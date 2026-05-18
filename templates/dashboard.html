@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard-header"
+    style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h1 class="hero-title" style="margin-bottom: 0.5rem;">User <span class="highlight">Analytics</span></h1>
+        <p class="hero-subtitle text-secondary">Your AI-driven travel footprint.</p>
+    </div>
+    <div style="text-align: right;">
+        <button class="btn-primary"
+            style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-light); color: white;">Edit
+            Preferences <i class="fa-solid fa-gear"></i></button>
+    </div>
+</div>
+
+<div class="dashboard-grid show" style="margin-top: 2rem;">
+    <!-- Eco Impact Summary -->
+    <div class="glass-panel card card-hover">
+        <div class="card-header">
+            <h2><i class="fa-solid fa-earth-americas"></i> Eco Impact</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+            <h1 class="text-glow" style="color: var(--accent-green); font-size: 3.5rem; margin-bottom: 0;">214 <span
+                    style="font-size: 1.2rem; color: var(--text-secondary);">kg</span></h1>
+            <p class="text-secondary">Total CO₂ emissions saved vs Cars</p>
+        </div>
+    </div>
+
+    <!-- Money Saved -->
+    <div class="glass-panel card card-hover">
+        <div class="card-header">
+            <h2><i class="fa-solid fa-wallet"></i> AI Cost Optimization</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+            <h1 class="highlight" style="font-size: 3.5rem; margin-bottom: 0;">₹4,250</h1>
+            <p class="text-secondary">Money saved using active split-routes</p>
+        </div>
+    </div>
+
+    <!-- Safety Preferences -->
+    <div class="glass-panel card card-hover">
+        <div class="card-header">
+            <h2><i class="fa-solid fa-shield-virus"></i> Safety Preferences</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 8px;">
+                <span>Strict Night Travel Policy</span>
+                <i class="fa-solid fa-toggle-on highlight" style="font-size: 1.5rem;"></i>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 8px;">
+                <span>Prioritize Women Safety Index</span>
+                <i class="fa-solid fa-toggle-on highlight" style="font-size: 1.5rem;"></i>
+            </div>
+            <div
+                style="display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2); padding: 0.8rem; border-radius: 8px;">
+                <span>Driver Rating floor >= 90</span>
+                <i class="fa-solid fa-toggle-off text-secondary" style="font-size: 1.5rem;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Past Bookings -->
+    <div class="glass-panel card span-2 card-hover">
+        <div class="card-header">
+            <h2><i class="fa-solid fa-ticket-simple"></i> Past Iterations & Bookings</h2>
+        </div>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
+            <thead>
+                <tr style="border-bottom: 1px solid var(--border-light); text-align: left; color: var(--text-secondary);">
+                    <th style="padding: 1rem;">Route</th>
+                    <th style="padding: 1rem;">Date</th>
+                    <th style="padding: 1rem;">Seat & Fare</th>
+                    <th style="padding: 1rem;">Status</th>
+                </tr>
+            </thead>
+            <tbody id="bookings-table-body">
+                <!-- Injected dynamically via dashboard.js -->
+                <tr>
+                    <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i> Retrieving travel profile...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Travel Stats Chart -->
+    <div class="glass-panel card card-hover">
+        <div class="card-header">
+            <h2><i class="fa-solid fa-chart-pie"></i> Travel Analytics</h2>
+        </div>
+        <div class="chart-container" style="height: 200px; display: flex; justify-content: center;">
+            <canvas id="userTravelStats"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

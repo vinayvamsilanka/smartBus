@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="loader" class="loader">
+    <div class="spinner"></div>
+    <p>AI is analyzing routes, predicting fares, and calculating eco-scores...</p>
+</div>
+
+<div id="results-dashboard" class="dashboard hidden"
+    style="opacity: 0; transform: translateY(20px); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
+    <div class="results-header" style="background: white; border-radius: 20px; padding: 2.5rem; border: 1px solid #e2e8f0; margin-bottom: 3rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <h2 style="font-size: 2.2rem; font-weight: 800; color: var(--text-primary);" id="route-title">AI Selected Routes</h2>
+                <span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-size: 0.8rem;">NETWORK OPTIMIZED</span>
+            </div>
+            <p style="font-size: 1.1rem; color: var(--text-secondary); font-weight: 500;" id="search-overview">Showing results</p>
+        </div>
+        <button class="btn-primary" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.75rem 1.5rem; font-weight: 700;" onclick="window.location.href='/'">
+            <i class="fa-solid fa-magnifying-glass"></i> NEW SEARCH
+        </button>
+    </div>
+
+    <div class="dashboard-grid show">
+        <!-- AI Fare Predictor Chart (Left Side) -->
+        <div class="glass-panel card span-2 card-hover">
+            <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.5rem; color: var(--text-primary);"><i class="fa-solid fa-chart-line" style="color: var(--accent-primary);"></i> AI Fare Predictor</h2>
+                <span class="badge" style="background: var(--accent-primary); color: white;">Cheapest: <span id="cheapest-date">...</span></span>
+            </div>
+            
+            <div class="chart-container" style="background: rgba(248, 250, 252, 0.5); border-radius: 12px; padding: 10px;">
+                <canvas id="fareChart"></canvas>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem;">
+                <div class="ai-confidence-box" style="margin: 0; padding: 1.25rem; background: #ecfdf5; border: 1px solid #10b98133; border-radius: 16px;">
+                    <i class="fa-solid fa-square-poll-vertical" style="font-size: 1.5rem;"></i>
+                    <div style="display: flex; flex-direction: column;">
+                        <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #065f46;">Prediction Confidence</span>
+                        <span style="font-size: 1.2rem; font-weight: 800; color: #059669;"><span id="ai-confidence">...</span>% Confidence AI</span>
+                    </div>
+                </div>
+
+                <div class="split-journey" id="split-journey-box" style="display: none; flex-direction: column; position: relative;">
+                    <div class="split-info">
+                        <h3><i class="fa-solid fa-code-branch"></i> Split Journey Recommendation</h3>
+                        <p style="color: var(--text-secondary);">Save more by splitting your trip via <span id="split-via" class="highlight">...</span></p>
+                    </div>
+
+                    <div class="motion-timeline">
+                        <div class="timeline-line"></div>
+                        <i class="fa-solid fa-bus timeline-bus" id="animated-bus"></i>
+
+                        <div class="timeline-point" id="tp-origin">
+                            <div class="dot"></div>
+                            <span class="label">...</span>
+                        </div>
+                        <div class="timeline-point" id="tp-via">
+                            <div class="dot highlight-dot"></div>
+                            <span class="label">...</span>
+                        </div>
+                        <div class="timeline-point" id="tp-dest">
+                            <div class="dot"></div>
+                            <span class="label">...</span>
+                        </div>
+                    </div>
+
+                    <div class="split-pricing" style="background: #eff6ff; border: 1px solid #dbeafe; padding: 1.25rem;">
+                        <div style="display: flex; flex-direction: column;">
+                            <span style="font-size: 0.75rem; color: #64748b;">Direct Fare</span>
+                            <span class="price-strike" style="font-size: 1.1rem;">₹<span id="direct-fare">...</span></span>
+                        </div>
+                        <div style="display: flex; flex-direction: column; align-items: center;">
+                            <span style="font-size: 0.75rem; color: #1e40af; font-weight: 700;">Split Fare</span>
+                            <span class="price-highlight" style="font-size: 1.5rem; color: #2563eb;">₹<span id="split-fare">...</span></span>
+                        </div>
+                        <div class="savings" style="height: fit-content; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
+                            SAVE ₹<span id="split-savings">...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bus Options List -->
+        <div class="results-list" id="buses-container"
+            style="display: flex; flex-direction: column; gap: 1.5rem; grid-column: span 3;">
+            <!-- Rendered via results.js -->
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/results.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}City Management{% endblock %}
+{% block page_header %}City Hub Network{% endblock %}
+
+{% block content %}
+<div class="table-panel">
+    <div class="table-header">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <h4><i class="fa-solid fa-map-location-dot"></i> Network Nodes</h4>
+            <span class="badge"
+                style="background: rgba(167, 139, 250, 0.2); color: var(--accent-purple); padding:0.3rem 0.8rem; border-radius:30px; font-size:0.8rem;">Indexed:
+                {{ cities|length }}</span>
+        </div>
+        <button class="btn-admin" onclick="openModal('addCityModal')">
+            <i class="fa-solid fa-plus-circle"></i> Add New City
+        </button>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Internal Ref Name</th>
+                <th>Route Status</th>
+                <th style="text-align: right;">Operations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for city in cities %}
+            <tr>
+                <td><span style="color:var(--text-secondary); font-family:monospace;">#{{ "%03d"|format(city.id)
+                        }}</span></td>
+                <td
+                    style="font-weight: 600; color: #fff; font-size: 1rem; {% if not city.is_active %}opacity: 0.5; text-decoration: line-through;{% endif %}">
+                    {{ city.name.title() }}
+                </td>
+                <td>
+                    {% if city.is_active %}
+                    <span style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--accent-green);">
+                        <i class="fa-solid fa-circle-check" style="font-size:0.7rem;"></i> Active Hub
+                    </span>
+                    {% else %}
+                    <span style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--text-secondary);">
+                        <i class="fa-solid fa-circle-xmark" style="font-size:0.7rem;"></i> Inactive
+                    </span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                        <form method="POST" action="{{ url_for('admin_ui.toggle_city', id=city.id) }}"
+                            style="display:inline;">
+                            <button type="submit" class="action-btn" title="Toggle Hub Status"
+                                style="color: {% if city.is_active %}var(--accent-primary){% else %}var(--text-secondary){% endif %};">
+                                <i class="fa-solid fa-power-off"></i>
+                            </button>
+                        </form>
+                        <button class="action-btn" title="Edit Metadata"
+                            onclick="alert('Metadata Editor coming soon in v2.0')"><i
+                                class="fa-solid fa-pen-to-square"></i></button>
+                        <form method="POST" action="{{ url_for('admin_ui.delete_city', id=city.id) }}"
+                            onsubmit="return confirm('SOFT DELETE: Deactivate {{ city.name.title() }} from the live network? It will remain in history but disappear from user search.');">
+                            <button type="submit" class="action-btn delete" title="Soft Delete Node"><i
+                                    class="fa-solid fa-trash-can"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align:center; padding: 4rem;">
+                    <i class="fa-solid fa-mountain-sun"
+                        style="font-size: 3rem; color:rgba(255,255,255,0.05); margin-bottom:1.5rem;"></i>
+                    <p style="color:var(--text-secondary);">No routing nodes discovered in the graph yet.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add City Modal -->
+<div id="addCityModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-building-circle-check"></i> Register New City</h3>
+            <button class="modal-close" onclick="closeModal('addCityModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin_ui.add_city') }}">
+            <div class="form-group">
+                <label>System Identifier (Unique Name)</label>
+                <input type="text" name="name" class="form-control" required placeholder="e.g. Visakhapatnam" autofocus>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('addCityModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Initialize Hub <i class="fa-solid fa-bolt"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

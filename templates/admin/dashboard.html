@@ -1,0 +1,125 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Analytics Overview{% endblock %}
+{% block page_header %}Enterprise Dashboard{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-users text-glow"></i> Active Users</h4>
+        <div class="stat-value">{{ t_users }}</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-ticket" style="color:var(--accent-purple);"></i> Total Bookings</h4>
+        <div class="stat-value">{{ t_bookings }}</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-indian-rupee-sign" style="color:var(--accent-green);"></i> Gross Revenue</h4>
+        <div class="stat-value">₹{{ t_revenue }}</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-bus-simple text-glow"></i> Active Fleet</h4>
+        <div class="stat-value">{{ t_buses }}</div>
+    </div>
+</div>
+
+<div class="stat-grid" style="margin-top: 1.5rem;">
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-city" style="color:var(--accent-purple);"></i> Network Hubs</h4>
+        <div class="stat-value">{{ t_cities }}</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-route" style="color:var(--accent-primary);"></i> Active Routes</h4>
+        <div class="stat-value">{{ t_routes }}</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-calendar-check" style="color:var(--accent-green);"></i> Live Dispatches</h4>
+        <div class="stat-value">{{ t_schedules }}</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-link" style="color:var(--text-secondary);"></i> API Health</h4>
+        <div class="stat-value" style="font-size: 1.2rem; color:var(--accent-green);">99.9%</div>
+    </div>
+</div>
+
+<div class="stat-grid" style="grid-template-columns: 2fr 1fr;">
+    <!-- Revenue Chart -->
+    <div class="table-panel" style="padding: 1.5rem;">
+        <h4 style="margin-bottom: 1rem;"><i class="fa-solid fa-chart-line"></i> Revenue Trend (YTD)</h4>
+        <div style="height: 300px;">
+            <canvas id="revenueChart"></canvas>
+        </div>
+    </div>
+
+    <!-- AI Split Journey Adoptions -->
+    <div class="table-panel" style="padding: 1.5rem;">
+        <h4 style="margin-bottom: 1rem;"><i class="fa-solid fa-code-branch"></i> API Optimizations</h4>
+        <div style="height: 300px; display:flex; justify-content:center; align-items:center;">
+            <canvas id="splitChart"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Revenue Line Chart
+        const ctxR = document.getElementById('revenueChart').getContext('2d');
+
+        let grad = ctxR.createLinearGradient(0, 0, 0, 300);
+        grad.addColorStop(0, 'rgba(167, 139, 250, 0.4)');
+        grad.addColorStop(1, 'rgba(167, 139, 250, 0)');
+
+        new Chart(ctxR, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                datasets: [{
+                    label: 'Gross Volume (₹)',
+                    data: [12400, 19000, 16500, 24000, 28000, 31000],
+                    borderColor: '#a78bfa',
+                    backgroundColor: grad,
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                }
+            }
+        });
+
+        // Split Journey Doughnut
+        const ctxS = document.getElementById('splitChart').getContext('2d');
+        new Chart(ctxS, {
+            type: 'doughnut',
+            data: {
+                labels: ['Direct Routes', 'AI Split Routes'],
+                datasets: [{
+                    data: [65, 35],
+                    backgroundColor: ['#38bdf8', '#34d399'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter' } } }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

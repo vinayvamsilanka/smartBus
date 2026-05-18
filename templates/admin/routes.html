@@ -1,0 +1,156 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Route Management{% endblock %}
+{% block page_header %}Dynamic Route Engine{% endblock %}
+
+{% block content %}
+<div class="table-panel">
+    <div class="table-header">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <h4><i class="fa-solid fa-route"></i> Network Edges</h4>
+            <span class="badge"
+                style="background: rgba(167, 139, 250, 0.2); color: var(--accent-purple); padding:0.3rem 0.8rem; border-radius:30px; font-size:0.8rem;">Active
+                Paths: {{ routes|length }}</span>
+        </div>
+        <button class="btn-admin" onclick="openModal('addRouteModal')">
+            <i class="fa-solid fa-plus-circle"></i> Create New Route
+        </button>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>Distance</th>
+                <th>Base Fare</th>
+                <th>Status</th>
+                <th style="text-align: right;">Operations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for route in routes %}
+            <tr>
+                <td><span style="color:var(--text-secondary); font-family:monospace;">#R-{{ "%03d"|format(route.id)
+                        }}</span></td>
+                <td style="font-weight: 600; color: #fff; {% if not route.is_active %}opacity: 0.5;{% endif %}">{{
+                    route.origin.title() }}</td>
+                <td style="font-weight: 600; color: #fff; {% if not route.is_active %}opacity: 0.5;{% endif %}">{{
+                    route.destination.title() }}</td>
+                <td>{{ route.distance_km }} km</td>
+                <td style="color:var(--accent-green); font-weight:bold;">₹{{ route.base_fare }}</td>
+                <td>
+                    {% if route.is_active %}
+                    <span style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--accent-green);">
+                        <i class="fa-solid fa-check-double" style="font-size:0.7rem;"></i> Live
+                    </span>
+                    {% else %}
+                    <span style="display:inline-flex; align-items:center; gap:0.5rem; color:var(--text-secondary);">
+                        <i class="fa-solid fa-pause-circle" style="font-size:0.7rem;"></i> Suspended
+                    </span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                        <form method="POST" action="{{ url_for('admin_ui.toggle_route', id=route.id) }}"
+                            style="display:inline;">
+                            <button type="submit" class="action-btn" title="Toggle Route Life"
+                                style="color: {% if route.is_active %}var(--accent-primary){% else %}var(--text-secondary){% endif %};">
+                                <i class="fa-solid fa-power-off"></i>
+                            </button>
+                        </form>
+                        <button class="action-btn" title="Edit Route Details" onclick="openEditModal('{{ route.id }}', '{{ route.distance_km }}', '{{ route.base_fare }}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <form method="POST" action="{{ url_for('admin_ui.delete_route', id=route.id) }}"
+                            onsubmit="return confirm('SOFT DELETE: Suspend route {{ route.origin.title() }} → {{ route.destination.title() }}?');">
+                            <button type="submit" class="action-btn delete" title="Archive Route"><i
+                                    class="fa-solid fa-trash-can"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align:center; padding: 4rem;">
+                    <i class="fa-solid fa-map"
+                        style="font-size: 3rem; color:rgba(255,255,255,0.05); margin-bottom:1.5rem;"></i>
+                    <p style="color:var(--text-secondary);">No routes defined in the engine.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Route Modal -->
+<div id="addRouteModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-plus-square"></i> New Route Configuration</h3>
+            <button class="modal-close" onclick="closeModal('addRouteModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin_ui.add_route') }}">
+            <div class="form-group">
+                <label>Origin Hub</label>
+                <select name="origin" id="new-origin" class="form-control" required onchange="fetchRouteSuggestion()">
+                    <option value="" disabled selected>-- Select Hub --</option>
+                    {% for city in cities %}
+                    <option value="{{ city.name }}">{{ city.name.title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Destination Hub</label>
+                <select name="destination" id="new-dest" class="form-control" required onchange="fetchRouteSuggestion()">
+                    <option value="" disabled selected>-- Select Hub --</option>
+                    {% for city in cities %}
+                    <option value="{{ city.name }}">{{ city.name.title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group" style="position: relative;">
+                <label>Distance (km)</label>
+                <input type="number" name="distance" id="new-dist" class="form-control" required placeholder="850">
+                <span id="ai-suggest-badge" class="badge" style="position: absolute; right: 0.5rem; top: 2.2rem; background: var(--accent-purple); color: white; scale: 0.8; display: none;">AI SUGGESTED</span>
+            </div>
+            <div class="form-group">
+                <label>Base Fare (₹)</label>
+                <input type="number" name="base_fare" id="new-fare" class="form-control" required placeholder="1250">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('addRouteModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Save Route <i class="fa-solid fa-lock"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    async function fetchRouteSuggestion() {
+        const origin = document.getElementById('new-origin').value;
+        const dest = document.getElementById('new-dest').value;
+        
+        if (origin && dest && origin !== dest) {
+            try {
+                const response = await fetch(`/admin/api/suggest-route?origin=${origin}&dest=${dest}`);
+                const data = await response.json();
+                
+                if (data.distance_km) {
+                    document.getElementById('new-dist').value = data.distance_km;
+                    document.getElementById('new-fare').value = data.suggested_fare;
+                    document.getElementById('ai-suggest-badge').style.display = 'block';
+                }
+            } catch (err) {
+                console.error("AI Auto-Suggest failed:", err);
+            }
+        }
+    }
+
+    function openEditModal(id, distance, fare) {
+        document.getElementById('editRouteForm').action = "/admin/routes/edit/" + id;
+        document.getElementById('edit-distance').value = distance;
+        document.getElementById('edit-fare').value = fare;
+        openModal('editRouteModal');
+    }
+</script>
+{% endblock %}

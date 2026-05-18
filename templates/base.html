@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBus AI | Future of Travel</title>
+    <meta name="description" content="AI-Powered Intelligent Bus Travel Optimization Platform">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script>
+        window.USER_ID = {{ session.get('user_id') | tojson if session.get('user_id') else 'null' }};
+        window.USER_NAME = {{ session.get('user_name') | tojson if session.get('user_name') else 'null' }};
+    </script>
+    {% block head %}{% endblock %}
+</head>
+
+<body>
+    <div class="app-bg"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <a href="/"
+                style="text-decoration: none; display: flex; align-items: center; gap: 0.8rem; color: var(--text-primary);">
+                <i class="fa-solid fa-bus-simple text-glow"></i>
+                <span>Smart<span class="highlight">Bus AI</span></span>
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="active">AI Optimizer</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="#">Eco Travel</a>
+            <a href="#">Safety</a>
+            {% if session.get('user_id') %}
+            <div class="login-dropdown">
+                <a href="#" class="btn-login" style="background: rgba(37, 99, 235, 0.1); color: var(--accent-primary); border-color: rgba(37, 99, 235, 0.2);"><i class="fa-solid fa-circle-user"></i> Hi, {{ session.get('user_name') }} <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; opacity: 0.7;"></i></a>
+                <div class="dropdown-content">
+                    <a href="/dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+                    <a href="/logout" style="color: var(--accent-error) !important;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                </div>
+            </div>
+            {% else %}
+            <div class="login-dropdown">
+                <a href="/login" class="btn-login"><i class="fa-solid fa-circle-user"></i> Login <i class="fa-solid fa-chevron-down"
+                        style="font-size: 0.7rem; opacity: 0.7;"></i></a>
+                <div class="dropdown-content">
+                    <a href="/login"><i class="fa-solid fa-user"></i> User Login</a>
+                    <a href="/admin/login"><i class="fa-solid fa-user-shield"></i> Admin Portal</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- AI Travel Assistant Floating Chatbot -->
+    <div id="ai-chat-btn" class="chat-btn glass-panel">
+        <i class="fa-solid fa-robot text-glow"></i>
+    </div>
+
+    <div id="ai-chat-window" class="chat-window glass-panel hidden card-hover">
+        <div class="chat-header">
+            <h3><i class="fa-solid fa-wand-magic-sparkles"></i> AI Assistant</h3>
+            <span id="close-chat" style="cursor: pointer;"><i class="fa-solid fa-xmark"></i></span>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+            <div class="message ai-message">
+                Hello! I can help you find the safest night bus under ₹800 or suggest the cheapest eco-friendly route.
+                Try me!
+            </div>
+        </div>
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Ask AI anything...">
+            <button id="send-chat" class="btn-primary" style="padding: 0.5rem 1rem;"><i
+                    class="fa-solid fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,1512 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    :root {
+        --bg-main: #f8fafc;
+        --bg-surface: #ffffff;
+        --neon-blue: #2563eb;
+        --accent-blue: #1d4ed8;
+        --accent-purple: #4f46e5;
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --glass-border: #e2e8f0;
+        --glass-bg: #ffffff;
+        --glow: none;
+    }
+
+    body {
+        background-color: var(--bg-main);
+        color: var(--text-primary);
+        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+        margin: 0;
+        overflow-x: hidden;
+    }
+
+    /* Utitilies for Glassmorphism */
+    main.container {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    
+    .glass {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        border-radius: 12px;
+    }
+
+    .glass-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-4px);
+        border-color: #cbd5e1;
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    .btn-neon {
+        background: var(--neon-blue);
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-neon:hover {
+        background: var(--accent-blue);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.4);
+    }
+
+    .btn-outline-neon {
+        background: transparent;
+        color: var(--neon-blue);
+        border: 1px solid var(--neon-blue);
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .btn-outline-neon:hover {
+        background: #eff6ff;
+    }
+
+    .highlight-text {
+        color: var(--neon-blue);
+    }
+
+    /* Hero Section */
+    .hero-section {
+        position: relative;
+        min-height: calc(100vh - 80px);
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        /* Custom overflow: visible for search dropdown support */
+        overflow: visible;
+        background: var(--bg-main);
+    }
+
+    /* Hide the orbs */
+    .hero-orb, .hero-grid, .hero-particle { display: none; }
+
+    /* Subtle dot grid background */
+    .hero-grid {
+        position: absolute; inset: 0;
+        background-image: radial-gradient(rgba(0, 240, 255, 0.08) 1px, transparent 1px);
+        background-size: 40px 40px;
+        z-index: 0;
+    }
+
+    /* Floating particles */
+    .hero-particle {
+        position: absolute;
+        width: 4px; height: 4px;
+        border-radius: 50%;
+        background: var(--neon-blue);
+        opacity: 0.5;
+        animation: particleFly linear infinite;
+    }
+    @keyframes particleFly {
+        0% { transform: translateY(100vh) scale(0); opacity: 0; }
+        10% { opacity: 0.6; }
+        90% { opacity: 0.4; }
+        100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+    }
+
+    /* Hero Content Center */
+    .hero-content {
+        position: relative;
+        z-index: 10;
+        text-align: center;
+        max-width: 1000px;
+        width: 100%;
+        margin: 0 auto;
+        animation: fadeUp 0.9s ease-out both;
+    }
+    @keyframes fadeUp {
+        from { opacity: 0; transform: translateY(40px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 20px;
+        background: rgba(0, 240, 255, 0.08);
+        border: 1px solid rgba(0, 240, 255, 0.25);
+        border-radius: 50px;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        color: var(--neon-blue);
+        text-transform: uppercase;
+        margin-bottom: 28px;
+    }
+    .hero-badge .dot {
+        width: 8px; height: 8px; border-radius: 50%;
+        background: var(--neon-blue);
+        box-shadow: 0 0 8px var(--neon-blue);
+        animation: blink 1.5s ease-in-out infinite;
+    }
+    @keyframes blink {
+        0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+    }
+
+    .hero-title {
+        font-size: clamp(2rem, 5vw, 3.5rem);
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: 1px;
+        margin: 0 0 10px 0;
+        color: var(--text-primary);
+        text-transform: uppercase;
+    }
+
+    .hero-tagline {
+        font-size: clamp(1.1rem, 2vw, 1.8rem);
+        color: var(--text-secondary);
+        font-weight: 500;
+        max-width: 900px;
+        margin: 0 auto 40px;
+        line-height: 1.4;
+    }
+
+    /* Hero Stats Row */
+    .hero-stats {
+        display: flex;
+        justify-content: center;
+        gap: 50px;
+        margin-bottom: 50px;
+        flex-wrap: wrap;
+    }
+    .hero-stat {
+        text-align: center;
+    }
+    .hero-stat .stat-number {
+        font-size: 1.9rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #fff, var(--neon-blue));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        display: block;
+        line-height: 1;
+        margin-bottom: 5px;
+    }
+    .hero-stat .stat-label {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .search-panel-wrapper {
+        width: 100%;
+        max-width: 1100px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .search-panel {
+        width: 100%;
+        background: #ffffff;
+        border-radius: 20px;
+        padding: 30px;
+        box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+    }
+
+    .search-inputs-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        width: 100%;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        z-index: 100; /* Ensure this is above the button container */
+    }
+
+    .search-field {
+        flex: 1 1 200px;
+        min-width: 180px;
+        max-width: 240px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 14px;
+        padding: 14px 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        position: relative;
+    }
+
+    .search-field:hover {
+        background: #ffffff;
+        border-color: var(--neon-blue);
+        box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.15);
+        transform: translateY(-2px);
+    }
+    
+    .search-field:focus-within {
+        background: #ffffff;
+        border-color: var(--neon-blue);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 8px 20px -6px rgba(37, 99, 235, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .search-field label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-secondary);
+        font-weight: 700;
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        transition: color 0.3s ease;
+    }
+
+    .search-field:focus-within label {
+        color: var(--neon-blue);
+    }
+
+    .search-field label i {
+        color: var(--neon-blue);
+        transition: transform 0.3s ease;
+    }
+    
+    .search-field:hover label i,
+    .search-field:focus-within label i {
+        transform: scale(1.15);
+    }
+
+    .search-field input, .search-field select {
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 1.1rem;
+        font-weight: 700;
+        width: 100%;
+        outline: none;
+        text-align: center;
+        font-family: inherit;
+        cursor: pointer;
+    }
+    
+    .search-field input::placeholder {
+        color: #94a3b8;
+        font-weight: 500;
+    }
+    
+    .search-field input[type="date"]::-webkit-calendar-picker-indicator {
+        filter: none;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.3s ease;
+    }
+    
+    .search-field:hover input[type="date"]::-webkit-calendar-picker-indicator,
+    .search-field:focus-within input[type="date"]::-webkit-calendar-picker-indicator {
+        opacity: 1;
+    }
+
+    .search-btn-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        position: relative;
+        z-index: 10; /* Lower than inputs container for the dropdown */
+    }
+
+    .btn-neon {
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: white;
+        border: none;
+        padding: 18px 45px;
+        font-size: 1rem;
+        border-radius: 12px;
+        font-weight: 700;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        box-shadow: 0 15px 30px -10px rgba(37, 99, 235, 0.5);
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Professional Shimmer Effect */
+    @keyframes shimmer {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+
+    .btn-neon::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 50%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+        transform: skewX(-20deg) translateX(-150%);
+        animation: shimmer 3s infinite;
+    }
+
+    .btn-neon:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 40px -12px rgba(37, 99, 235, 0.6);
+        filter: brightness(1.15);
+    }
+
+    .btn-neon:active {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 20px -5px rgba(37, 99, 235, 0.4);
+    }
+
+    /* Refined Search Fields */
+    .search-field {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .search-field:hover {
+        border-color: #cbd5e1;
+        background: #fdfdfd;
+    }
+
+    .search-field:focus-within {
+        border-color: rgba(37, 99, 235, 0.5);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 10px 15px -3px rgba(0,0,0,0.05);
+    }
+
+    @media (max-width: 768px) {
+        .search-field {
+            min-width: 100%;
+        }
+    }
+
+    /* Sections Shared Styles */
+    .section-spacing {
+        padding: 120px 0;
+        position: relative;
+    }
+
+    .container-inner {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 5%;
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: 60px;
+    }
+    
+    .neon-badge {
+        display: inline-block;
+        padding: 6px 16px;
+        background: rgba(0, 240, 255, 0.1);
+        border: 1px solid rgba(0, 240, 255, 0.3);
+        color: var(--neon-blue);
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 2px;
+        border-radius: 50px;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+        box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+
+    .section-title {
+        font-size: clamp(2.5rem, 4vw, 3.5rem);
+        font-weight: 800;
+        margin: 0 0 20px 0;
+    }
+
+    .section-subtitle {
+        font-size: 1.15rem;
+        color: var(--text-secondary);
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+
+    /* AI Split Journey Section */
+    .split-journey-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 30px;
+        margin-top: 40px;
+    }
+
+    .sj-card {
+        padding: 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .sj-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 4px;
+        background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .sj-card:hover::before { opacity: 1; }
+
+    .sj-icon {
+        font-size: 2.5rem;
+        color: var(--neon-blue);
+        margin-bottom: 20px;
+        filter: drop-shadow(0 0 10px rgba(0, 240, 255, 0.4));
+    }
+
+    .sj-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .sj-desc {
+        color: var(--text-secondary);
+        font-size: 1rem;
+        margin-bottom: 30px;
+        line-height: 1.5;
+    }
+
+    /* Route Visualization */
+    .route-viz {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 25px;
+        position: relative;
+    }
+
+    .route-dot {
+        width: 14px;
+        height: 14px;
+        background: white;
+        border-radius: 50%;
+        position: relative;
+        z-index: 2;
+        box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+    
+    .route-dot.glow {
+        background: var(--neon-blue);
+        box-shadow: 0 0 15px var(--neon-blue);
+    }
+
+    .route-line {
+        position: absolute;
+        top: 50%;
+        left: 10px;
+        right: 10px;
+        height: 2px;
+        background: rgba(255,255,255,0.2);
+        z-index: 1;
+        transform: translateY(-50%);
+    }
+
+    .route-line.smart {
+        background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
+    }
+
+    .route-line.fast {
+        background: var(--accent-purple);
+        box-shadow: 0 0 10px var(--accent-purple);
+    }
+
+    /* Popular Routes */
+    .routes-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+    }
+
+    .route-item {
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .route-cities {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        font-weight: 700;
+        font-size: 1.3rem;
+    }
+
+    .route-cities i {
+        color: var(--neon-blue);
+        font-size: 1rem;
+    }
+
+    .route-operator {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        margin-bottom: 8px;
+    }
+
+    .route-type {
+        display: inline-block;
+        font-size: 0.75rem;
+        background: #f1f5f9;
+        padding: 4px 10px;
+        border-radius: 20px;
+        color: var(--accent-purple);
+        margin-bottom: 20px;
+    }
+
+    .route-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        padding-top: 15px;
+    }
+
+    .route-price {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--neon-blue);
+    }
+
+    /* Live Bus & Features Split */
+    .split-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+    }
+
+    .split-layout.reverse {
+        direction: rtl;
+    }
+    
+    .split-layout.reverse > * {
+        direction: ltr;
+    }
+
+    .live-visual {
+        position: relative;
+        padding: 40px;
+        background: radial-gradient(circle at center, rgba(37, 99, 235, 0.05) 0%, transparent 70%);
+    }
+
+    .live-card-ui {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 24px;
+        padding: 25px;
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        position: relative;
+        z-index: 2;
+    }
+
+    .map-mockup {
+        height: 250px;
+        border-radius: 16px;
+        background: #f8fafc;
+        margin-bottom: 20px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        background-image: radial-gradient(circle at center, rgba(37, 99, 235, 0.1) 0%, transparent 60%);
+    }
+
+    .map-radar {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 100px; height: 100px;
+        border-radius: 50%;
+        border: 2px solid rgba(0, 240, 255, 0.5);
+        animation: radarPing 2s ease-out infinite;
+    }
+
+    .bus-marker {
+        position: absolute;
+        top: 50%; left: 50%;
+        transform: translate(-50%, -50%);
+        width: 40px; height: 40px;
+        background: var(--neon-blue);
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 0 20px var(--neon-blue);
+        color: #000;
+        font-size: 1.2rem;
+    }
+    
+    @keyframes radarPing {
+        0% { width: 0; height: 0; opacity: 1; }
+        100% { width: 300px; height: 300px; opacity: 0; }
+    }
+
+    .live-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        background: rgba(255,255,255,0.03);
+        border-radius: 16px;
+    }
+
+    .driver-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .driver-avatar {
+        width: 50px; height: 50px;
+        border-radius: 50%;
+        background: var(--accent-blue);
+        display: flex; justify-content: center; align-items: center;
+        font-weight: 700; font-size: 1.2rem;
+    }
+
+    .live-eta h4 { margin: 0; font-size: 1.8rem; color: var(--neon-blue); }
+    .live-eta p { margin: 0; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; }
+
+    /* Features Grid */
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+    }
+
+    .feature-item {
+        padding: 30px 20px;
+        text-align: center;
+    }
+
+    .feature-item .f-icon {
+        font-size: 2.5rem;
+        color: var(--neon-blue);
+        margin-bottom: 20px;
+        display: inline-block;
+        padding: 15px;
+        background: rgba(0, 240, 255, 0.05);
+        border-radius: 50%;
+        border: 1px solid rgba(0, 240, 255, 0.2);
+    }
+
+    .feature-item h3 { font-size: 1.2rem; margin-bottom: 10px; }
+    .feature-item p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; }
+
+    /* Seat Selection Preview */
+    .seat-preview-mockup {
+        width: 320px;
+        margin: 0 auto;
+        padding: 30px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .steering-wheel {
+        width: 60px; height: 60px;
+        border: 6px solid rgba(255,255,255,0.2);
+        border-radius: 50%;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    .steering-wheel::after {
+        content: '';
+        position: absolute;
+        top: 50%; left: 5px; right: 5px; height: 4px;
+        background: rgba(255,255,255,0.2);
+        transform: translateY(-50%);
+    }
+
+    .seat-row {
+        display: flex; gap: 15px; width: 100%; justify-content: center;
+    }
+
+    .aisle-space { width: 40px; }
+
+    .bus-seat {
+        width: 45px; height: 55px;
+        border-radius: 12px 12px 8px 8px;
+        background: #f1f5f9;
+        border: 2px solid #e2e8f0;
+        cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .bus-seat.available:hover {
+        background: #eff6ff;
+        border-color: var(--neon-blue);
+        transform: scale(1.1);
+    }
+
+    .bus-seat.booked {
+        background: #fee2e2;
+        border-color: #fca5a5;
+        cursor: not-allowed;
+        opacity: 0.7;
+    }
+
+    .bus-seat.selected {
+        background: var(--neon-blue);
+        box-shadow: 0 4px 6px -1px var(--neon-blue);
+        border-color: #ffffff;
+    }
+
+    .legend-row {
+        display: flex; gap: 20px; margin-top: 20px;
+    }
+
+    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
+    .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); }
+    .legend-box.av { background: #1e293b; }
+    .legend-box.bk { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); }
+    .legend-box.sl { background: var(--neon-blue); }
+
+    /* Mobile Promo & Reviews */
+    .app-promo-card {
+        padding: 60px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .app-promo-card::before {
+        content: '';
+        position: absolute;
+        top: -50%; right: -10%;
+        width: 400px; height: 400px;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 60%);
+        border-radius: 50%;
+    }
+
+    .store-btns { display: flex; gap: 15px; margin-top: 30px; }
+    
+    .store-btn {
+        background: white; color: black;
+        padding: 12px 24px; border-radius: 12px;
+        display: flex; align-items: center; gap: 12px;
+        font-weight: 700; cursor: pointer; border: none;
+        transition: transform 0.3s;
+    }
+
+    .store-btn:hover { transform: translateY(-5px); }
+    .store-btn i { font-size: 1.8rem; }
+    .store-btn span { display: block; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; }
+
+    /* Testimonials */
+    .reviews-container {
+        display: flex;
+        gap: 30px;
+        overflow-x: auto;
+        padding-bottom: 20px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--neon-blue) rgba(255,255,255,0.05);
+    }
+    
+    .review-card {
+        min-width: 350px;
+        padding: 30px;
+    }
+
+    .review-stars { color: #facc15; font-size: 1.2rem; margin-bottom: 15px; }
+    .review-text { font-size: 1.1rem; line-height: 1.6; font-style: italic; margin-bottom: 20px; }
+    .review-author { display: flex; align-items: center; gap: 15px; }
+    .author-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #334155; }
+
+    /* Footer */
+    .premium-footer {
+        background: #02040a;
+        padding: 80px 0 30px 0;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .footer-glowing-lines {
+        position: absolute;
+        bottom: 0; left: 0; width: 100%; height: 200px;
+        background: 
+            radial-gradient(ellipse at bottom, rgba(0, 240, 255, 0.15) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .footer-grid {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr 1fr;
+        gap: 50px;
+        margin-bottom: 60px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .footer-brand h2 { font-size: 2rem; margin-bottom: 20px; }
+    .footer-brand p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 25px; max-width: 300px; }
+
+    .social-icons { display: flex; gap: 15px; }
+    .social-icons a {
+        width: 40px; height: 40px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.05);
+        display: flex; justify-content: center; align-items: center;
+        color: white; transition: all 0.3s;
+    }
+    .social-icons a:hover { background: var(--neon-blue); color: black; transform: translateY(-3px); }
+
+    .footer-links h4 { font-size: 1.2rem; margin-bottom: 25px; color: white; }
+    .footer-links ul { list-style: none; padding: 0; margin: 0; }
+    .footer-links li { margin-bottom: 12px; }
+    .footer-links a { color: var(--text-secondary); text-decoration: none; transition: color 0.3s; }
+    .footer-links a:hover { color: var(--neon-blue); }
+
+    .footer-bottom {
+        text-align: center;
+        padding-top: 30px;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        position: relative;
+        z-index: 2;
+    }
+    .search-panel-wrapper {
+        position: relative;
+        z-index: 100;
+    }
+
+    .search-panel { 
+        overflow: visible !important; 
+    }
+
+    /* City Selector Grid Styling - Premium Redesign */
+    .city-selector-grid {
+        position: absolute;
+        top: calc(100% + 15px);
+        left: 0;
+        width: 320px;
+        background: #ffffff;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 2px solid var(--neon-blue); /* Stronger border for visibility */
+        border-radius: 20px;
+        padding: 10px;
+        display: none;
+        flex-direction: column;
+        gap: 5px;
+        z-index: 5000; /* Extremely high z-index to stay on top of everything */
+        box-shadow: 0 35px 70px -15px rgba(0, 0, 0, 0.35); /* Stronger shadow */
+        max-height: 400px; /* Slight increase in height */
+        overflow-y: auto;
+        animation: drop-reveal 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes drop-reveal {
+        from { opacity: 0; transform: translateY(-10px) scale(0.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .city-selector-header {
+        padding: 10px 15px;
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--neon-blue);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        margin-bottom: 8px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .city-btn {
+        background: transparent;
+        border: none;
+        border-radius: 12px;
+        padding: 12px 18px;
+        font-size: 1rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        width: 100%;
+    }
+
+    .city-btn i {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        transition: color 0.2s;
+        width: 20px;
+        text-align: center;
+    }
+
+    .city-btn:hover {
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--neon-blue);
+        transform: translateX(5px);
+    }
+
+    .city-btn:hover i {
+        color: var(--neon-blue);
+    }
+
+    .city-empty-state {
+        padding: 30px 20px;
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        display: none;
+    }
+
+    .city-selector-grid::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .city-selector-grid::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .city-selector-grid::-webkit-scrollbar-thumb {
+        background: rgba(37, 99, 235, 0.2);
+        border-radius: 10px;
+    }
+
+    .city-selector-grid::-webkit-scrollbar-thumb:hover {
+        background: var(--neon-blue);
+    }
+    /* Responsive */
+    @media (max-width: 1024px) {
+        .split-layout { grid-template-columns: 1fr; gap: 50px; }
+        .search-panel { grid-template-columns: 1fr 1fr; }
+        .features-grid { grid-template-columns: repeat(2, 1fr); }
+        .footer-grid { grid-template-columns: 1fr 1fr; }
+        .hero-stats { gap: 25px; }
+        .stat-divider { display: none; }
+    }
+
+    @media (max-width: 768px) {
+        .search-panel { padding: 20px; }
+        .search-field { flex: 1 1 100%; min-width: 100%; }
+        .features-grid { grid-template-columns: 1fr; }
+        .footer-grid { grid-template-columns: 1fr; }
+        .app-promo-card { flex-direction: column; text-align: center; padding: 40px 20px; }
+        .store-btns { justify-content: center; }
+        .hero-title { letter-spacing: -1px; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<div class="hero-section">
+    <div class="hero-bg-lines"></div>
+    <div class="sky-routes">
+        <svg viewBox="0 0 1000 400" preserveAspectRatio="none" style="width:100%; height:100%;">
+            <path d="M-100,200 Q200,50 400,250 T800,100 T1200,200" fill="none" stroke="var(--neon-blue)" stroke-width="2" opacity="0.4"/>
+            <path d="M-100,250 Q150,300 350,150 T700,200 T1200,150" fill="none" stroke="var(--accent-purple)" stroke-width="2" opacity="0.3"/>
+            <path d="M0,100 Q250,100 500,250 T1000,150 T1200,50" fill="none" stroke="#fff" stroke-width="1" opacity="0.2"/>
+        </svg>
+    </div>
+
+    <div class="hero-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; max-width: 1200px; margin: 0 auto; text-align: center;">
+        <div class="hero-content" style="max-width: 900px; margin-bottom: 30px;">
+            <h1 class="hero-title" style="margin-bottom: 5px; font-weight: 800;">SMARTBUS AI</h1>
+            <p class="hero-subtitle" style="font-size: 1.3rem; color: var(--neon-blue); margin-bottom: 15px; font-weight: 600;">Smarter Routes. Better Journeys.</p>
+            <p class="hero-tagline" style="color: var(--text-secondary); text-transform: none; max-width: 700px;">
+                Discover the fastest, cheapest, and most comfortable bus journeys with<br>intelligent route optimization. Step into the future of transport.
+            </p>
+        </div>
+
+        <div class="search-panel-wrapper">
+            <form action="/results" method="GET" class="search-panel">
+                <div class="search-inputs-container">
+                    <div class="search-field" style="position: relative;">
+                        <label><i class="fa-solid fa-location-dot"></i> Departure City</label>
+                        <input type="text" id="origin-input" name="origin" placeholder="Where from?" required autocomplete="off" oninput="filterCities('origin-input', 'origin-selector')">
+                        <div id="origin-selector" class="city-selector-grid card-hover">
+                            <div class="city-selector-header">Popular Cities <i class="fa-solid fa-star"></i></div>
+                            <div class="cities-list" id="origin-list">
+                                {% for city in cities %}
+                                <button type="button" class="city-btn" onclick="selectCity('origin-input', '{{ city.name.title() }}', 'origin-selector')">
+                                    <i class="fa-solid fa-city text-glow"></i>
+                                    <span>{{ city.name.title() }}</span>
+                                </button>
+                                {% endfor %}
+                            </div>
+                            <div class="city-empty-state" id="origin-empty">No cities found matching your search.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="search-field" style="position: relative;">
+                        <label><i class="fa-solid fa-map-pin"></i> Destination City</label>
+                        <input type="text" id="dest-input" name="dest" placeholder="Where to?" required autocomplete="off" oninput="filterCities('dest-input', 'dest-selector')">
+                        <div id="dest-selector" class="city-selector-grid card-hover">
+                            <div class="city-selector-header">All Destinations <i class="fa-solid fa-map-location-dot"></i></div>
+                            <div class="cities-list" id="dest-list">
+                                {% for city in cities %}
+                                <button type="button" class="city-btn" onclick="selectCity('dest-input', '{{ city.name.title() }}', 'dest-selector')">
+                                    <i class="fa-solid fa-city text-glow"></i>
+                                    <span>{{ city.name.title() }}</span>
+                                </button>
+                                {% endfor %}
+                            </div>
+                            <div class="city-empty-state" id="dest-empty">No cities found matching your search.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="search-field">
+                        <label><i class="fa-solid fa-calendar-alt"></i> Travel Date</label>
+                        <input type="date" name="date" required>
+                    </div>
+                    
+                    <div class="search-field">
+                        <label><i class="fa-solid fa-users"></i> Passenger Count</label>
+                        <select name="passengers">
+                            <option value="1">1 Passenger</option>
+                            <option value="2">2 Passengers</option>
+                            <option value="3">3 Passengers</option>
+                            <option value="4">4 Passengers</option>
+                            <option value="5">5+ Passengers</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="search-btn-container">
+                    <button type="submit" class="btn-neon">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        Find Smart Routes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- SMART ROUTE FEATURE SECTION -->
+<section class="section-spacing" style="background: #ffffff;">
+    <div class="container-inner">
+        <div class="section-header">
+            <span class="neon-badge">AI INNOVATION</span>
+            <h2 class="section-title">Intelligent <span class="highlight-text">Split Journeys</span></h2>
+            <p class="section-subtitle">Our AI analyzes thousands of routes in milliseconds to suggest connected journeys that are significantly cheaper or faster than direct buses.</p>
+        </div>
+
+        <div class="split-journey-grid">
+            <div class="glass-card sj-card">
+                <i class="fa-solid fa-route sj-icon"></i>
+                <h3 class="sj-title">Direct Journey</h3>
+                <p class="sj-desc">Standard uninterrupted bus route with average market pricing.</p>
+                <div class="route-viz">
+                    <div class="route-dot"></div>
+                    <div class="route-line"></div>
+                    <div class="route-dot"></div>
+                </div>
+                <div class="btn-outline-neon" style="border-color: #cbd5e1; color: #0f172a;">Cost: ₹950</div>
+            </div>
+
+            <div class="glass-card sj-card" style="border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);">
+                <i class="fa-solid fa-wand-magic-sparkles sj-icon" style="color: var(--neon-blue);"></i>
+                <h3 class="sj-title">Smart Split Journey</h3>
+                <p class="sj-desc">AI-suggested double connection saving you up to 30% on fare.</p>
+                <div class="route-viz">
+                    <div class="route-dot"></div>
+                    <div class="route-line smart-flow"></div>
+                    <div class="route-dot glow"></div>
+                    <div class="route-line smart-flow"></div>
+                    <div class="route-dot"></div>
+                </div>
+                <div class="btn-outline-neon">Cost: ₹620 (Save 34%)</div>
+            </div>
+
+            <div class="glass-card sj-card">
+                <i class="fa-solid fa-bolt sj-icon" style="color: var(--accent-purple);"></i>
+                <h3 class="sj-title">Fastest Journey</h3>
+                <p class="sj-desc">Optimized combination for absolute minimum travel time.</p>
+                <div class="route-viz">
+                    <div class="route-dot"></div>
+                    <div class="route-line fast"></div>
+                    <div class="route-dot"></div>
+                </div>
+                <div class="btn-outline-neon" style="color: #c084fc; border-color: #c084fc;">Time: 7h 15m</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- POPULAR BUS ROUTES -->
+<section class="section-spacing" style="background: #f8fafc;">
+    <div class="container-inner">
+        <div class="section-header">
+            <h2 class="section-title">Popular <span class="highlight-text">Routes</span></h2>
+            <p class="section-subtitle">Explore the most frequently booked destinations globally powered by SmartBus.</p>
+        </div>
+        <div class="routes-grid">
+            {% for route in popular_routes %}
+            <div class="glass-card route-item">
+                <div class="route-cities">{{ route.origin.title() }} <i class="fa-solid fa-arrow-right-long"></i> {{ route.destination.title() }}</div>
+                <div class="route-operator">SmartBus Express #{{ route.id }}</div>
+                <div class="route-type">Eco AC Sleeper</div>
+                <p style="color: var(--text-secondary); margin-bottom: 10px;"><i class="fa-solid fa-road"></i> {{ route.distance_km }} km</p>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;"><i class="fa-regular fa-clock"></i> Projected: {{ (route.distance_km / 60)|round(1) }}h</p>
+                <div class="route-footer">
+                    <span class="route-price">₹{{ route.base_fare }}</span>
+                    <button type="button" class="btn-outline-neon" onclick="quickFill('{{ route.origin.title() }}', '{{ route.destination.title() }}')">Select Path</button>
+                </div>
+            </div>
+            {% else %}
+            <div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">
+                No routes available currently. Check back soon.
+            </div>
+            {% endfor %}
+        </div>      </div>
+    </div>
+</section>
+
+<!-- LIVE BUS EXPERIENCE SECTION -->
+<section class="section-spacing" style="background: #ffffff;">
+    <div class="container-inner split-layout">
+        <div class="split-content">
+            <span class="neon-badge">REAL-TIME TRACKING</span>
+            <h2 class="section-title">Track your bus in <span class="highlight-text">real-time</span> and travel with confidence.</h2>
+            <p class="section-subtitle" style="margin: 0 0 30px 0; text-align: left;">Say goodbye to uncertainty. Our advanced GPS-integrated tracking dashboard gives you live map views, down-to-the-minute ETAs, and direct communication with ground staff.</p>
+            
+            <ul style="list-style: none; padding: 0; margin-bottom: 40px;">
+                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Live GPS Map Tracking</li>
+                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Instant Route Diversion Alerts</li>
+                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Verified Driver Details</li>
+            </ul>
+            <button class="btn-neon">Experience Live Track</button>
+        </div>
+
+        <div class="live-visual">
+            <div class="live-card-ui">
+                <div class="map-mockup">
+                    <div class="map-radar"></div>
+                    <div class="bus-marker"><i class="fa-solid fa-bus"></i></div>
+                </div>
+                <div class="live-info">
+                    <div class="driver-info">
+                        <div class="driver-avatar"><i class="fa-solid fa-user-tie"></i></div>
+                        <div>
+                            <h4 style="margin:0; font-size: 1.1rem;">Kamal R.</h4>
+                            <p style="margin:0; color: var(--text-secondary); font-size: 0.85rem;">⭐ 4.9 Rating</p>
+                        </div>
+                    </div>
+                    <div class="live-eta" style="text-align: right;">
+                        <h4>14 MIN</h4>
+                        <p>To Boarding Point</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WHY CHOOSE SMARTBUS -->
+<section class="section-spacing" style="background: #f8fafc;">
+    <div class="container-inner">
+        <div class="section-header">
+            <h2 class="section-title">Why Choose <span class="highlight-text">SmartBus AI</span></h2>
+            <p class="section-subtitle">Experience transportation redefined with military-grade security and zero-friction booking flows.</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="glass-card feature-item">
+                <i class="fa-solid fa-brain f-icon"></i>
+                <h3>AI Route Optimization</h3>
+                <p>Proprietary algorithms compute millions of permutations to find your ultimate journey route.</p>
+            </div>
+            <div class="glass-card feature-item">
+                <i class="fa-solid fa-shield-halved f-icon"></i>
+                <h3>Secure Payments</h3>
+                <p>End-to-end 256-bit encryption ensuring your transactional data never gets compromised.</p>
+            </div>
+            <div class="glass-card feature-item">
+                <i class="fa-solid fa-chair f-icon"></i>
+                <h3>Live Seat Selection</h3>
+                <p>Transparent bus layouts allowing you to pick your preferred window or aisle seat precisely.</p>
+            </div>
+            <div class="glass-card feature-item">
+                <i class="fa-solid fa-ticket f-icon"></i>
+                <h3>Instant Confirmation</h3>
+                <p>No waiting in queues. M-Tickets generated instantly and synced to your WhatsApp.</p>
+            </div>
+            <div class="glass-card feature-item">
+                <i class="fa-solid fa-headset f-icon"></i>
+                <h3>24/7 Priority Support</h3>
+                <p>Human-in-the-loop AI chatbots and dedicated call centers ready whenever you need.</p>
+            </div>
+            <div class="glass-card feature-item">
+                <i class="fa-solid fa-bolt-lightning f-icon"></i>
+                <h3>Fast Refund System</h3>
+                <p>Cancelled your plan? Receive automated refunds credited directly to source in 2 hours.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- SEAT SELECTION PREVIEW -->
+<section class="section-spacing" style="background: #ffffff;">
+    <div class="container-inner split-layout reverse">
+        <div class="split-content">
+            <h2 class="section-title">Immersive <span class="highlight-text">Seat Selection</span></h2>
+            <p class="section-subtitle" style="margin: 0 0 30px 0; text-align: left;">Our modern HD seat mapping interface allows you to view inside the bus before booking. Pick seats near charging ports, verify legroom, and travel your way.</p>
+            <button class="btn-neon">Choose Your Seat</button>
+            
+            <div class="legend-row">
+                <div class="legend-item"><div class="legend-box av"></div> Available</div>
+                <div class="legend-item"><div class="legend-box bk"></div> Booked</div>
+                <div class="legend-item"><div class="legend-box sl"></div> Selected</div>
+            </div>
+        </div>
+
+        <div class="live-visual">
+            <div class="glass-card seat-preview-mockup">
+                <div class="steering-wheel"></div>
+                <div class="seat-row">
+                    <div class="bus-seat available"></div>
+                    <div class="bus-seat booked"></div>
+                    <div class="aisle-space"></div>
+                    <div class="bus-seat available"></div>
+                </div>
+                <div class="seat-row">
+                    <div class="bus-seat available"></div>
+                    <div class="bus-seat selected"></div>
+                    <div class="aisle-space"></div>
+                    <div class="bus-seat booked"></div>
+                </div>
+                <div class="seat-row">
+                    <div class="bus-seat available"></div>
+                    <div class="bus-seat available"></div>
+                    <div class="aisle-space"></div>
+                    <div class="bus-seat available"></div>
+                </div>
+                <div class="seat-row">
+                    <div class="bus-seat booked"></div>
+                    <div class="bus-seat available"></div>
+                    <div class="aisle-space"></div>
+                    <div class="bus-seat available"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="premium-footer">
+    <div class="footer-glowing-lines"></div>
+    <div class="container-inner">
+        <div class="footer-grid">
+            <div class="footer-brand">
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-bus-simple" style="color: var(--neon-blue);"></i>
+                    Smart<span style="color: var(--neon-blue);">Bus AI</span>
+                </h2>
+                <p>Next-generation travel booking platform powered by smart route technology. Redefining how the world connects across highways.</p>
+                <div class="social-icons">
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                    <a href="#"><i class="fa-brands fa-facebook-f"></i></a>
+                    <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-links">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="#">About SmartBus</a></li>
+                    <li><a href="#">Careers</a></li>
+                    <li><a href="#">Press</a></li>
+                    <li><a href="#">Blog</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-links">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="#">Help Center</a></li>
+                    <li><a href="#">Cancellation Policy</a></li>
+                    <li><a href="#">Terms & Privacy</a></li>
+                    <li><a href="#">Report an Issue</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-links">
+                <h4>Travel Routes</h4>
+                <ul>
+                    <li><a href="#">Popular Cities</a></li>
+                    <li><a href="#">Bus Operators</a></li>
+                    <li><a href="#">Airport Transfers</a></li>
+                    <li><a href="#">Smart Deals</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="footer-bottom">
+            <p>&copy; 2026 SmartBus AI. Designed for the Future of Travel.</p>
+        </div>
+    </div>
+</footer>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function selectCity(inputId, cityName, selectorId) {
+        const otherInputId = inputId === 'origin-input' ? 'dest-input' : 'origin-input';
+        const otherValue = document.getElementById(otherInputId).value;
+
+        if (cityName === otherValue && cityName !== "") {
+            // Premium alert replacement if possible, but standard alert for now
+            alert("Departure and Destination cannot be the same city.");
+            return;
+        }
+
+        document.getElementById(inputId).value = cityName;
+        
+        // Hide selector
+        const selector = document.getElementById(selectorId);
+        selector.style.display = 'none';
+        
+        // Visual feedback
+        const parent = document.getElementById(inputId).closest('.search-field');
+        parent.style.borderColor = 'var(--neon-blue)';
+        setTimeout(() => {
+            parent.style.borderColor = '';
+        }, 1000);
+    }
+
+    function filterCities(inputId, selectorId) {
+        const input = document.getElementById(inputId);
+        const filter = input.value.toLowerCase();
+        const selector = document.getElementById(selectorId);
+        const list = selector.querySelector('.cities-list');
+        const btns = list.getElementsByClassName('city-btn');
+        const emptyState = selector.querySelector('.city-empty-state');
+        
+        // Show selector if hidden
+        selector.style.display = 'flex';
+        
+        let found = 0;
+        for (let i = 0; i < btns.length; i++) {
+            const cityName = btns[i].querySelector('span').textContent.toLowerCase();
+            if (cityName.includes(filter)) {
+                btns[i].style.display = "flex";
+                found++;
+            } else {
+                btns[i].style.display = "none";
+            }
+        }
+        
+        if (found === 0) {
+            emptyState.style.display = 'block';
+            list.style.display = 'none';
+        } else {
+            emptyState.style.display = 'none';
+            list.style.display = 'block';
+        }
+    }
+
+    function quickFill(origin, dest) {
+        document.getElementById('origin-input').value = origin;
+        document.getElementById('dest-input').value = dest;
+        // Scroll to search panel
+        document.querySelector('.search-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        
+        // Add a temporary glow to show it's filled
+        const fields = document.querySelectorAll('.search-field');
+        fields.forEach(f => {
+            f.style.boxShadow = '0 0 15px rgba(37, 99, 235, 0.2)';
+            setTimeout(() => f.style.boxShadow = '', 2000);
+        });
+    }
+
+    // Close selectors when clicking outside
+    document.addEventListener('click', function(event) {
+        const originField = document.getElementById('origin-input').closest('.search-field');
+        const destField = document.getElementById('dest-input').closest('.search-field');
+        const originSelector = document.getElementById('origin-selector');
+        const destSelector = document.getElementById('dest-selector');
+        
+        if (!originField.contains(event.target)) {
+            originSelector.style.display = 'none';
+        } else if (event.target.id === 'origin-input' || originField.contains(event.target)) {
+            originSelector.style.display = 'flex';
+        }
+
+        if (!destField.contains(event.target)) {
+            destSelector.style.display = 'none';
+        } else if (event.target.id === 'dest-input' || destField.contains(event.target)) {
+            destSelector.style.display = 'flex';
+        }
+    });
+
+    // Handle focus
+    const inputs = document.querySelectorAll('.search-field input');
+    inputs.forEach(input => {
+        input.addEventListener('focus', () => {
+            const selector = input.parentElement.querySelector('.city-selector-grid');
+            if (selector) selector.style.display = 'flex';
+        });
+    });
+</script>
+{% endblock %}

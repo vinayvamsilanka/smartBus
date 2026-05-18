@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    .auth-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: calc(100vh - 120px);
+        perspective: 1000px;
+        position: relative;
+        z-index: 10;
+        margin-top: 2rem;
+    }
+
+    .auth-card {
+        width: 100%;
+        max-width: 480px;
+        background: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(40px);
+        -webkit-backdrop-filter: blur(40px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 24px;
+        padding: 3rem;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5), 
+                    inset 0 1px 0 rgba(255,255,255,0.1);
+        transform-style: preserve-3d;
+        transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .auth-tabs {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        background: rgba(0, 0, 0, 0.2);
+        padding: 0.4rem;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.02);
+    }
+
+    .auth-tab {
+        flex: 1;
+        padding: 0.8rem;
+        text-align: center;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-family: var(--font-heading);
+        font-weight: 700;
+        font-size: 0.95rem;
+        cursor: pointer;
+        border-radius: 8px;
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .auth-tab.active {
+        background: var(--accent-primary);
+        color: white;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+
+    .auth-form-section {
+        display: none;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .auth-form-section.active {
+        display: block;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .input-wrapper {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+
+    .input-icon {
+        position: absolute;
+        left: 1.2rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        pointer-events: none;
+        transition: 0.3s;
+    }
+
+    .auth-input {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.2) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: white !important;
+        padding: 1rem 1.2rem 1rem 3rem !important;
+        border-radius: 12px !important;
+        font-size: 0.95rem !important;
+        font-family: var(--font-body) !important;
+        transition: all 0.3s !important;
+        outline: none !important;
+    }
+
+    .auth-input:focus {
+        border-color: var(--accent-primary) !important;
+        box-shadow: 0 0 15px rgba(37, 99, 235, 0.25) !important;
+        background: rgba(0, 0, 0, 0.3) !important;
+    }
+
+    .auth-input:focus + .input-icon {
+        color: var(--accent-primary);
+    }
+
+    .login-methods {
+        display: flex;
+        justify-content: center;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .method-btn {
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        padding: 0.6rem 1.2rem;
+        border-radius: 30px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .method-btn.active {
+        background: rgba(37, 99, 235, 0.1);
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+    }
+
+    /* OTP Modal Overlay styling */
+    .otp-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(15, 23, 42, 0.8);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 2000;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .otp-overlay.active {
+        opacity: 1;
+        pointer-events: auto;
+    }
+
+    .otp-box {
+        width: 100%;
+        max-width: 400px;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 2.5rem;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+        text-align: center;
+        transform: translateY(20px) scale(0.95);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .otp-overlay.active .otp-box {
+        transform: translateY(0) scale(1);
+    }
+
+    .otp-inputs {
+        display: flex;
+        justify-content: center;
+        gap: 0.8rem;
+        margin: 1.5rem 0;
+    }
+
+    .otp-digit {
+        width: 50px;
+        height: 50px;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1.5px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        font-size: 1.5rem;
+        color: white;
+        text-align: center;
+        font-weight: 700;
+        transition: 0.3s;
+        outline: none;
+    }
+
+    .otp-digit:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.3);
+        background: rgba(0, 0, 0, 0.4);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div style="text-align: center; margin-bottom: 2rem;">
+            <i class="fa-solid fa-bus-simple text-glow" style="font-size: 2.5rem; margin-bottom: 1rem; display: inline-block;"></i>
+            <h2 class="hero-title" style="margin-bottom: 0.5rem; font-size: 2rem;">Secure <span class="highlight">Gateway</span></h2>
+            <p class="hero-subtitle text-secondary" style="font-size: 0.95rem;">Experience smart traveling today.</p>
+        </div>
+
+        <div class="auth-tabs">
+            <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+            <button class="auth-tab" onclick="switchTab('signup')">Sign Up</button>
+        </div>
+
+        <!-- 1. SIGN IN FORM -->
+        <div id="login-section" class="auth-form-section active">
+            <div class="login-methods">
+                <button class="method-btn active" id="btn-method-email" onclick="switchLoginMethod('email')"><i class="fa-solid fa-envelope"></i> Email Credentials</button>
+                <button class="method-btn" id="btn-method-phone" onclick="switchLoginMethod('phone')"><i class="fa-solid fa-mobile-screen-button"></i> Mobile OTP</button>
+            </div>
+
+            <!-- Email Method -->
+            <form id="emailLoginForm" onsubmit="handleEmailLogin(event)">
+                <div class="input-wrapper">
+                    <input type="email" id="login-email" class="auth-input" placeholder="Enter your email" required>
+                    <i class="fa-solid fa-envelope input-icon"></i>
+                </div>
+                <div class="input-wrapper">
+                    <input type="password" id="login-password" class="auth-input" placeholder="Secure password" required>
+                    <i class="fa-solid fa-lock input-icon"></i>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                    Sign In Securing Trip <i class="fa-solid fa-shield-halved"></i>
+                </button>
+            </form>
+
+            <!-- Phone Method (RedBus/AbhiBus style) -->
+            <form id="phoneLoginForm" onsubmit="handlePhoneVerify(event)" style="display: none;">
+                <div class="input-wrapper">
+                    <input type="tel" id="login-phone" class="auth-input" placeholder="10-digit Phone Number" pattern="[6-9][0-9]{9}" required style="padding-left: 4rem !important;">
+                    <i class="fa-solid fa-mobile-screen-button input-icon"></i>
+                    <span style="position: absolute; left: 1.2rem; top: 50%; transform: translateY(-50%); color: white; font-weight: 700; font-size: 0.95rem; pointer-events: none;">+91</span>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                    Get Secure OTP <i class="fa-solid fa-key"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- 2. SIGN UP FORM -->
+        <div id="signup-section" class="auth-form-section">
+            <form id="signupForm" onsubmit="handleRegister(event)">
+                <div class="input-wrapper">
+                    <input type="text" id="signup-name" class="auth-input" placeholder="Full name" required>
+                    <i class="fa-solid fa-circle-user input-icon"></i>
+                </div>
+                <div class="input-wrapper">
+                    <input type="email" id="signup-email" class="auth-input" placeholder="Email address" required>
+                    <i class="fa-solid fa-envelope input-icon"></i>
+                </div>
+                <div class="input-wrapper">
+                    <input type="password" id="signup-password" class="auth-input" placeholder="Secure password" required>
+                    <i class="fa-solid fa-lock input-icon"></i>
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; justify-content: center; margin-top: 1rem;">
+                    Create Travel Account <i class="fa-solid fa-circle-plus"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Beautiful OTP Verification Overlay -->
+<div id="otpOverlay" class="otp-overlay">
+    <div class="otp-box">
+        <i class="fa-solid fa-shield-halved text-glow" style="font-size: 2.8rem; color: var(--accent-primary); margin-bottom: 1rem; display: inline-block;"></i>
+        <h3 style="color: white; margin-bottom: 0.5rem; font-family: var(--font-heading);">Phone Verification</h3>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">We sent a secure One-Time PIN to <strong id="otp-phone-display" style="color: white;">+91 9876543210</strong></p>
+        
+        <div class="otp-inputs">
+            <input type="text" maxlength="1" class="otp-digit" onkeyup="moveOTPFocus(this, 'otp2')" id="otp1">
+            <input type="text" maxlength="1" class="otp-digit" onkeyup="moveOTPFocus(this, 'otp3')" id="otp2">
+            <input type="text" maxlength="1" class="otp-digit" onkeyup="moveOTPFocus(this, 'otp4')" id="otp3">
+            <input type="text" maxlength="1" class="otp-digit" onkeyup="moveOTPFocus(this, null)" id="otp4">
+        </div>
+
+        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
+            Resend PIN in <span id="otp-timer" style="color: var(--accent-primary); font-weight:700;">30</span>s
+        </p>
+
+        <div style="display: flex; gap: 1rem;">
+            <button class="btn-primary" style="background: rgba(255,255,255,0.05); color: white; border: 1px solid rgba(255,255,255,0.1); flex: 1; justify-content: center;" onclick="closeOTP()">Cancel</button>
+            <button class="btn-primary" style="flex: 2; justify-content: center;" onclick="verifyOTP()">Verify OTP <i class="fa-solid fa-circle-check"></i></button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function switchTab(tab) {
+        document.querySelectorAll('.auth-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.auth-form-section').forEach(s => s.classList.remove('active'));
+        
+        if (tab === 'login') {
+            document.querySelector('.auth-tab:nth-child(1)').classList.add('active');
+            document.getElementById('login-section').classList.add('active');
+        } else {
+            document.querySelector('.auth-tab:nth-child(2)').classList.add('active');
+            document.getElementById('signup-section').classList.add('active');
+        }
+    }
+
+    function switchLoginMethod(method) {
+        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
+        if (method === 'email') {
+            document.getElementById('btn-method-email').classList.add('active');
+            document.getElementById('emailLoginForm').style.display = 'block';
+            document.getElementById('phoneLoginForm').style.display = 'none';
+        } else {
+            document.getElementById('btn-method-phone').classList.add('active');
+            document.getElementById('emailLoginForm').style.display = 'none';
+            document.getElementById('phoneLoginForm').style.display = 'block';
+        }
+    }
+
+    async function handleEmailLogin(e) {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const password = document.getElementById('login-password').value;
+
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                // Redirect back to seat booking details page if selectedBusData is present, else dashboard
+                const selectedBus = localStorage.getItem('selectedBusData');
+                if (selectedBus) {
+                    window.location.href = '/details';
+                } else {
+                    window.location.href = '/dashboard';
+                }
+            } else {
+                alert(`Authentication error: ${data.msg}`);
+            }
+        } catch {
+            alert('Authentication failed. Server could not be reached.');
+        }
+    }
+
+    async function handleRegister(e) {
+        e.preventDefault();
+        const name = document.getElementById('signup-name').value;
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+
+        try {
+            const res = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                alert(`Welcome ${data.user_name}! Account created and verified securely.`);
+                const selectedBus = localStorage.getItem('selectedBusData');
+                if (selectedBus) {
+                    window.location.href = '/details';
+                } else {
+                    window.location.href = '/dashboard';
+                }
+            } else {
+                alert(`Registration failed: ${data.msg}`);
+            }
+        } catch {
+            alert('Registration request failed. Server offline.');
+        }
+    }
+
+    let otpTimerInterval;
+    let savedPhoneNumber = '';
+
+    function handlePhoneVerify(e) {
+        e.preventDefault();
+        savedPhoneNumber = document.getElementById('login-phone').value;
+        document.getElementById('otp-phone-display').innerText = `+91 ${savedPhoneNumber}`;
+        
+        // Show OTP box
+        document.getElementById('otpOverlay').classList.add('active');
+        document.getElementById('otp1').focus();
+
+        // Start countdown
+        let count = 30;
+        document.getElementById('otp-timer').innerText = count;
+        clearInterval(otpTimerInterval);
+        otpTimerInterval = setInterval(() => {
+            count--;
+            document.getElementById('otp-timer').innerText = count;
+            if (count <= 0) {
+                clearInterval(otpTimerInterval);
+            }
+        }, 1000);
+    }
+
+    function moveOTPFocus(current, nextId) {
+        if (current.value.length === 1 && nextId) {
+            document.getElementById(nextId).focus();
+        }
+    }
+
+    function closeOTP() {
+        document.getElementById('otpOverlay').classList.remove('active');
+        clearInterval(otpTimerInterval);
+    }
+
+    async function verifyOTP() {
+        const o1 = document.getElementById('otp1').value;
+        const o2 = document.getElementById('otp2').value;
+        const o3 = document.getElementById('otp3').value;
+        const o4 = document.getElementById('otp4').value;
+
+        if (!o1 || !o2 || !o3 || !o4) {
+            alert('Please enter complete secure 4-digit PIN.');
+            return;
+        }
+
+        // Verify simulated OTP (accept any OTP for sleek demonstration)
+        const email = `phone${savedPhoneNumber}@smartbus.com`;
+        
+        // Check if phone user exists, else register them, then log them in!
+        try {
+            // First check/register phone user dynamically
+            const regRes = await fetch('/api/auth/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    name: `Passenger ${savedPhoneNumber.slice(-4)}`,
+                    email: email,
+                    password: `pass_${savedPhoneNumber}`
+                })
+            });
+        } catch(e) {}
+
+        try {
+            // Securely log them in
+            const loginRes = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email: email, password: `pass_${savedPhoneNumber}` })
+            });
+
+            if (loginRes.ok) {
+                closeOTP();
+                const selectedBus = localStorage.getItem('selectedBusData');
+                if (selectedBus) {
+                    window.location.href = '/details';
+                } else {
+                    window.location.href = '/dashboard';
+                }
+            } else {
+                alert('OTP Verification match error.');
+            }
+        } catch {
+            alert('Verification backend connection failed.');
+        }
+    }
+</script>
+{% endblock %}

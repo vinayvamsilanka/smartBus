@@ -1,0 +1,232 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Fleet Management{% endblock %}
+{% block page_header %}Bus Fleet Control Center{% endblock %}
+
+{% block content %}
+<div class="table-panel">
+    <div class="table-header">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <h4><i class="fa-solid fa-truck-moving"></i> Fleet Asset Manager</h4>
+            <span class="badge"
+                style="background: rgba(56, 189, 248, 0.2); color: var(--accent-primary); padding:0.3rem 0.8rem; border-radius:30px; font-size:0.8rem;">Active:
+                {{ buses|length }}</span>
+        </div>
+        <button class="btn-admin" onclick="openModal('addBusModal')">
+            <i class="fa-solid fa-plus-circle"></i> Deploy New Bus
+        </button>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Batch ID</th>
+                <th>Registration</th>
+                <th>Chassis Class</th>
+                <th>Gross Capacity</th>
+                <th>Telemetry Status</th>
+                <th style="text-align: right;">Operations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for bus in buses %}
+            <tr>
+                <td><span style="color:var(--text-secondary); font-family:monospace;">#SB-{{ "%04d"|format(bus.id)
+                        }}</span></td>
+                <td
+                    style="font-weight: 600; color: #fff; font-size: 1rem; {% if not bus.is_active %}opacity: 0.5; text-decoration: line-through;{% endif %}">
+                    {{ bus.bus_number|upper }}</td>
+                <td style="color:var(--accent-purple); font-weight:500;">{{ bus.type }}</td>
+                <td><i class="fa-solid fa-users" style="font-size:0.8rem; color:var(--text-secondary);"></i> {{
+                    bus.capacity }} Pax</td>
+                <td>
+                    {% if bus.is_active %}
+                    <span style="color:var(--accent-green); display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-signal" style="font-size:0.8rem;"></i> Operational
+                    </span>
+                    {% else %}
+                    <span style="color:var(--text-secondary); display:flex; align-items:center; gap:0.5rem;">
+                        <i class="fa-solid fa-ban" style="font-size:0.8rem;"></i> Decommissioned
+                    </span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                        <form method="POST" action="{{ url_for('admin_ui.toggle_bus', id=bus.id) }}"
+                            style="display:inline;">
+                            <button type="submit" class="action-btn" title="Toggle Fleet Status"
+                                style="color: {% if bus.is_active %}var(--accent-primary){% else %}var(--text-secondary){% endif %};">
+                                <i class="fa-solid fa-power-off"></i>
+                            </button>
+                        </form>
+                        <button class="action-btn" title="Edit Asset Info" onclick="openEditBusModal('{{ bus.id }}', '{{ bus.bus_number }}', '{{ bus.type }}', '{{ bus.capacity }}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="action-btn" title="Maintenance & Telemetry Log" onclick="openTelemetryModal('{{ bus.id }}', '{{ bus.bus_number }}')"><i class="fa-solid fa-wrench"></i></button>
+                        <form method="POST" action="{{ url_for('admin_ui.delete_bus', id=bus.id) }}"
+                            onsubmit="return confirm('SOFT DELETE: Archive {{ bus.bus_number|upper }}? This will hide it from all booking engines but preserve history.');">
+                            <button type="submit" class="action-btn delete" title="Soft Delete Asset"><i
+                                    class="fa-solid fa-trash-can"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align:center; padding: 4rem;">
+                    <i class="fa-solid fa-bus"
+                        style="font-size: 3rem; color:rgba(255,255,255,0.05); margin-bottom:1.5rem;"></i>
+                    <p style="color:var(--text-secondary);">Fleet registry currently vacant.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Bus Modal -->
+<div id="addBusModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-bus"></i> Register New Asset</h3>
+            <button class="modal-close" onclick="closeModal('addBusModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin_ui.add_bus') }}">
+            <div class="form-group">
+                <label>License Plate / Registration</label>
+                <input type="text" name="bus_number" class="form-control" required placeholder="AP 39 TT 1234">
+            </div>
+            <div class="form-group">
+                <label>Chassis Class</label>
+                <select name="type" class="form-control" required>
+                    <option value="AC Sleeper">AC Sleeper</option>
+                    <option value="Volvo Seater">Volvo B11R Seater</option>
+                    <option value="Electric AC">Electric Semi-Sleeper</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Seating Capacity</label>
+                <input type="number" name="capacity" class="form-control" min="12" max="55" value="40" required>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('addBusModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Deploy Asset <i class="fa-solid fa-location-arrow"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Edit Bus Modal -->
+<div id="editBusModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-edit"></i> Update Fleet Asset</h3>
+            <button class="modal-close" onclick="closeModal('editBusModal')">&times;</button>
+        </div>
+        <form id="editBusForm" method="POST" action="">
+            <div class="form-group">
+                <label>License Plate / Registration</label>
+                <input type="text" name="bus_number" id="edit-bus-num" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Chassis Class</label>
+                <select name="type" id="edit-bus-type" class="form-control" required>
+                    <option value="AC Sleeper">AC Sleeper</option>
+                    <option value="Volvo Seater">Volvo B11R Seater</option>
+                    <option value="Electric AC">Electric Semi-Sleeper</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Seating Capacity</label>
+                <input type="number" name="capacity" id="edit-bus-cap" class="form-control" min="12" max="55" required>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('editBusModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Update Asset <i class="fa-solid fa-save"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Telemetry / Safety Modal -->
+<div id="telemetryModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-gauge-high"></i> Telemetry & Safety Manager</h3>
+            <button class="modal-close" onclick="closeModal('telemetryModal')">&times;</button>
+        </div>
+        <form id="telemetryForm" method="POST" action="">
+            <div class="form-group">
+                <label>Asset: <span id="telemetry-bus-num" style="color: var(--accent-primary); font-weight:700;">AP 39 TT 1234</span></label>
+            </div>
+            
+            <div class="form-group">
+                <label>Driver Reliability Rating (<span id="lbl-driver">90</span>%)</label>
+                <input type="range" name="driver_score" id="rng-driver" class="form-control-range" min="50" max="100" value="90" oninput="document.getElementById('lbl-driver').innerText = this.value" style="width: 100%; accent-color: var(--accent-primary);">
+            </div>
+
+            <div class="form-group">
+                <label>Maintenance Audit Score (<span id="lbl-maint">90</span>%)</label>
+                <input type="range" name="maintenance_score" id="rng-maint" class="form-control-range" min="50" max="100" value="90" oninput="document.getElementById('lbl-maint').innerText = this.value" style="width: 100%; accent-color: var(--accent-primary);">
+            </div>
+
+            <div class="form-group">
+                <label>Night Safety Forensics (<span id="lbl-night">90</span>%)</label>
+                <input type="range" name="night_safety" id="rng-night" class="form-control-range" min="50" max="100" value="90" oninput="document.getElementById('lbl-night').innerText = this.value" style="width: 100%; accent-color: var(--accent-primary);">
+            </div>
+
+            <div class="form-group">
+                <label>Women Safety Index (<span id="lbl-women">90</span>%)</label>
+                <input type="range" name="women_safety" id="rng-women" class="form-control-range" min="50" max="100" value="90" oninput="document.getElementById('lbl-women').innerText = this.value" style="width: 100%; accent-color: var(--accent-primary);">
+            </div>
+
+            <div class="form-group">
+                <label>CO₂ Emissions Rate (kg/km)</label>
+                <input type="number" name="co2_emissions" id="num-co2" class="form-control" step="0.001" min="0.005" max="0.5" value="0.04" required>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('telemetryModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Save Telemetry <i class="fa-solid fa-save"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditBusModal(id, num, type, cap) {
+        document.getElementById('editBusForm').action = "/admin/buses/edit/" + id;
+        document.getElementById('edit-bus-num').value = num;
+        document.getElementById('edit-bus-type').value = type;
+        document.getElementById('edit-bus-cap').value = cap;
+        openModal('editBusModal');
+    }
+
+    async function openTelemetryModal(id, num) {
+        document.getElementById('telemetryForm').action = "/admin/buses/telemetry/" + id;
+        document.getElementById('telemetry-bus-num').innerText = num.toUpperCase();
+        
+        try {
+            const res = await fetch("/admin/buses/telemetry/" + id);
+            if (res.ok) {
+                const data = await res.json();
+                
+                document.getElementById('rng-driver').value = data.driver_score;
+                document.getElementById('lbl-driver').innerText = data.driver_score;
+                
+                document.getElementById('rng-maint').value = data.maintenance_score;
+                document.getElementById('lbl-maint').innerText = data.maintenance_score;
+                
+                document.getElementById('rng-night').value = data.night_safety;
+                document.getElementById('lbl-night').innerText = data.night_safety;
+                
+                document.getElementById('rng-women').value = data.women_safety;
+                document.getElementById('lbl-women').innerText = data.women_safety;
+                
+                document.getElementById('num-co2').value = data.co2_emissions;
+            }
+        } catch (e) {
+            console.error("Failed to load telemetry", e);
+        }
+        
+        openModal('telemetryModal');
+    }
+</script>
+{% endblock %}

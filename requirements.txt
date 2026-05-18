@@ -1,0 +1,11 @@
+Flask
+scikit-learn
+pandas
+numpy
+flask-cors
+Flask-SQLAlchemy
+Flask-JWT-Extended
+Flask-Bcrypt
+Flask-Migrate
+psycopg2-binary
+redis

@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container py-8" style="margin-top: 2rem;">
+    <div class="details-header"
+        style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+        <div>
+            <button class="btn-reasoning" onclick="window.location.href='/results'" style="margin-bottom: 1rem;"><i
+                    class="fa-solid fa-arrow-left"></i> Back to Results</button>
+            <h1 class="hero-title" style="margin-bottom: 0.5rem;" id="bus-operator">Loading...</h1>
+            <p class="hero-subtitle text-secondary" id="bus-type">...</p>
+        </div>
+        <div style="text-align: right;">
+            <div class="price-highlight" style="font-size: 2.5rem;" id="bus-fare">...</div>
+            <span class="badge blue" id="bus-badge" style="display: none;"></span>
+        </div>
+    </div>
+    
+    <div class="dashboard-grid show">
+    <!-- Seat Map / 360 viewer -->
+    <div class="glass-panel card span-2" style="padding: 0; overflow: hidden; border: none;">
+        <div style="padding: 2rem 2.5rem; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.02);">
+            <div>
+                <h2 style="font-size: 1.5rem; color: var(--text-primary); display: flex; align-items: center; gap: 0.75rem;">
+                    <i class="fa-solid fa-vr-cardboard" style="color: var(--accent-primary);"></i>
+                    Smart Seat Experience 360°
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Drag to rotate · Click a seat to select</p>
+            </div>
+            <div style="display: flex; gap: 10px; align-items: center;" id="view-controls">
+                <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px;">View:</span>
+                <button class="view-angle-btn active" data-angle="front" onclick="setViewAngle('front')">🪟 Front</button>
+                <button class="view-angle-btn" data-angle="mid" onclick="setViewAngle('mid')">⚡ Mid</button>
+                <button class="view-angle-btn" data-angle="top" onclick="setViewAngle('top')">🔭 Top</button>
+                <button class="view-angle-btn" data-angle="side" onclick="setViewAngle('side')">↔ Side</button>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 320px; min-height: 520px;">
+            <!-- 360° Bus Interior -->
+            <div id="bus-360-wrapper" style="background: var(--bg-dark); padding: 40px; display: flex; flex-direction: column; align-items: center; overflow: hidden; position: relative;">
+                <!-- Ambient lights -->
+                <div style="position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 80%; height: 2px; background: linear-gradient(90deg, transparent, rgba(56,189,248,0.5), transparent); border-radius: 2px;"></div>
+                <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 80%; height: 2px; background: linear-gradient(90deg, transparent, rgba(56,189,248,0.2), transparent); border-radius: 2px;"></div>
+
+                <div id="bus-360-view" style="
+                    width: 100%;
+                    max-width: 500px;
+                    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+                    transform-style: preserve-3d;
+                    cursor: grab;
+                ">
+                    <!-- Cockpit / Driver View -->
+                    <div id="cockpit-view" style="
+                        background: linear-gradient(180deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+                        border: 1px solid rgba(255,255,255,0.1);
+                        border-radius: 20px 20px 0 0;
+                        padding: 30px;
+                        text-align: center;
+                        margin-bottom: 30px;
+                        color: rgba(255,255,255,0.8);
+                        font-family: var(--font-heading);
+                        position: relative;
+                        overflow: hidden;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    ">
+                        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: url('/static/images/realistic_bus_interior_base.png') center/cover; opacity: 0.3; filter: blur(2px);"></div>
+                        <div style="position: relative; z-index: 1;">
+                            <i class="fa-solid fa-steering-wheel" style="font-size: 2.5rem; color: var(--accent-primary); margin-bottom: 10px; display: block;"></i>
+                            <span style="font-weight: 800; letter-spacing: 4px; text-transform: uppercase; font-size: 0.8rem;">Cockpit / Dashboard View</span>
+                            <div style="display: flex; justify-content: center; gap: 20px; margin-top: 15px;">
+                                <div style="width: 10px; height: 10px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981;"></div>
+                                <div style="width: 10px; height: 10px; border-radius: 50%; background: #3b82f6; opacity: 0.5;"></div>
+                                <div style="width: 10px; height: 10px; border-radius: 50%; background: #f59e0b; opacity: 0.5;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side Labels -->
+                    <div style="position: absolute; top: 120px; left: -40px; transform: rotate(-90deg); color: rgba(255,255,255,0.2); font-weight: 800; text-transform: uppercase; letter-spacing: 5px; font-size: 0.7rem;">← Passenger Side</div>
+                    <div style="position: absolute; top: 120px; right: -40px; transform: rotate(90deg); color: rgba(255,255,255,0.2); font-weight: 800; text-transform: uppercase; letter-spacing: 5px; font-size: 0.7rem;">Driver Side →</div>
+
+                    <!-- Seat Grid -->
+                    <div id="seats-container" style="display: grid; grid-template-columns: 1fr 1fr 60px 1fr 1fr; gap: 15px; width: 100%; max-width: 500px; margin: 0 auto; position: relative;">
+                        <!-- AISLE Lights -->
+                        <div style="position: absolute; top: 0; bottom: 0; left: 50%; transform: translateX(-50%); width: 2px; background: linear-gradient(to bottom, transparent, var(--accent-primary), transparent); opacity: 0.3; pointer-events: none;"></div>
+                        <!-- Seats injected by JS -->
+                    </div>
+                </div>
+
+                <!-- Rotate Hint -->
+                <div style="margin-top: 24px; display: flex; gap: 12px; align-items: center;">
+                    <button class="ctrl-btn" onclick="rotateView(-20)" title="Rotate Left"><i class="fa-solid fa-rotate-left"></i></button>
+                    <button class="ctrl-btn" onclick="resetView()" title="Reset"><i class="fa-solid fa-house"></i></button>
+                    <button class="ctrl-btn" onclick="rotateView(20)" title="Rotate Right"><i class="fa-solid fa-rotate-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Seat Details & Legend Sidebar -->
+            <div style="background: rgba(15, 23, 42, 0.4); border-left: 1px solid var(--border-light); padding: 28px; display: flex; flex-direction: column; gap: 20px;">
+                <!-- Legend -->
+                <div>
+                    <p style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 12px; font-weight: 600;">Seat Legend</p>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">
+                            <div style="width: 28px; height: 28px; background: rgba(255,255,255,0.05); border: 1.5px solid var(--border-light); border-radius: 8px;"></div>
+                            <span style="color: var(--text-secondary);">Available</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">
+                            <div style="width: 28px; height: 28px; background: var(--accent-primary); border-radius: 8px; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);"></div>
+                            <span style="color: var(--text-secondary);">Selected</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px; font-size: 0.85rem;">
+                            <div style="width: 28px; height: 28px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--accent-error);">🚫</div>
+                            <span style="color: var(--text-secondary);">Booked</span>
+                        </div>
+                    </div>
+                </div>
+
+                <hr style="border: none; border-top: 1px solid var(--border-light);">
+
+                <!-- Selected Seat Info -->
+                <div>
+                    <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 12px; color: var(--text-primary);" id="selected-seat-title">Select a seat</h3>
+                    <div class="seat-metrics" id="seat-metrics" style="opacity: 0.4; transition: 0.4s;">
+                        <div class="metric">
+                            <i class="fa-solid fa-volume-high"></i>
+                            <span>Noise Level</span>
+                            <strong id="seat-noise">-- dB</strong>
+                        </div>
+                        <div class="metric">
+                            <i class="fa-solid fa-house-crack"></i>
+                            <span>Vibration</span>
+                            <strong id="seat-vibe">--</strong>
+                        </div>
+                        <div class="metric">
+                            <i class="fa-solid fa-eye"></i>
+                            <span>Experience</span>
+                            <strong id="seat-type">--</strong>
+                        </div>
+                        <div class="metric">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                            <span>Zone</span>
+                            <strong id="seat-zone">--</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-primary" style="width: 100%; justify-content: center; margin-top: auto;" disabled id="btn-book">
+                    Proceed to Secure Seat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Green Score -->
+    <div class="glass-panel card card-hover">
+        <div class="card-header">
+            <h2><i class="fa-solid fa-leaf"></i> Carbon Breakdown</h2>
+            <span id="eco-badge" class="badge green">...</span>
+        </div>
+        <div class="eco-stats">
+            <div class="stat-circle">
+                <svg viewBox="0 0 36 36" class="circular-chart green">
+                    <path class="circle-bg"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <path class="circle" id="eco-path" stroke-dasharray="85, 100"
+                        d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                    <text x="18" y="20.35" class="percentage" id="eco-level">High</text>
+                </svg>
+                <span class="label">Efficiency</span>
+            </div>
+            <div class="emission-compare">
+                <div class="compare-item">
+                    <i class="fa-solid fa-bus"></i>
+                    <span><span id="bus-co2">...</span> kg</span>
+                </div>
+                <div class="compare-item bad">
+                    <i class="fa-solid fa-car"></i>
+                    <span><span id="car-co2">...</span> kg</span>
+                </div>
+                <div class="compare-item">
+                    <i class="fa-solid fa-train"></i>
+                    <span><span id="train-co2">...</span> kg</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Safety Stats -->
+    <div class="glass-panel card card-hover">
+        <div class="card-header">
+            <h2><i class="fa-solid fa-shield-halved"></i> Safety Forensics</h2>
+            <span class="badge blue">Score: <span id="safety-overall">...</span>/100</span>
+        </div>
+        <div class="progress-bars" style="margin-top:auto; margin-bottom:auto;">
+            <div class="progress-item">
+                <div class="progress-label"><span>Driver Reliability</span><span id="driver-score">...</span></div>
+                <div class="progress-bg">
+                    <div class="progress-fill" id="driver-bar"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-label"><span>Maintenance</span><span id="maint-score">...</span></div>
+                <div class="progress-bg">
+                    <div class="progress-fill" id="maint-bar"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-label"><span>Night Travel</span><span id="night-score">...</span></div>
+                <div class="progress-bg">
+                    <div class="progress-fill warning" id="night-bar"></div>
+                </div>
+            </div>
+            <div class="progress-item">
+                <div class="progress-label"><span>Women Safety</span><span id="women-score">...</span></div>
+                <div class="progress-bg">
+                    <div class="progress-fill success" id="women-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delay Predictor Chart -->
+    <div class="glass-panel card span-2 card-hover">
+        <div class="card-header">
+            <h2><i class="fa-solid fa-clock-rotate-left"></i> Delay History & Prediction</h2>
+            <span class="badge" style="background: rgba(129, 140, 248, 0.1); border: 1px solid rgba(129, 140, 248, 0.2); color: var(--accent-purple);">Prob: <span
+                    id="on-time-prob">...</span>%</span>
+        </div>
+        <div style="display: flex; gap: 2rem;">
+            <div class="delay-simulation" style="flex:1;">
+                <p>Simulated Projection: <strong id="sim-delay" class="highlight"
+                        style="font-size: 1.5rem;">...</strong> mins</p>
+                <div class="trend-sparkline" id="sparkline-container">
+                    <!-- Bars injected later -->
+                </div>
+                <small class="text-secondary">Historical deviation variance</small>
+            </div>
+            <div class="chart-container" style="flex: 2; height: 150px;">
+                <canvas id="reliabilityChart"></canvas>
+            </div>
+        </div>
+    </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/details.js') }}"></script>
+{% endblock %}

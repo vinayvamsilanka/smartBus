@@ -1,0 +1,134 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Schedule Management{% endblock %}
+{% block page_header %}Fleet Logistics & Timing{% endblock %}
+
+{% block content %}
+<div class="table-panel">
+    <div class="table-header">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <h4><i class="fa-solid fa-calendar-check"></i> Master Schedule</h4>
+            <span class="badge"
+                style="background: rgba(56, 189, 248, 0.2); color: var(--accent-primary); padding:0.3rem 0.8rem; border-radius:30px; font-size:0.8rem;">Scheduled:
+                {{ schedules|length }}</span>
+        </div>
+        <button class="btn-admin" onclick="openModal('addScheduleModal')">
+            <i class="fa-solid fa-clock"></i> New Dispatch
+        </button>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Batch</th>
+                <th>Bus / Fleet</th>
+                <th>Route (Hub-to-Hub)</th>
+                <th>Departure</th>
+                <th>Arrival</th>
+                <th>Status</th>
+                <th style="text-align: right;">Operations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sch in schedules %}
+            <tr>
+                <td><span style="color:var(--text-secondary); font-family:monospace;">#SCH-{{ sch.id }}</span></td>
+                <td>
+                    <div style="display:flex; flex-direction:column;">
+                        <span style="font-weight:600; color:#fff;">{{ sch.bus.bus_number }}</span>
+                        <small style="color:var(--accent-purple);">{{ sch.bus.type }}</small>
+                    </div>
+                </td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:0.5rem; color:#fff; font-weight:500;">
+                        {{ sch.route.origin.title() }} <i class="fa-solid fa-arrow-right"
+                            style="font-size:0.7rem; color:var(--text-secondary);"></i> {{ sch.route.destination.title()
+                        }}
+                    </div>
+                </td>
+                <td style="color:var(--accent-primary);">{{ sch.departure_time.strftime('%b %d, %H:%M') }}</td>
+                <td style="color:var(--text-secondary);">{{ sch.arrival_time.strftime('%b %d, %H:%M') }}</td>
+                <td>
+                    {% if sch.is_active %}
+                    <span class="badge" style="background:rgba(52, 211, 153, 0.1); color:var(--accent-green);">On
+                        Board</span>
+                    {% else %}
+                    <span class="badge"
+                        style="background:rgba(244, 63, 94, 0.1); color:var(--accent-red);">Cancelled</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    <div style="display:flex; justify-content:flex-end; gap:0.5rem;">
+                        <form method="POST" action="{{ url_for('admin_ui.toggle_schedule', id=sch.id) }}"
+                            style="display:inline;">
+                            <button type="submit" class="action-btn" title="Toggle Departure Status"
+                                style="color: {% if sch.is_active %}var(--accent-green){% else %}var(--text-secondary){% endif %};">
+                                <i class="fa-solid fa-toggle-on"></i>
+                            </button>
+                        </form>
+                        <button class="action-btn" title="Delay Management"><i
+                                class="fa-solid fa-clock-rotate-left"></i></button>
+                        <form method="POST" action="{{ url_for('admin_ui.delete_schedule', id=sch.id) }}"
+                            onsubmit="return confirm('Cancel this dispatch? Users will be notified.');">
+                            <button type="submit" class="action-btn delete" title="Cancel Dispatch"><i
+                                    class="fa-solid fa-calendar-xmark"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align:center; padding: 4rem;">
+                    <i class="fa-solid fa-calendar-minus"
+                        style="font-size: 3rem; color:rgba(255,255,255,0.05); margin-bottom:1.5rem;"></i>
+                    <p style="color:var(--text-secondary);">No active dispatches found in the database.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Add Schedule Modal -->
+<div id="addScheduleModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-calendar-plus"></i> Schedule New Dispatch</h3>
+            <button class="modal-close" onclick="closeModal('addScheduleModal')">&times;</button>
+        </div>
+        <form method="POST" action="{{ url_for('admin_ui.add_schedule') }}">
+            <div class="form-group">
+                <label>Select Fleet Asset (Bus)</label>
+                <select name="bus_id" class="form-control" required>
+                    {% for bus in buses %}
+                    <option value="{{ bus.id }}">{{ bus.bus_number }} ({{ bus.type }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Select Route Path</label>
+                <select name="route_id" class="form-control" required>
+                    {% for rt in routes %}
+                    <option value="{{ rt.id }}">{{ rt.origin.title() }} → {{ rt.destination.title() }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+                <div class="form-group">
+                    <label>Departure Time</label>
+                    <input type="datetime-local" name="departure" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label>Arrival Time</label>
+                    <input type="datetime-local" name="arrival" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('addScheduleModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Confirm Dispatch <i
+                        class="fa-solid fa-paper-plane"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

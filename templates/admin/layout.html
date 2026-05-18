@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartBus Admin | {% block title %}{% endblock %}</title>
+    <!-- Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Admin CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <a href="{{ url_for('admin_ui.dashboard') }}" style="text-decoration:none;">
+            <div class="sidebar-logo">
+                <i class="fa-solid fa-user-shield"></i> SmartBus Admin
+            </div>
+        </a>
+        <a href="/" target="_blank" class="nav-item portal-link"
+            style="margin-bottom:1rem; border: 1px dashed rgba(56, 189, 248, 0.4); background: rgba(56, 189, 248, 0.05);">
+            <i class="fa-solid fa-earth-americas"></i> View Web Portal <i class="fa-solid fa-external-link"
+                style="font-size:0.7rem; margin-left:auto;"></i>
+        </a>
+
+        <a href="{{ url_for('admin_ui.dashboard') }}"
+            class="nav-item {% if request.endpoint == 'admin_ui.dashboard' %}active{% endif %}">
+            <i class="fa-solid fa-chart-pie"></i> Dashboard
+        </a>
+        <a href="{{ url_for('admin_ui.manage_cities') }}"
+            class="nav-item {% if request.endpoint == 'admin_ui.manage_cities' %}active{% endif %}">
+            <i class="fa-solid fa-city"></i> Cities Manager
+        </a>
+        <a href="{{ url_for('admin_ui.manage_buses') }}"
+            class="nav-item {% if request.endpoint == 'admin_ui.manage_buses' %}active{% endif %}">
+            <i class="fa-solid fa-bus-simple"></i> Bus Fleet
+        </a>
+        <a href="{{ url_for('admin_ui.manage_routes') }}"
+            class="nav-item {% if request.endpoint == 'admin_ui.manage_routes' %}active{% endif %}">
+            <i class="fa-solid fa-route"></i> Route Engine
+        </a>
+        <a href="{{ url_for('admin_ui.manage_schedules') }}"
+            class="nav-item {% if request.endpoint == 'admin_ui.manage_schedules' %}active{% endif %}">
+            <i class="fa-solid fa-calendar-check"></i> Dispatch Schedules
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fa-solid fa-shield-heart"></i> Safety & Eco Metrics
+        </a>
+        <a href="#" class="nav-item">
+            <i class="fa-solid fa-users-gear"></i> System Access
+        </a>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div class="main-wrapper">
+        <!-- Top Header -->
+        <header class="top-header">
+            <div class="header-title">{% block page_header %}Dashboard{% endblock %}</div>
+            <div class="header-profile">
+                <span style="color:var(--text-secondary); font-size:0.9rem;">
+                    <i class="fa-solid fa-circle" style="color:var(--accent-green); font-size:0.6rem;"></i>
+                    {{ current_admin.name }} ({{ current_admin.role.name }})
+                </span>
+                <a href="{{ url_for('admin_ui.logout') }}" class="btn-logout"><i
+                        class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>
+            </div>
+        </header>
+
+        <!-- Flash Messages (Toast Notifications emulation) -->
+        <div class="alert-container">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert-box {{ category }}">
+                <div class="alert-icon">
+                    <i
+                        class="fa-solid {% if category=='error' %}fa-triangle-exclamation{% else %}fa-circle-check{% endif %}"></i>
+                </div>
+                <div class="alert-message">{{ message }}</div>
+                <button class="alert-close" onclick="this.parentElement.remove()">&times;</button>
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+        </div>
+
+        <!-- Render View -->
+        <main class="content-area">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script>
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Close on overlay click
+        window.onclick = function (event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>
