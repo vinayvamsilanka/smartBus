@@ -9,7 +9,7 @@ auth_bp = Blueprint('auth', __name__)
 def register():
     data = request.get_json()
     if User.query.filter_by(email=data.get('email')).first():
-        return jsonify({"msg": "Email already exists"}), 400
+        return jsonify({"success": False, "msg": "Email already exists"}), 400
 
     hashed_pw = bcrypt.generate_password_hash(data.get('password')).decode('utf-8')
     new_user = User(
@@ -25,7 +25,15 @@ def register():
     session['user_id'] = new_user.id
     session['user_name'] = new_user.name
     
-    return jsonify({"msg": "User registered successfully", "user_name": new_user.name}), 201
+    return jsonify({
+        "success": True,
+        "msg": "User registered successfully",
+        "user_name": new_user.name,
+        "user": {
+            "id": new_user.id,
+            "name": new_user.name
+        }
+    }), 201
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -39,6 +47,16 @@ def login():
         
         access_token = create_access_token(identity=str(user.id))
         role_name = user.role.name if user.role else 'User'
-        return jsonify(access_token=access_token, role=role_name, user_name=user.name), 200
+        return jsonify({
+            "success": True,
+            "access_token": access_token,
+            "role": role_name,
+            "user_name": user.name,
+            "user": {
+                "id": user.id,
+                "name": user.name
+            }
+        }), 200
 
-    return jsonify({"msg": "Invalid credentials"}), 401
+    return jsonify({"success": False, "msg": "Invalid credentials"}), 401
+

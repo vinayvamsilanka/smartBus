@@ -244,6 +244,327 @@
     </div>
     </div>
 </div>
+
+<!-- Beautiful, Interactive Glassmorphic Multi-Step Checkout Modal -->
+<div id="checkout-modal" class="hidden" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    transition: opacity 0.4s ease;
+    opacity: 0;
+">
+    <div class="glass-panel" style="
+        width: 100%;
+        max-width: 520px;
+        background: rgba(30, 41, 59, 0.7);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        padding: 30px;
+        position: relative;
+        transform: scale(0.95);
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        color: #fff;
+        max-height: 90vh;
+        overflow-y: auto;
+    " id="checkout-modal-content">
+        
+        <button id="close-checkout-modal" style="
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            width: 36px; height: 36px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: 0.3s;
+        "><i class="fa-solid fa-xmark"></i></button>
+
+        <!-- Step Progress Indicator -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding: 0 10px;">
+            <div style="text-align: center; flex: 1;">
+                <div id="step-1-indicator" style="width: 32px; height: 32px; border-radius: 50%; background: var(--accent-primary); color: #000; font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 5px; font-size: 0.85rem; border: 2px solid var(--accent-primary);">1</div>
+                <small style="font-size: 0.7rem; color: #cbd5e1;" id="lbl-step-1">Verify / Login</small>
+            </div>
+            <div style="flex: 1; height: 2px; background: rgba(255,255,255,0.1); margin-top: -20px;" id="line-step-1"></div>
+            <div style="text-align: center; flex: 1;">
+                <div id="step-2-indicator" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 5px; font-size: 0.85rem; border: 2px solid rgba(255,255,255,0.1);">2</div>
+                <small style="font-size: 0.7rem; color: var(--text-secondary);" id="lbl-step-2">Passengers</small>
+            </div>
+            <div style="flex: 1; height: 2px; background: rgba(255,255,255,0.1); margin-top: -20px;" id="line-step-2"></div>
+            <div style="text-align: center; flex: 1;">
+                <div id="step-3-indicator" style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.4); font-weight: bold; display: flex; align-items: center; justify-content: center; margin: 0 auto 5px; font-size: 0.85rem; border: 2px solid rgba(255,255,255,0.1);">3</div>
+                <small style="font-size: 0.7rem; color: var(--text-secondary);" id="lbl-step-3">Payment</small>
+            </div>
+        </div>
+
+        <!-- STEP 1: EMBEDDED IN-PLACE AUTHENTICATION -->
+        <div id="checkout-step-auth" class="checkout-step-container">
+            <h3 style="margin-top: 0; font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-shield-halved" style="color: var(--accent-primary);"></i> Secure Verification
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 25px;">Please verify your identity to proceed with securing seat <strong id="modal-seat-id-1" style="color: var(--accent-primary);"></strong>.</p>
+            
+            <div id="auth-modal-error" style="display: none; background: rgba(239, 68, 68, 0.15); border: 1px solid rgba(239, 68, 68, 0.25); color: #ef4444; border-radius: 12px; padding: 12px; font-size: 0.85rem; margin-bottom: 15px;"></div>
+
+            <div style="display: flex; gap: 15px; margin-bottom: 20px;">
+                <button id="modal-tab-email" style="flex:1; padding:10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; cursor: pointer; font-weight: 600;" class="active-tab">Credentials</button>
+                <button id="modal-tab-otp" style="flex:1; padding:10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; cursor: pointer; font-weight: 600;">Mobile OTP</button>
+            </div>
+
+            <!-- Email Credentials fields -->
+            <div id="modal-auth-email-form">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">Email Address</label>
+                    <input type="email" id="modal-email-input" placeholder="name@example.com" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none;">
+                </div>
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">Password</label>
+                    <input type="password" id="modal-password-input" placeholder="••••••••" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none;">
+                </div>
+            </div>
+
+            <!-- Mobile OTP fields -->
+            <div id="modal-auth-otp-form" style="display: none;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">Mobile Number</label>
+                    <div style="display: flex; gap: 10px;">
+                        <span style="padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-secondary); font-weight: 600;">+91</span>
+                        <input type="tel" id="modal-phone-input" placeholder="98765 43210" style="flex:1; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none; letter-spacing: 1px;">
+                    </div>
+                </div>
+                <div style="margin-bottom: 25px;" id="modal-otp-verify-section">
+                    <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">Enter 4-Digit OTP</label>
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <input type="text" maxlength="1" class="modal-otp-digit" style="width: 50px; height: 50px; text-align: center; font-size: 1.5rem; font-weight: bold; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none;">
+                        <input type="text" maxlength="1" class="modal-otp-digit" style="width: 50px; height: 50px; text-align: center; font-size: 1.5rem; font-weight: bold; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none;">
+                        <input type="text" maxlength="1" class="modal-otp-digit" style="width: 50px; height: 50px; text-align: center; font-size: 1.5rem; font-weight: bold; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none;">
+                        <input type="text" maxlength="1" class="modal-otp-digit" style="width: 50px; height: 50px; text-align: center; font-size: 1.5rem; font-weight: bold; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none;">
+                    </div>
+                </div>
+            </div>
+
+            <button id="modal-auth-submit" style="
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                border: none;
+                border-radius: 12px;
+                color: #000;
+                font-weight: 700;
+                font-size: 1rem;
+                cursor: pointer;
+                box-shadow: 0 10px 20px rgba(56, 189, 248, 0.25);
+                transition: 0.3s;
+            ">Authenticate & Proceed</button>
+        </div>
+
+        <!-- STEP 2: PASSENGER DETAILS FORM -->
+        <div id="checkout-step-passenger" class="checkout-step-container" style="display: none;">
+            <h3 style="margin-top: 0; font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-user-pen" style="color: var(--accent-primary);"></i> Passenger Details
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 25px;">Please fill out travelers information for seat <strong id="modal-seat-id-2" style="color: var(--accent-primary);"></strong>.</p>
+            
+            <div style="margin-bottom: 15px;">
+                <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">Passenger Full Name</label>
+                <input type="text" id="passenger-name-input" placeholder="e.g. Charan Kumar" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none; font-weight: 600;">
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">Age</label>
+                    <input type="number" id="passenger-age-input" placeholder="Age" min="1" max="120" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none;">
+                </div>
+                <div style="flex: 1.5;">
+                    <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">Gender</label>
+                    <select id="passenger-gender-input" style="width: 100%; padding: 12px; background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: #fff; outline: none; cursor: pointer;">
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="passenger-details-submit" style="
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                border: none;
+                border-radius: 12px;
+                color: #000;
+                font-weight: 700;
+                font-size: 1rem;
+                cursor: pointer;
+                box-shadow: 0 10px 20px rgba(56, 189, 248, 0.25);
+                transition: 0.3s;
+            ">Proceed to Payment</button>
+        </div>
+
+        <!-- STEP 3: SECURE PAYMENT GATEWAY -->
+        <div id="checkout-step-payment" class="checkout-step-container" style="display: none;">
+            <h3 style="margin-top: 0; font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-credit-card" style="color: var(--accent-primary);"></i> SmartBus Payment
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 25px;">Secure checkout for seat <strong id="modal-seat-id-3" style="color: var(--accent-primary);"></strong>. Total fare: <strong style="color:#fff;" id="modal-fare-amount">₹...</strong></p>
+
+            <!-- Mock Credit Card Graphic -->
+            <div style="
+                background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.95));
+                border: 1px solid rgba(255,255,255,0.15);
+                border-radius: 16px;
+                padding: 20px;
+                margin-bottom: 25px;
+                box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+                position: relative;
+                overflow: hidden;
+                font-family: monospace;
+            ">
+                <div style="position: absolute; top: -50px; right: -50px; width: 150px; height: 150px; border-radius: 50%; background: var(--accent-primary); opacity: 0.05; filter: blur(30px);"></div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 30px; align-items: center;">
+                    <i class="fa-solid fa-microchip" style="font-size: 2rem; color: #fbbf24;"></i>
+                    <span style="font-size: 0.8rem; font-weight: bold; letter-spacing: 2px; color: rgba(255,255,255,0.4); text-transform: uppercase;">SmartBus Secure</span>
+                </div>
+                <div style="font-size: 1.25rem; letter-spacing: 3px; color: #fff; margin-bottom: 20px; word-spacing: 5px;">•••• •••• •••• ••••</div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="display: block; font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">Card Holder</span>
+                        <span id="credit-card-holder-name" style="color: #fff; font-size: 0.85rem; font-weight: bold; text-transform: uppercase;">PASSENGER NAME</span>
+                    </div>
+                    <div style="text-align: right;">
+                        <span style="display: block; font-size: 0.6rem; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 1px;">Expires</span>
+                        <span style="color: #fff; font-size: 0.85rem; font-weight: bold;">12/30</span>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <div style="flex: 2;">
+                    <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">Mock Card Number</label>
+                    <input type="text" value="4321 9876 5432 1098" readonly style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-secondary); outline: none; font-family: monospace;">
+                </div>
+                <div style="flex: 1;">
+                    <label style="display: block; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 6px;">CVV</label>
+                    <input type="password" value="123" readonly style="width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: var(--text-secondary); outline: none; font-family: monospace; text-align: center;">
+                </div>
+            </div>
+
+            <button id="payment-confirm-submit" style="
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, #10b981, #059669);
+                border: none;
+                border-radius: 12px;
+                color: #fff;
+                font-weight: 700;
+                font-size: 1rem;
+                cursor: pointer;
+                box-shadow: 0 10px 20px rgba(16, 185, 129, 0.25);
+                transition: 0.3s;
+            ">Pay & Confirm Ticket</button>
+        </div>
+
+        <!-- STEP 4: PROCESSING TRANSACTION SCREEN -->
+        <div id="checkout-step-processing" class="checkout-step-container" style="display: none; text-align: center; padding: 40px 10px;">
+            <div class="processing-spinner" style="
+                width: 70px; height: 70px;
+                border: 4px solid rgba(255,255,255,0.05);
+                border-top: 4px solid var(--accent-primary);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+                margin: 0 auto 25px;
+            "></div>
+            <h4 style="font-family: var(--font-heading); font-size: 1.25rem; font-weight: 700; margin-bottom: 10px; color: #fff;">Processing Transaction...</h4>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Connecting to secure SmartBus AI payment network. Please do not close or reload this window...</p>
+        </div>
+
+        <!-- STEP 5: TICKET SUCCESS CONFIRMATION -->
+        <div id="checkout-step-success" class="checkout-step-container" style="display: none; text-align: center;">
+            <div style="
+                width: 60px; height: 60px;
+                background: rgba(16, 185, 129, 0.15);
+                border: 2px solid #10b981;
+                border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+                color: #10b981; font-size: 1.75rem;
+                margin: 0 auto 20px;
+                box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+            ">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 style="margin-top: 0; font-family: var(--font-heading); font-size: 1.4rem; font-weight: 700; margin-bottom: 5px; color: #10b981;">Booking Confirmed!</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 25px;">Your seat has been securely locked in the SQLite records.</p>
+            
+            <!-- Ticket Summary Card -->
+            <div style="
+                background: rgba(255,255,255,0.03);
+                border: 1px dashed rgba(255,255,255,0.15);
+                border-radius: 16px;
+                padding: 20px;
+                margin-bottom: 30px;
+                text-align: left;
+            ">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 12px;">
+                    <span style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Ticket ID</span>
+                    <strong style="font-size: 0.85rem; color: #fff;" id="success-ticket-id">#TXN-...</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Passenger</span>
+                    <strong style="font-size: 0.85rem; color: #fff;" id="success-passenger-name">...</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Seat Assigned</span>
+                    <strong style="font-size: 0.85rem; color: var(--accent-primary);" id="success-seat-id">...</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Amount Charged</span>
+                    <strong style="font-size: 0.85rem; color: #fff;" id="success-fare-amount">₹...</strong>
+                </div>
+            </div>
+
+            <button id="success-dashboard-redirect" style="
+                width: 100%;
+                padding: 14px;
+                background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                border: none;
+                border-radius: 12px;
+                color: #000;
+                font-weight: 700;
+                font-size: 1rem;
+                cursor: pointer;
+                box-shadow: 0 10px 20px rgba(56, 189, 248, 0.25);
+                transition: 0.3s;
+            ">Go to My Travel Dashboard</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- Spinner animation stylesheet -->
+<style>
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .modal-otp-digit:focus {
+        border-color: var(--accent-primary) !important;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+    }
+    .active-tab {
+        background: rgba(56, 189, 248, 0.15) !important;
+        border-color: var(--accent-primary) !important;
+        color: var(--accent-primary) !important;
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
