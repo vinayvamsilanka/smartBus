@@ -11,6 +11,11 @@
         rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <link rel="manifest" href="/static/manifest.json">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script>
         window.USER_ID = {{ session.get('user_id') | tojson if session.get('user_id') else 'null' }};
@@ -31,27 +36,28 @@
             </a>
         </div>
         <div class="nav-links">
-            <a href="/" class="active">AI Optimizer</a>
-            <a href="/dashboard">Dashboard</a>
-            <a href="#">Eco Travel</a>
-            <a href="#">Safety</a>
+            <a href="/" id="nav-optimizer">AI Optimizer</a>
+            <a href="/dashboard" id="nav-dashboard">Dashboard</a>
+            <a href="/eco-rewards" id="nav-eco">Eco Travel</a>
+            <a href="/safety" id="nav-safety">Safety</a>
             {% if session.get('user_id') %}
-            <div class="login-dropdown">
-                <a href="#" class="btn-login" style="background: rgba(37, 99, 235, 0.1); color: var(--accent-primary); border-color: rgba(37, 99, 235, 0.2);"><i class="fa-solid fa-circle-user"></i> Hi, {{ session.get('user_name') }} <i class="fa-solid fa-chevron-down" style="font-size: 0.7rem; opacity: 0.7;"></i></a>
-                <div class="dropdown-content">
-                    <a href="/dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-                    <a href="/logout" style="color: var(--accent-error) !important;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-                </div>
-            </div>
+            <span class="user-profile-badge"
+                style="background: rgba(37, 99, 235, 0.08); color: var(--accent-primary); border: 1.5px solid rgba(37, 99, 235, 0.15); padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-circle-user"></i> Hi, {{ session.get('user_name') }}
+            </span>
+            <a href="/logout" class="btn-logout-nav"
+                style="background: rgba(239, 68, 68, 0.08); color: var(--accent-error); border: 1.5px solid rgba(239, 68, 68, 0.2); padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </a>
             {% else %}
-            <div class="login-dropdown">
-                <a href="/login" class="btn-login"><i class="fa-solid fa-circle-user"></i> Login <i class="fa-solid fa-chevron-down"
-                        style="font-size: 0.7rem; opacity: 0.7;"></i></a>
-                <div class="dropdown-content">
-                    <a href="/login"><i class="fa-solid fa-user"></i> User Login</a>
-                    <a href="/admin/login"><i class="fa-solid fa-user-shield"></i> Admin Portal</a>
-                </div>
-            </div>
+            <a href="/login" class="btn-login-nav"
+                style="background: #2563eb; color: white; padding: 8px 18px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);">
+                <i class="fa-solid fa-circle-user"></i> Login
+            </a>
+            <a href="/admin/login" class="btn-admin-nav"
+                style="border: 1.5px solid rgba(99, 102, 241, 0.3); background: rgba(99, 102, 241, 0.05); color: var(--accent-purple); padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                <i class="fa-solid fa-user-shield"></i> Admin Portal
+            </a>
             {% endif %}
         </div>
     </nav>
@@ -84,6 +90,99 @@
     </div>
 
     <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set active navigation links based on URL path
+            const activePath = window.location.pathname;
+            const navLinks = document.querySelectorAll('.nav-links a:not(.btn-login-nav):not(.btn-admin-nav):not(.btn-logout-nav)');
+
+            navLinks.forEach(a => a.classList.remove('active'));
+
+            let activeElement = null;
+            if (activePath === '/') {
+                activeElement = document.getElementById('nav-optimizer');
+            } else if (activePath === '/dashboard') {
+                activeElement = document.getElementById('nav-dashboard');
+            } else if (activePath === '/eco-rewards') {
+                activeElement = document.getElementById('nav-eco');
+            } else if (activePath === '/safety') {
+                activeElement = document.getElementById('nav-safety');
+            }
+
+            if (activeElement) {
+                activeElement.classList.add('active');
+            }
+
+            // --- NavBar Premium Sliding Pill Transition (Clean Light Highlight) ---
+            const navContainer = document.querySelector('.nav-links');
+            const indicator = document.createElement('div');
+            indicator.className = 'nav-hover-pill';
+            navContainer.insertBefore(indicator, navContainer.firstChild);
+
+            function updatePillPosition(element) {
+                if (!element) return;
+                const rect = element.getBoundingClientRect();
+                const containerRect = navContainer.getBoundingClientRect();
+
+                indicator.style.width = `${rect.width}px`;
+                indicator.style.height = `${rect.height}px`;
+                indicator.style.left = `${rect.left - containerRect.left}px`;
+                indicator.style.top = `${rect.top - containerRect.top}px`;
+                indicator.style.opacity = '1';
+            }
+
+            if (activeElement) {
+                setTimeout(() => updatePillPosition(activeElement), 100);
+            }
+
+            navLinks.forEach(link => {
+                link.addEventListener('mouseenter', function () {
+                    updatePillPosition(this);
+                });
+            });
+
+            navContainer.addEventListener('mouseleave', function () {
+                if (activeElement) {
+                    updatePillPosition(activeElement);
+                } else {
+                    indicator.style.opacity = '0';
+                }
+            });
+            // -------------------------------------------------------------
+            // --- Clean Page Transitions (No Black Shadow) ---
+            const transitionLinks = document.querySelectorAll('a[href^="/"], .btn-login-nav, .btn-admin-nav');
+            transitionLinks.forEach(link => {
+                link.addEventListener('click', function (e) {
+                    // Ignore new tabs, hashes, or the logout button
+                    if (this.target === '_blank' || e.ctrlKey || e.metaKey || this.getAttribute('href').startsWith('#') || this.classList.contains('btn-logout-nav')) {
+                        return;
+                    }
+                    e.preventDefault();
+                    const destination = this.href;
+                    document.body.classList.add('page-transitioning');
+
+                    // Navigate strictly after nice simple fade animation completes (250ms)
+                    setTimeout(() => {
+                        window.location.href = destination;
+                    }, 250);
+                });
+            });
+
+            // Re-enable if user uses back/forward browser cache
+            window.addEventListener('pageshow', function (event) {
+                if (event.persisted) {
+                    document.body.classList.remove('page-transitioning');
+                }
+            });
+        });
+    </script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/service-worker.js');
+            });
+        }
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 

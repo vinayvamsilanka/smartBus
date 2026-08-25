@@ -8,78 +8,455 @@
 
 <div id="results-dashboard" class="dashboard hidden"
     style="opacity: 0; transform: translateY(20px); transition: 0.6s cubic-bezier(0.16, 1, 0.3, 1);">
-    <div class="results-header" style="background: white; border-radius: 20px; padding: 2.5rem; border: 1px solid #e2e8f0; margin-bottom: 3rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
+    <div class="results-header"
+        style="background: white; border-radius: 20px; padding: 2.5rem; border: 1px solid #e2e8f0; margin-bottom: 3rem; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);">
         <div style="display: flex; flex-direction: column; gap: 0.5rem;">
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <h2 style="font-size: 2.2rem; font-weight: 800; color: var(--text-primary);" id="route-title">AI Selected Routes</h2>
-                <span class="badge" style="background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-size: 0.8rem;">NETWORK OPTIMIZED</span>
+                <h2 style="font-size: 2.2rem; font-weight: 800; color: var(--text-primary);" id="route-title">AI
+                    Selected Routes</h2>
+                <span class="badge"
+                    style="background: #eff6ff; color: #2563eb; border: 1px solid #dbeafe; font-size: 0.8rem;">NETWORK
+                    OPTIMIZED</span>
             </div>
-            <p style="font-size: 1.1rem; color: var(--text-secondary); font-weight: 500;" id="search-overview">Showing results</p>
+            <p style="font-size: 1.1rem; color: var(--text-secondary); font-weight: 500;" id="search-overview">Showing
+                results</p>
         </div>
-        <button class="btn-primary" style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.75rem 1.5rem; font-weight: 700;" onclick="window.location.href='/'">
+        <button class="btn-primary"
+            style="background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; padding: 0.75rem 1.5rem; font-weight: 700;"
+            onclick="window.location.href='/'">
             <i class="fa-solid fa-magnifying-glass"></i> NEW SEARCH
         </button>
     </div>
 
     <div class="dashboard-grid show">
-        <!-- AI Fare Predictor Chart (Left Side) -->
-        <div class="glass-panel card span-2 card-hover">
-            <div class="card-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
-                <h2 style="font-size: 1.5rem; color: var(--text-primary);"><i class="fa-solid fa-chart-line" style="color: var(--accent-primary);"></i> AI Fare Predictor</h2>
-                <span class="badge" style="background: var(--accent-primary); color: white;">Cheapest: <span id="cheapest-date">...</span></span>
-            </div>
-            
-            <div class="chart-container" style="background: rgba(248, 250, 252, 0.5); border-radius: 12px; padding: 10px;">
-                <canvas id="fareChart"></canvas>
-            </div>
+        <!-- PREMIUM DARK AI DASHBOARD SECTION -->
+        <style>
+            .premium-ai-dashboard {
+                display: flex;
+                flex-direction: column;
+                gap: 1.5rem;
+                background: #0b0f19;
+                padding: 1.5rem;
+                border-radius: 16px;
+                font-family: 'Inter', sans-serif;
+                margin-bottom: 2rem;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            }
 
-            <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem;">
-                <div class="ai-confidence-box" style="margin: 0; padding: 1.25rem; background: #ecfdf5; border: 1px solid #10b98133; border-radius: 16px;">
-                    <i class="fa-solid fa-square-poll-vertical" style="font-size: 1.5rem;"></i>
-                    <div style="display: flex; flex-direction: column;">
-                        <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: #065f46;">Prediction Confidence</span>
-                        <span style="font-size: 1.2rem; font-weight: 800; color: #059669;"><span id="ai-confidence">...</span>% Confidence AI</span>
+            .glow-card {
+                background: #111827;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 12px;
+                padding: 1.5rem;
+                position: relative;
+            }
+
+            .glow-card.top-card {
+                padding-bottom: 0.5rem;
+            }
+
+            .glow-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1.5rem;
+            }
+
+            .glow-title {
+                color: #e2e8f0;
+                font-size: 0.95rem;
+                font-weight: 700;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+                margin: 0;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .info-icon {
+                color: #64748b;
+                font-size: 1rem;
+            }
+
+            .glow-controls,
+            .glow-dropdown {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 8px;
+                display: flex;
+                padding: 4px;
+            }
+
+            .glow-pill {
+                background: transparent;
+                border: none;
+                color: #94a3b8;
+                font-size: 0.75rem;
+                padding: 6px 14px;
+                border-radius: 6px;
+                cursor: pointer;
+                transition: 0.3s;
+                font-weight: 500;
+            }
+
+            .glow-pill.active {
+                background: rgba(255, 255, 255, 0.1);
+                color: #fff;
+            }
+
+            .glow-dropdown {
+                border: none;
+                color: #94a3b8;
+                padding: 6px 14px;
+                font-size: 0.8rem;
+                cursor: pointer;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                background: #1f2937;
+            }
+
+            .chart-header-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+
+            .trend-title {
+                color: #94a3b8;
+                font-size: 0.95rem;
+                font-weight: 500;
+            }
+
+            .best-time-badge {
+                border: 1px solid rgba(20, 184, 166, 0.5);
+                color: #14b8a6;
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                letter-spacing: 1px;
+                box-shadow: 0 0 15px rgba(20, 184, 166, 0.25);
+                background: rgba(20, 184, 166, 0.05);
+            }
+
+            .chart-wrapper {
+                height: 250px;
+                position: relative;
+                margin-top: 10px;
+            }
+
+            .split-subtitle {
+                color: #94a3b8;
+                font-size: 0.95rem;
+                font-weight: 500;
+                margin-bottom: 2rem;
+            }
+
+            /* Responsive Flexbox Setup for Split Journey */
+            .split-visual-wrapper {
+                display: flex;
+                width: 100%;
+                align-items: flex-start;
+                /* top align because of curve expanding downwards */
+                gap: 15px;
+                margin-bottom: 3.5rem;
+            }
+
+            .route-sequence {
+                display: flex;
+                flex-grow: 1;
+                align-items: center;
+                position: relative;
+                padding-bottom: 70px;
+                /* space for the curve that hangs below */
+            }
+
+            .split-node {
+                background: #1f2937;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                border-radius: 12px;
+                padding: 12px 18px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 10;
+                box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+                white-space: nowrap;
+                /* prevent city names from wrapping inside node box */
+            }
+
+            .node-icon {
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                border: 1.5px solid rgba(56, 189, 248, 0.6);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #38bdf8;
+                font-size: 0.75rem;
+                background: rgba(56, 189, 248, 0.1);
+            }
+
+            .node-icon.purple {
+                color: #a855f7;
+                border-color: rgba(168, 85, 247, 0.6);
+                background: rgba(168, 85, 247, 0.1);
+            }
+
+            .node-details {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .node-name {
+                color: #f8fafc;
+                font-weight: 700;
+                font-size: 0.95rem;
+            }
+
+            .node-time {
+                color: #94a3b8;
+                font-size: 0.8rem;
+                margin-top: 2px;
+            }
+
+            .node-action {
+                padding: 16px 20px;
+                background: rgba(56, 189, 248, 0.1);
+                border: 1px solid rgba(56, 189, 248, 0.3);
+                color: #38bdf8;
+                font-size: 1.4rem;
+                cursor: pointer;
+                transition: 0.3s;
+                height: fit-content;
+            }
+
+            .node-action:hover {
+                background: rgba(56, 189, 248, 0.2);
+                box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+            }
+
+            /* Connecting Lines */
+            .path-connector {
+                flex-grow: 1;
+                height: 3px;
+                position: relative;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-width: 40px;
+                /* guarantees line renders even if compressed */
+                z-index: 1;
+                transform: translateY(-35px);
+                /* offset up by half of padding-bottom to align with node centers */
+            }
+
+            .path-connector.leg-1 {
+                background: linear-gradient(90deg, #38bdf8, #818cf8);
+                box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+            }
+
+            .path-connector.leg-2 {
+                background: linear-gradient(90deg, #818cf8, #d946ef);
+                box-shadow: 0 0 10px rgba(217, 70, 239, 0.6);
+            }
+
+            .path-text {
+                position: absolute;
+                top: -24px;
+                font-size: 0.8rem;
+                font-weight: 500;
+                color: #cbd5e1;
+                background: #111827;
+                padding: 2px 8px;
+                border-radius: 4px;
+                z-index: 5;
+                white-space: nowrap;
+            }
+
+            .curve-bottom {
+                position: absolute;
+                top: calc(50% - 35px);
+                /* Centered with the nodes */
+                left: 50px;
+                /* Tucks seamlessly behind the first node */
+                right: 50px;
+                /* Tucks seamlessly behind the last node */
+                height: 70px;
+                border-bottom: 2.5px solid #38bdf8;
+                border-left: 2.5px solid #38bdf8;
+                border-right: 2.5px solid #d946ef;
+                border-radius: 0 0 32px 32px;
+                z-index: 0;
+                box-shadow: 0 6px 15px rgba(56, 189, 248, 0.15);
+                opacity: 0.85;
+                display: flex;
+                justify-content: center;
+            }
+
+            .curve-bottom .path-text {
+                top: auto;
+                bottom: -12px;
+                color: #38bdf8;
+                font-weight: 700;
+            }
+
+            .split-fare-info {
+                position: absolute;
+                bottom: 20px;
+                right: 25px;
+                display: flex;
+                justify-content: flex-end;
+                align-items: baseline;
+                color: #f8fafc;
+                font-weight: 700;
+                font-size: 1.25rem;
+            }
+
+            .split-fare-info span {
+                font-weight: 500;
+                color: #94a3b8;
+                font-size: 0.95rem;
+                margin-left: 8px;
+            }
+
+            /* Chart modifications via overrides */
+            #fareChart {
+                filter: drop-shadow(0 10px 15px rgba(168, 85, 247, 0.2));
+            }
+
+            /* Add overflow-x scrolling on mobile so it never squishes too much */
+            @media (max-width: 900px) {
+                .route-sequence-scroll-wrapper {
+                    overflow-x: auto;
+                    padding-bottom: 15px;
+                }
+
+                .split-visual-wrapper {
+                    width: 700px;
+                    /* Force minimum width to preserve layout gracefully on mobile */
+                }
+            }
+        </style>
+
+        <div class="premium-ai-dashboard span-2">
+            <!-- 1. AI FARE PREDICTOR -->
+            <div class="glow-card top-card">
+                <div class="glow-header">
+                    <h2 class="glow-title">AI FARE PREDICTOR <i class="fa-regular fa-circle-question info-icon"></i>
+                    </h2>
+                    <div class="glow-controls">
+                        <button class="glow-pill active">Past 10 Days</button>
+                        <button class="glow-pill">Next 10 Days</button>
                     </div>
                 </div>
 
-                <div class="split-journey" id="split-journey-box" style="display: none; flex-direction: column; position: relative;">
-                    <div class="split-info">
-                        <h3><i class="fa-solid fa-code-branch"></i> Split Journey Recommendation</h3>
-                        <p style="color: var(--text-secondary);">Save more by splitting your trip via <span id="split-via" class="highlight">...</span></p>
+                <div class="chart-header-row">
+                    <div class="trend-title">
+                        <i class="fa-solid fa-arrow-trend-up" style="color: #a855f7;"></i> Price Trend: <span
+                            id="chart-origin">...</span> &rarr; <span id="chart-dest">...</span>
                     </div>
+                    <div class="best-time-badge">BEST TIME TO BOOK</div>
+                </div>
 
-                    <div class="motion-timeline">
-                        <div class="timeline-line"></div>
-                        <i class="fa-solid fa-bus timeline-bus" id="animated-bus"></i>
+                <div class="chart-wrapper">
+                    <canvas id="fareChart"></canvas>
+                </div>
 
-                        <div class="timeline-point" id="tp-origin">
-                            <div class="dot"></div>
-                            <span class="label">...</span>
-                        </div>
-                        <div class="timeline-point" id="tp-via">
-                            <div class="dot highlight-dot"></div>
-                            <span class="label">...</span>
-                        </div>
-                        <div class="timeline-point" id="tp-dest">
-                            <div class="dot"></div>
-                            <span class="label">...</span>
-                        </div>
-                    </div>
+                <!-- Hidden components to maintain JS compatibility -->
+                <div style="display:none;">
+                    <span id="cheapest-date"></span><span id="ai-confidence"></span>
+                </div>
+            </div>
 
-                    <div class="split-pricing" style="background: #eff6ff; border: 1px solid #dbeafe; padding: 1.25rem;">
-                        <div style="display: flex; flex-direction: column;">
-                            <span style="font-size: 0.75rem; color: #64748b;">Direct Fare</span>
-                            <span class="price-strike" style="font-size: 1.1rem;">₹<span id="direct-fare">...</span></span>
+            <!-- 2. SPLIT JOURNEY RECOMMENDATIONS -->
+            <div class="glow-card bottom-card" id="split-journey-box" style="display: none;">
+                <div class="glow-header">
+                    <h2 class="glow-title">SPLIT JOURNEY RECOMMENDATIONS</h2>
+                </div>
+                <div class="split-subtitle">
+                    <span id="route-text-nodes">...</span>
+                </div>
+
+                <div class="route-sequence-scroll-wrapper">
+                    <div class="split-visual-wrapper">
+
+                        <div class="route-sequence">
+                            <!-- Direct Curve -->
+                            <div class="curve-bottom">
+                                <div class="path-text text-bottom" id="total-duration">...</div>
+                            </div>
+
+                            <!-- Origin -->
+                            <div class="split-node" id="tp-origin">
+                                <div class="node-icon"><i class="fa-solid fa-location-dot"></i></div>
+                                <div class="node-details">
+                                    <span class="node-name label">...</span>
+                                    <span class="node-time" id="split-leg1-dep">...</span>
+                                </div>
+                            </div>
+
+                            <!-- Leg 1 connection -->
+                            <div class="path-connector leg-1">
+                                <span class="path-text" id="leg1-duration">...</span>
+                            </div>
+
+                            <!-- Via -->
+                            <div class="split-node" id="tp-via">
+                                <div class="node-icon purple"><i class="fa-solid fa-location-dot"></i></div>
+                                <div class="node-details">
+                                    <span class="node-name label">...</span>
+                                    <span class="node-time" id="split-leg1-arr">...</span>
+                                </div>
+                            </div>
+
+                            <!-- Leg 2 connection -->
+                            <div class="path-connector leg-2">
+                                <span class="path-text" id="leg2-duration">...</span>
+                            </div>
+
+                            <!-- Destination -->
+                            <div class="split-node" id="tp-dest">
+                                <div class="node-icon purple"><i class="fa-solid fa-location-dot"></i></div>
+                                <div class="node-details">
+                                    <span class="node-name label">...</span>
+                                    <span class="node-time" id="split-leg2-arr">...</span>
+                                </div>
+                            </div>
                         </div>
-                        <div style="display: flex; flex-direction: column; align-items: center;">
-                            <span style="font-size: 0.75rem; color: #1e40af; font-weight: 700;">Split Fare</span>
-                            <span class="price-highlight" style="font-size: 1.5rem; color: #2563eb;">₹<span id="split-fare">...</span></span>
-                        </div>
-                        <div class="savings" style="height: fit-content; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);">
-                            SAVE ₹<span id="split-savings">...</span>
+
+                        <!-- Book Button -->
+                        <div class="split-node node-action" id="btn-split-leg1" title="Book Optimal Split Route">
+                            <i class="fa-solid fa-map"></i>
                         </div>
                     </div>
                 </div>
+
+                <div class="split-fare-info">
+                    ₹<span id="split-fare"
+                        style="font-weight:700; color:#fff; font-size:1.25rem; margin:0; padding:0; margin-left: 2px;">...</span>
+                    <span>(Split Fare)</span>
+                </div>
+
+                <div style="display:none;" id="direct-fare"></div>
+                <div style="display:none;" id="split-savings"></div>
+                <div style="display:none;" id="leg1-route-detail"></div>
+                <div style="display:none;" id="split-leg1-operator"></div>
+                <div style="display:none;" id="split-leg1-fare"></div>
+                <div style="display:none;" id="leg2-route-detail"></div>
+                <div style="display:none;" id="split-leg2-operator"></div>
+                <div style="display:none;" id="split-leg2-dep"></div>
+                <div style="display:none;" id="split-leg2-fare"></div>
+                <div style="display:none;" id="leg1-text"></div>
+                <div style="display:none;" id="leg2-text"></div>
+                <div style="display:none;" id="btn-split-leg2"></div>
+                <div style="display:none;" id="split-via"></div>
+                <i id="animated-bus" style="display:none;"></i>
             </div>
         </div>
 

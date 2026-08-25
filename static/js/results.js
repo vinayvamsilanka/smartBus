@@ -3,8 +3,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const origin = urlParams.get('origin') || 'Hyderabad';
     const dest = urlParams.get('dest') || 'Bangalore';
     const date = urlParams.get('date') || new Date().toISOString().split("T")[0];
+    const passengers = urlParams.get('passengers') || '1';
+    localStorage.setItem('passengerCount', passengers);
 
     document.getElementById('search-overview').innerText = `${origin} ➔ ${dest} | Date: ${date}`;
+
+    // New Dashboard fields
+    const co = document.getElementById('chart-origin');
+    if (co) co.innerText = origin;
+    const cd = document.getElementById('chart-dest');
+    if (cd) cd.innerText = dest;
 
     let fareChartInstance = null;
     let globalDataCache = null;
@@ -39,6 +47,106 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.querySelector('#tp-origin .label').innerText = timeline[0];
             document.querySelector('#tp-via .label').innerText = timeline[1];
             document.querySelector('#tp-dest .label').innerText = timeline[2];
+
+            const originCity = timeline[0];
+            const viaCity = timeline[1];
+            const destCity = timeline[2];
+
+            document.getElementById('leg1-text').innerText = `${originCity} ➔ ${viaCity}`;
+            document.getElementById('leg2-text').innerText = `${viaCity} ➔ ${destCity}`;
+
+            // Populate connecting leg details
+            const leg1 = data.optimizer.split_journey.leg1_bus;
+            const leg2 = data.optimizer.split_journey.leg2_bus;
+
+            document.getElementById('leg1-route-detail').innerText = `${originCity} ➔ ${viaCity}`;
+            document.getElementById('split-leg1-operator').innerText = `${leg1.operator} (${leg1.type})`;
+            document.getElementById('split-leg1-dep').innerText = leg1.departure_datetime.split(' ')[1];
+            document.getElementById('split-leg1-arr').innerText = leg1.arrival_datetime.split(' ')[1];
+            document.getElementById('split-leg1-fare').innerText = `₹${leg1.fare}`;
+
+            document.getElementById('leg2-route-detail').innerText = `${viaCity} ➔ ${destCity}`;
+            document.getElementById('split-leg2-operator').innerText = `${leg2.operator} (${leg2.type})`;
+            document.getElementById('split-leg2-dep').innerText = leg2.departure_datetime.split(' ')[1];
+            document.getElementById('split-leg2-arr').innerText = leg2.arrival_datetime.split(' ')[1];
+            document.getElementById('split-leg2-fare').innerText = `₹${leg2.fare}`;
+
+            // Populate New Dark UI Elements
+            const splitLeg1Dep = document.getElementById('split-leg1-dep').innerText;
+            const splitLeg1Arr = document.getElementById('split-leg1-arr').innerText;
+            const splitLeg2Arr = document.getElementById('split-leg2-arr').innerText;
+
+            const routeTextNodes = document.getElementById('route-text-nodes');
+            if (routeTextNodes) {
+                routeTextNodes.innerText = `${originCity} (${splitLeg1Dep}) → ${viaCity} (${splitLeg1Arr}) → ${destCity} (${splitLeg2Arr})`;
+            }
+
+            const leg1Duration = document.getElementById('leg1-duration');
+            if (leg1Duration) leg1Duration.innerText = leg1.duration;
+
+            const leg2Duration = document.getElementById('leg2-duration');
+            if (leg2Duration) leg2Duration.innerText = leg2.duration;
+
+            function parseDurationStr(durArr) {
+                let h = 0; let m = 0;
+                durArr.forEach(d => {
+                    const dh = d.match(/(\d+)\s*h/i);
+                    const dm = d.match(/(\d+)\s*m/i);
+                    if (dh) h += parseInt(dh[1]);
+                    if (dm) m += parseInt(dm[1]);
+                });
+                h += Math.floor(m / 60);
+                m = m % 60;
+                return `${h}h ${m}m`;
+            }
+            const totalDur = document.getElementById('total-duration');
+            if (totalDur) {
+                totalDur.innerText = parseDurationStr([leg1.duration, leg2.duration, "0h 30m"]); // Adding 30m layover estimate
+            }
+
+            document.getElementById('btn-split-leg1').onclick = () => {
+                localStorage.setItem('selectedBusData', JSON.stringify({
+                    id: `bus_${leg1.bus_id}`,
+                    schedule_id: leg1.schedule_id,
+                    operator: leg1.operator,
+                    type: leg1.type,
+                    fare: leg1.fare,
+                    badge: "Leg 1 of Split Journey",
+                    confidence: leg1.confidence,
+                    carbon_footprint: leg1.carbon_footprint,
+                    safety_index: leg1.safety_index,
+                    overall_safety: leg1.overall_safety,
+                    delay: leg1.delay,
+                    departure_time: leg1.departure_datetime,
+                    arrival_time: leg1.arrival_datetime,
+                    duration: leg1.duration,
+                    ai_reasoning: "Selected as Leg 1 of your split journey."
+                }));
+                localStorage.setItem('passengerCount', passengers);
+                window.location.href = `/details`;
+            };
+
+            document.getElementById('btn-split-leg2').onclick = () => {
+                localStorage.setItem('selectedBusData', JSON.stringify({
+                    id: `bus_${leg2.bus_id}`,
+                    schedule_id: leg2.schedule_id,
+                    operator: leg2.operator,
+                    type: leg2.type,
+                    fare: leg2.fare,
+                    badge: "Leg 2 of Split Journey",
+                    confidence: leg2.confidence,
+                    carbon_footprint: leg2.carbon_footprint,
+                    safety_index: leg2.safety_index,
+                    overall_safety: leg2.overall_safety,
+                    delay: leg2.delay,
+                    departure_time: leg2.departure_datetime,
+                    arrival_time: leg2.arrival_datetime,
+                    duration: leg2.duration,
+                    ai_reasoning: "Selected as Leg 2 of your split journey."
+                }));
+                localStorage.setItem('passengerCount', passengers);
+                window.location.href = `/details`;
+            };
 
             setTimeout(() => {
                 const busStr = document.getElementById('animated-bus');
@@ -151,9 +259,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderChart(labels, data) {
         const ctx = document.getElementById('fareChart').getContext('2d');
-        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.5)');
-        gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
+
+        let strokeGradient = ctx.createLinearGradient(0, 0, 400, 0);
+        strokeGradient.addColorStop(0, '#a855f7');
+        strokeGradient.addColorStop(0.5, '#6366f1');
+        strokeGradient.addColorStop(1, '#38bdf8');
+
+        let fillGradient = ctx.createLinearGradient(0, 0, 0, 400);
+        fillGradient.addColorStop(0, 'rgba(168, 85, 247, 0.4)');
+        fillGradient.addColorStop(0.5, 'rgba(56, 189, 248, 0.1)');
+        fillGradient.addColorStop(1, 'rgba(17, 24, 39, 0)');
 
         fareChartInstance = new Chart(ctx, {
             type: 'line',
@@ -162,12 +277,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 datasets: [{
                     label: 'Predicted Fare (₹)',
                     data: data,
-                    borderColor: '#38bdf8',
-                    backgroundColor: gradient,
-                    borderWidth: 3,
-                    pointBackgroundColor: '#8b5cf6',
-                    pointBorderColor: '#fff',
-                    pointRadius: 5,
+                    borderColor: strokeGradient,
+                    backgroundColor: fillGradient,
+                    borderWidth: 4,
+                    pointBackgroundColor: '#111827',
+                    pointBorderColor: '#38bdf8',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    pointHoverRadius: 8,
                     fill: true,
                     tension: 0.4
                 }]
@@ -177,8 +294,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#94a3b8' } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+                    y: { grid: { color: 'rgba(255, 255, 255, 0.03)' }, ticks: { color: '#64748b' } },
+                    x: { grid: { color: 'rgba(255, 255, 255, 0.03)' }, ticks: { color: '#64748b' } }
                 }
             }
         });
@@ -199,6 +316,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const bus = globalDataCache.buses.find(b => b.id === bus_id);
         // Serialize its data via localstorage so details page can use it instantly without refetching the ML model dict
         localStorage.setItem('selectedBusData', JSON.stringify(bus));
+        localStorage.setItem('passengerCount', passengers);
         window.location.href = `/details`;
     };
 });

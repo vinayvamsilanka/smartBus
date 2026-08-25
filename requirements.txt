@@ -9,3 +9,9 @@ Flask-Bcrypt
 Flask-Migrate
 psycopg2-binary
 redis
+qrcode
+reportlab
+pymysql
+python-dotenv
+waitress
+gunicorn

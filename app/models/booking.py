@@ -11,6 +11,10 @@ class Booking(db.Model):
     fare_paid = db.Column(db.Float, nullable=False)
     booking_date = db.Column(db.DateTime, default=datetime.utcnow)
 
+    passenger_name = db.Column(db.String(100), nullable=True)
+    passenger_age = db.Column(db.Integer, nullable=True)
+    passenger_gender = db.Column(db.String(20), nullable=True)
+
     # Define unique constraint for seat per schedule so it doesn't double book
     __table_args__ = (db.UniqueConstraint('schedule_id', 'seat_number', name='_schedule_seat_uc'),)
 

@@ -1,0 +1,520 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    /* Premium Safety Theme Variables */
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.85);
+        --glass-border: rgba(0, 0, 0, 0.05);
+        --glow-primary: rgba(37, 99, 235, 0.08);
+        --glow-green: rgba(16, 185, 129, 0.08);
+        --accent-purple-glow: rgba(99, 102, 241, 0.08);
+    }
+
+    .dark-theme {
+        --glass-bg: rgba(30, 41, 59, 0.75);
+        --glass-border: rgba(255, 255, 255, 0.1);
+        --glow-primary: rgba(37, 99, 235, 0.15);
+        --glow-green: rgba(16, 185, 129, 0.15);
+    }
+
+    /* Container fade-in */
+    .safety-container {
+        max-width: 1200px;
+        margin: 3rem auto 6rem;
+        padding: 0 1.5rem;
+        animation: safetyFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes safetyFadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Hero section styling */
+    .safety-hero {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.04);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .dark-theme .safety-hero {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .safety-hero::before {
+        content: '';
+        position: absolute;
+        top: -60%; right: -10%;
+        width: 450px; height: 450px;
+        background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .safety-info-block {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .safety-avatar-glow {
+        width: 84px; height: 84px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
+        display: flex; align-items: center; justify-content: center;
+        color: white;
+        font-size: 2.2rem;
+        font-weight: 700;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.2);
+        border: 4px solid white;
+        position: relative;
+    }
+
+    .dark-theme .safety-avatar-glow {
+        border-color: var(--bg-dark);
+    }
+
+    .safety-meta h2 {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.3rem;
+        font-family: var(--font-heading);
+    }
+
+    .safety-meta p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .safety-badge {
+        font-size: 0.72rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        padding: 5px 12px;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* Grid Centering & Spacing */
+    .safety-grid {
+        display: grid;
+        grid-template-columns: 1.8fr 1.2fr;
+        gap: 2.5rem;
+        margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 968px) {
+        .safety-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .safety-panel {
+        background: var(--glass-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+        padding: 2rem;
+        transition: 0.3s;
+    }
+
+    .panel-header {
+        border-bottom: 1px solid var(--glass-border);
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .panel-header h3 {
+        font-family: var(--font-heading);
+        font-weight: 800;
+        font-size: 1.25rem;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    /* Table styling */
+    .safety-table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: left;
+    }
+
+    .safety-table th {
+        color: var(--text-secondary);
+        font-weight: 700;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border-bottom: 1.5px solid var(--glass-border);
+    }
+
+    .safety-table td {
+        padding: 1.2rem 1rem;
+        border-bottom: 1px solid var(--glass-border);
+        font-size: 0.92rem;
+    }
+
+    .safety-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .safety-score-pill {
+        background: rgba(16, 185, 129, 0.08);
+        color: var(--accent-green);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.8rem;
+    }
+
+    /* Telemetry widget styling */
+    .telemetry-widget {
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    .telemetry-screen {
+        background: #0f172a;
+        color: #10b981;
+        border: 1.5px solid #1e293b;
+        border-radius: 12px;
+        padding: 1.5rem;
+        font-family: monospace;
+        box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .telemetry-screen::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+        background-size: 100% 4px, 6px 100%;
+        pointer-events: none;
+    }
+
+    .telemetry-line {
+        margin-bottom: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .telemetry-line span.label {
+        color: #64748b;
+    }
+
+    .telemetry-line span.val {
+        font-weight: bold;
+    }
+
+    .telemetry-line span.alert {
+        color: #ef4444;
+        animation: telemetryPulse 1s infinite;
+    }
+
+    @keyframes telemetryPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.3; }
+    }
+
+    .btn-telemetry {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 0.8rem 1.2rem;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition: 0.25s;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+    }
+
+    .btn-telemetry:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    /* Index list progress bars */
+    .safety-indices {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .index-item {
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+    }
+
+    .index-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+    }
+
+    .index-bar-bg {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .dark-theme .index-bar-bg {
+        background: #334155;
+    }
+
+    .index-bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-primary), var(--accent-purple));
+        border-radius: 10px;
+        width: 0%;
+        transition: width 1.5s cubic-bezier(0.165, 0.84, 0.44, 1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="safety-container">
+
+    <!-- Safety Portal Hero Section -->
+    <div class="safety-hero">
+        <div class="safety-info-block">
+            <div class="safety-avatar-glow">
+                <i class="fa-solid fa-shield-halved"></i>
+            </div>
+            <div class="safety-meta">
+                <h2>Fleet Safety & Telemetry</h2>
+                <p>
+                    <span class="safety-badge"><i class="fa-solid fa-circle-check"></i> AI Verified Corridors</span>
+                    <span>Standard Audit: Every 24 hours</span>
+                </p>
+            </div>
+        </div>
+        <div class="telemetry-widget" style="min-width: 250px;">
+            <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-secondary); font-weight:700; letter-spacing:0.5px;">SYSTEM SECURITY LEVEL</div>
+            <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent-green); display: flex; align-items: center; gap: 8px; line-height: 1.1;">
+                94.8% <span style="font-size: 0.88rem; background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.2); padding: 4px 10px; border-radius: 20px; font-weight:700;">EXCELLENT</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Safety Grid -->
+    <div class="safety-grid">
+
+        <!-- Safest Fleet Assets -->
+        <div class="safety-panel">
+            <div class="panel-header">
+                <h3><i class="fa-solid fa-ranking-star" style="color: var(--accent-primary);"></i> Top Safest Fleet Coaches</h3>
+                <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">Ordered by DB Safety Rating</span>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="safety-table">
+                    <thead>
+                        <tr>
+                            <th>Coach & Operator Details</th>
+                            <th>Driver Score</th>
+                            <th>Maint. Score</th>
+                            <th>Women Safety</th>
+                            <th>Safety Index</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for coach in safest_coaches %}
+                        <tr>
+                            <td>
+                                <div style="font-weight:700; color: var(--text-primary);">SmartTravel {{ coach.bus_number }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">{{ coach.type }}</div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.driver_score }}%</div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.maintenance_score }}%</div>
+                            </td>
+                            <td>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.women_safety }}%</div>
+                            </td>
+                            <td>
+                                <span class="safety-score-pill">{{ coach.overall_score }}%</span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-secondary); padding: 2rem;">
+                                No fleet metrics available. Verify system database seeding.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Telemetry Simulator Widget -->
+        <div class="safety-panel" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+                <div class="panel-header">
+                    <h3><i class="fa-solid fa-satellite-dish" style="color: var(--accent-purple);"></i> Real-Time Coach Scan</h3>
+                </div>
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1.2rem;">Select and audit telemetry directly from active coach diagnostics.</p>
+                
+                <div class="telemetry-screen" id="telemetry-screen">
+                    <div class="telemetry-line">> SYSTEM READY FOR TESTING</div>
+                    <div class="telemetry-line">> AWAITING INITIATION DIAL...</div>
+                </div>
+            </div>
+            
+            <button class="btn-telemetry" id="btn-scan-telemetry" style="margin-top: 1.5rem; width: 100%;">
+                <i class="fa-solid fa-crosshairs" id="scan-icon"></i> <span id="scan-text">Start Telemetry Test Scan</span>
+            </button>
+        </div>
+
+    </div>
+
+    <!-- Bottom Safety Factors Summary -->
+    <div class="safety-panel">
+        <div class="panel-header">
+            <h3><i class="fa-solid fa-chart-line" style="color: var(--accent-purple);"></i> AI Safety Prioritization Metrics</h3>
+        </div>
+        <div class="safety-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 0; gap: 2rem;">
+            <div class="safety-indices">
+                <div class="index-item">
+                    <div class="index-label">
+                        <span>Driver Fatigue & Speed Auditing</span>
+                        <span>96.4% Accuracy</span>
+                    </div>
+                    <div class="index-bar-bg">
+                        <div class="index-bar-fill" style="width: 96.4%;"></div>
+                    </div>
+                </div>
+                <div class="index-item">
+                    <div class="index-label">
+                        <span>Real-Time Maintenance Checkups</span>
+                        <span>98.2% Adherence</span>
+                    </div>
+                    <div class="index-bar-bg">
+                        <div class="index-bar-fill" style="width: 98.2%;"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="safety-indices">
+                <div class="index-item">
+                    <div class="index-label">
+                        <span>Safe Night Corridor Routing</span>
+                        <span>92.5% Optimized</span>
+                    </div>
+                    <div class="index-bar-bg">
+                        <div class="index-bar-fill" style="width: 92.5%;"></div>
+                    </div>
+                </div>
+                <div class="index-item">
+                    <div class="index-label">
+                        <span>Women Comfort & Incident Containment</span>
+                        <span>95.0% Rated</span>
+                    </div>
+                    <div class="index-bar-bg">
+                        <div class="index-bar-fill" style="width: 95.0%;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('btn-scan-telemetry');
+        const screen = document.getElementById('telemetry-screen');
+        const icon = document.getElementById('scan-icon');
+        const btnText = document.getElementById('scan-text');
+
+        if (!btn || !screen) return;
+
+        let scanning = false;
+        
+        btn.addEventListener('click', () => {
+            if (scanning) return;
+            scanning = true;
+            
+            // UI Loading state
+            icon.className = "fa-solid fa-spinner fa-spin";
+            btnText.textContent = "Scanning active coaches...";
+            btn.style.opacity = "0.7";
+            
+            screen.innerHTML = `
+                <div class="telemetry-line">> SCANNING SATELLITE TELEMETRY FEED...</div>
+                <div class="telemetry-line">> LOCATING ACTIVE TRANSPORT LINERS...</div>
+                <div class="telemetry-line">> CONNECTING DIAGNOSTIC SENSORS...</div>
+            `;
+            
+            setTimeout(() => {
+                screen.innerHTML += `<div class="telemetry-line" style="color: #6366f1;">> CONNECTED TO SMARTTRAVEL ASSET #87</div>`;
+            }, 1000);
+
+            setTimeout(() => {
+                const speed = Math.floor(Math.random() * 20) + 55;
+                const temp = Math.floor(Math.random() * 10) + 85;
+                const driverScore = Math.floor(Math.random() * 8) + 90;
+                
+                screen.innerHTML = `
+                    <div class="telemetry-line" style="color:#6366f1;">> SCANNED VEHICLE AP-09-H8272 SUCCESSFUL</div>
+                    <div class="telemetry-line"><span class="label">SPEED PROFILE:</span> <span class="val">${speed} km/h</span></div>
+                    <div class="telemetry-line"><span class="label">ENGINE TEMP:</span> <span class="val">${temp}°C (OPTIMAL)</span></div>
+                    <div class="telemetry-line"><span class="label">DRIVER ALIVE SIGNAL:</span> <span class="val">ACTIVE</span></div>
+                    <div class="telemetry-line"><span class="label">FATIGUE INDEX:</span> <span class="val">LOW (Driver Rating: ${driverScore}%)</span></div>
+                    <div class="telemetry-line"><span class="label">PANIC ALERTS LOG:</span> <span class="val">0 ALERTS RECORDED</span></div>
+                    <div class="telemetry-line" style="color:#10b981;">> VERDICT: SECURE RIDE STATUS OK ✅</div>
+                `;
+                
+                // Reset button
+                icon.className = "fa-solid fa-crosshairs";
+                btnText.textContent = "Run Telemetry Test Scan";
+                btn.style.opacity = "1";
+                scanning = false;
+            }, 2500);
+        });
+    });
+</script>
+{% endblock %}

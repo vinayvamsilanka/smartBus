@@ -10,7 +10,7 @@ def role_required(role='Admin'):
         def wrapper(*args, **kwargs):
             user_id = get_jwt_identity()
             user = User.query.get(int(user_id))
-            if not user or user.role != role:
+            if not user or not user.role or user.role.name != role:
                 return jsonify({'msg': 'Access forbidden: Insufficient permissions'}), 403
             return fn(*args, **kwargs)
         return wrapper

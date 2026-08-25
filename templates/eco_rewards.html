@@ -1,0 +1,614 @@
+{% extends "base.html" %}
+
+{% block head %}
+<style>
+    /* Premium Eco-Rewards Theme Variables */
+    :root {
+        --glass-bg: rgba(255, 255, 255, 0.85);
+        --glass-border: rgba(0, 0, 0, 0.05);
+        --accent-green-glow: rgba(16, 185, 129, 0.08);
+        --accent-purple-glow: rgba(99, 102, 241, 0.08);
+    }
+
+    /* Container fade-in */
+    .rewards-container {
+        max-width: 1200px;
+        margin: 3rem auto 6rem;
+        padding: 0 1.5rem;
+        animation: rewardsFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes rewardsFadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* High Fidelity Header Profile Card */
+    .profile-hero {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.95));
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        box-shadow: 0 15px 40px -10px rgba(0, 0, 0, 0.04);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2.5rem;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        align-items: center;
+        gap: 2rem;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .profile-hero::before {
+        content: '';
+        position: absolute;
+        top: -60%; right: -10%;
+        width: 450px; height: 450px;
+        background: radial-gradient(circle, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
+        pointer-events: none;
+    }
+
+    .profile-info-block {
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .avatar-glow {
+        width: 84px; height: 84px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
+        display: flex; align-items: center; justify-content: center;
+        color: white;
+        font-size: 2.2rem;
+        font-weight: 700;
+        font-family: var(--font-heading);
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.2);
+        border: 4px solid white;
+        position: relative;
+    }
+
+    .avatar-glow .status-indicator {
+        position: absolute;
+        bottom: 2px; right: 2px;
+        width: 18px; height: 18px;
+        background: var(--accent-green);
+        border: 3.5px solid white;
+        border-radius: 50%;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+    }
+
+    .profile-meta h2 {
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.3rem;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+    }
+
+    .profile-meta p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .tier-badge {
+        font-size: 0.7rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        padding: 5px 12px;
+        border-radius: 50px;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        line-height: 1;
+    }
+
+    /* Milestone Tracker Box */
+    .milestone-container {
+        flex: 1 1 360px;
+        max-width: 480px;
+        background: rgba(0, 0, 0, 0.015);
+        border: 1px solid rgba(0, 0, 0, 0.03);
+        padding: 1.25rem;
+        border-radius: 18px;
+    }
+
+    .milestone-header {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        margin-bottom: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .milestone-bar {
+        height: 10px;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 0.6rem;
+        position: relative;
+    }
+
+    .milestone-progress {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent-green), #34d399);
+        border-radius: 10px;
+        width: 50%;
+        transition: width 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .milestone-desc {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 500;
+    }
+
+    /* Catalog Section */
+    .section-title {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .filter-pills {
+        display: flex;
+        gap: 0.8rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .filter-pill {
+        padding: 8px 18px;
+        border-radius: 50px;
+        border: 1px solid rgba(0, 0, 0, 0.06);
+        background: white;
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-pill:hover, .filter-pill.active {
+        background: var(--accent-green);
+        color: white;
+        border-color: var(--accent-green);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+    }
+
+    /* Product Grid */
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3.5rem;
+    }
+
+    .product-card {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 20px;
+        padding: 1.8rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.015);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        min-height: 320px;
+    }
+
+    .product-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 4.5px;
+        background: linear-gradient(90deg, var(--accent-green), #34d399);
+    }
+
+    .product-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.035);
+        border-color: rgba(16, 185, 129, 0.2);
+    }
+
+    .prod-category-pill {
+        align-self: flex-start;
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        padding: 4px 10px;
+        border-radius: 30px;
+        background: rgba(16, 185, 129, 0.08);
+        color: var(--accent-green);
+        margin-bottom: 1.2rem;
+    }
+
+    .prod-icon-wrapper {
+        width: 60px; height: 60px;
+        border-radius: 16px;
+        background: rgba(16, 185, 129, 0.05);
+        color: var(--accent-green);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.8rem;
+        margin-bottom: 1.2rem;
+        border: 1px solid rgba(16, 185, 129, 0.1);
+        transition: 0.3s;
+    }
+
+    .product-card:hover .prod-icon-wrapper {
+        transform: scale(1.08) rotate(-5deg);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .product-title {
+        font-size: 1.15rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+        line-height: 1.25;
+    }
+
+    .product-desc {
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        margin-bottom: 1.5rem;
+        line-height: 1.45;
+        flex-grow: 1;
+    }
+
+    .prod-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: auto;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.03);
+    }
+
+    .prod-cost {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .cost-value {
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: var(--text-primary);
+    }
+
+    .cost-label {
+        font-size: 0.72rem;
+        color: var(--text-secondary);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .btn-redeem {
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
+    }
+
+    .btn-redeem:hover:not(:disabled) {
+        background: #1d4ed8;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+    }
+
+    .btn-redeem:disabled {
+        background: rgba(0,0,0,0.06);
+        color: var(--text-secondary);
+        box-shadow: none;
+        cursor: not-allowed;
+    }
+
+    /* Active Claims Section */
+    .claims-panel {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        border-radius: 24px;
+        padding: 2.2rem;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.015);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .table-claims {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .table-claims th {
+        padding: 1rem;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--text-secondary);
+        font-weight: 700;
+        text-align: left;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.04);
+    }
+
+    .table-claims td {
+        padding: 1.2rem 1rem;
+        font-size: 0.88rem;
+        color: var(--text-primary);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+        vertical-align: middle;
+    }
+
+    .claim-row {
+        transition: background 0.25s;
+    }
+
+    .claim-row:hover {
+        background: rgba(16, 185, 129, 0.015);
+    }
+
+    .coupon-badge {
+        font-family: monospace;
+        font-size: 0.95rem;
+        font-weight: 700;
+        padding: 6px 12px;
+        background: rgba(0, 0, 0, 0.03);
+        border: 1px solid rgba(0,0,0,0.05);
+        border-radius: 8px;
+        color: var(--text-primary);
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-copy {
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: color 0.2s;
+        font-size: 0.85rem;
+    }
+
+    .btn-copy:hover {
+        color: var(--accent-primary);
+    }
+
+    .badge-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 30px;
+    }
+
+    .badge-status.active {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent-green);
+    }
+
+    .badge-status.used {
+        background: rgba(0,0,0,0.06);
+        color: var(--text-secondary);
+    }
+
+    /* Toast notification styling */
+    .toast-container {
+        position: fixed;
+        bottom: 2.5rem; right: 2.5rem;
+        z-index: 10000;
+        display: flex;
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+
+    .toast-alert {
+        background: #0f172a;
+        color: white;
+        padding: 1.1rem 1.6rem;
+        border-radius: 16px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        font-size: 0.92rem;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.06);
+        transform: translateY(20px);
+        opacity: 0;
+        animation: toastFlyIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        transition: all 0.3s;
+    }
+
+    @keyframes toastFlyIn {
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    .toast-alert.success { border-left: 5px solid var(--accent-green); }
+    .toast-alert.error { border-left: 5px solid var(--accent-error); }
+
+    /* Active Coupon Board Card Styling */
+    .active-coupon-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+        border: 1.5px solid rgba(16, 185, 129, 0.35);
+        border-radius: 20px;
+        padding: 1.4rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 0 20px rgba(16, 185, 129, 0.08);
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+    
+    .active-coupon-card:hover {
+        transform: translateY(-4px);
+        border-color: rgba(16, 185, 129, 0.6);
+        box-shadow: 0 15px 35px rgba(16, 185, 129, 0.25);
+    }
+    
+    .active-coupon-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+        background: linear-gradient(90deg, #10b981, #f59e0b, #3b82f6);
+    }
+
+    .pulse-dot {
+        width: 8px; height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 10px #10b981;
+        display: inline-block;
+        animation: pulseDot 1.5s infinite;
+    }
+
+    @keyframes pulseDot {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+        70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rewards-container">
+
+    <!-- Profile Hero Header -->
+    <div class="profile-hero">
+        <div class="profile-info-block">
+            <div class="avatar-glow">
+                <span id="user-avatar-initials">U</span>
+                <div class="status-indicator"></div>
+            </div>
+            <div class="profile-meta">
+                <h2>Hi, <span id="welcome-user-name" class="highlight">Traveler</span> <span class="tier-badge" id="user-tier-badge"><i class="fa-solid fa-crown"></i> ECO PLATINUM</span></h2>
+                <p><i class="fa-solid fa-leaf" style="color: var(--accent-green);"></i> <span id="user-tier-text">Eco Voyager</span></p>
+            </div>
+        </div>
+
+        <div class="milestone-container">
+            <div class="milestone-header">
+                <span>GREEN MILES BALANCE</span>
+                <span><span id="curr-eco-pts">--</span> / 300 Pts</span>
+            </div>
+            <div class="milestone-bar">
+                <div class="milestone-progress" id="milestone-prog-fill" style="width: 0%;"></div>
+            </div>
+            <div class="milestone-desc" id="milestone-desc-content">
+                <i class="fa-solid fa-sparkles text-glow" style="color: var(--accent-gold);"></i>
+                <span>Loading green loyalty status...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP-MEDIUM ACTIVE UNUSED ECO COUPONS BOARD -->
+    <div id="active-coupons-section" style="margin-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+            <h3 class="section-title" style="margin: 0; display: flex; align-items: center; gap: 0.6rem; font-size: 1.25rem;">
+                <i class="fa-solid fa-ticket-simple" style="color: var(--accent-gold); font-size: 1.3rem;"></i> 
+                Active Unused Eco Vouchers & Coupons
+            </h3>
+            <span id="active-coupons-count-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 14px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">
+                0 Active
+            </span>
+        </div>
+        <div id="active-coupons-board-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+            <!-- Rendered dynamically by rewards.js -->
+            <div style="grid-column: 1 / -1; background: rgba(15, 23, 42, 0.5); border: 1.5px dashed rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; text-align: center; color: var(--text-secondary);">
+                <i class="fa-solid fa-ticket" style="font-size: 2rem; color: var(--accent-gold); opacity: 0.6; margin-bottom: 0.5rem; display: block;"></i>
+                <p style="font-size: 0.95rem; font-weight: 600; color: #ffffff; margin-bottom: 4px;">No active unused coupons currently</p>
+                <small style="color: var(--text-secondary);">Redeem your Green Miles in the catalog below to generate discount coupons that will stay active here on screen until you use them for bus booking!</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Store Section -->
+    <h3 class="section-title"><i class="fa-solid fa-store" style="color: var(--accent-green);"></i> Eco-Rewards Catalog</h3>
+    
+    <!-- Filter Pills -->
+    <div class="filter-pills">
+        <button class="filter-pill active" onclick="filterCatalog('All')">All Rewards</button>
+        <button class="filter-pill" onclick="filterCatalog('Voucher')">Ride Vouchers</button>
+        <button class="filter-pill" onclick="filterCatalog('Merchandise')">Merchandise</button>
+        <button class="filter-pill" onclick="filterCatalog('Carbon Offset')">Carbon Offsets</button>
+    </div>
+
+    <!-- Product Grid -->
+    <div class="products-grid" id="products-catalog-grid">
+        <!-- Rendered dynamically by rewards.js -->
+        <div style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-secondary);">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--accent-green); margin-bottom: 0.8rem; display:block; margin-left:auto; margin-right:auto;"></i>
+            Loading rewards catalog...
+        </div>
+    </div>
+
+    <!-- Claims Section -->
+    <div class="claims-panel">
+        <h3 class="section-title" style="margin-bottom: 1.5rem;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-purple);"></i> Active Vouchers & Claims</h3>
+        <div style="overflow-x: auto;">
+            <table class="table-claims">
+                <thead>
+                    <tr>
+                        <th>Reward Item</th>
+                        <th>Category</th>
+                        <th>Points Spent</th>
+                        <th>Redeemed Date</th>
+                        <th>Claim Coupon Code</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="claims-table-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+                            Awaiting claims query...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<!-- Floating Toast Container -->
+<div class="toast-container" id="toast-alerts-box"></div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/rewards.js') }}"></script>
+{% endblock %}

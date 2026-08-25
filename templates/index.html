@@ -30,7 +30,7 @@
         margin: 0 !important;
         width: 100% !important;
     }
-    
+
     .glass {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -96,7 +96,7 @@
     /* Hero Section */
     .hero-section {
         position: relative;
-        min-height: calc(100vh - 80px);
+        min-height: clamp(650px, 100vh - 80px, 900px);
         width: 100%;
         display: flex;
         flex-direction: column;
@@ -105,15 +105,20 @@
         padding: 40px 20px;
         /* Custom overflow: visible for search dropdown support */
         overflow: visible;
-        background: var(--bg-main);
+        background: linear-gradient(rgba(15, 23, 42, 0.35), rgba(15, 23, 42, 0.65)), url('/static/img/smart_bus_sunset.png') center/cover no-repeat;
     }
 
     /* Hide the orbs */
-    .hero-orb, .hero-grid, .hero-particle { display: none; }
+    .hero-orb,
+    .hero-grid,
+    .hero-particle {
+        display: none;
+    }
 
     /* Subtle dot grid background */
     .hero-grid {
-        position: absolute; inset: 0;
+        position: absolute;
+        inset: 0;
         background-image: radial-gradient(rgba(0, 240, 255, 0.08) 1px, transparent 1px);
         background-size: 40px 40px;
         z-index: 0;
@@ -122,17 +127,32 @@
     /* Floating particles */
     .hero-particle {
         position: absolute;
-        width: 4px; height: 4px;
+        width: 4px;
+        height: 4px;
         border-radius: 50%;
         background: var(--neon-blue);
         opacity: 0.5;
         animation: particleFly linear infinite;
     }
+
     @keyframes particleFly {
-        0% { transform: translateY(100vh) scale(0); opacity: 0; }
-        10% { opacity: 0.6; }
-        90% { opacity: 0.4; }
-        100% { transform: translateY(-100px) scale(1.5); opacity: 0; }
+        0% {
+            transform: translateY(100vh) scale(0);
+            opacity: 0;
+        }
+
+        10% {
+            opacity: 0.6;
+        }
+
+        90% {
+            opacity: 0.4;
+        }
+
+        100% {
+            transform: translateY(-100px) scale(1.5);
+            opacity: 0;
+        }
     }
 
     /* Hero Content Center */
@@ -145,9 +165,17 @@
         margin: 0 auto;
         animation: fadeUp 0.9s ease-out both;
     }
+
     @keyframes fadeUp {
-        from { opacity: 0; transform: translateY(40px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     .hero-badge {
@@ -165,14 +193,26 @@
         text-transform: uppercase;
         margin-bottom: 28px;
     }
+
     .hero-badge .dot {
-        width: 8px; height: 8px; border-radius: 50%;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
         background: var(--neon-blue);
         box-shadow: 0 0 8px var(--neon-blue);
         animation: blink 1.5s ease-in-out infinite;
     }
+
     @keyframes blink {
-        0%, 100% { opacity: 1; } 50% { opacity: 0.3; }
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.3;
+        }
     }
 
     .hero-title {
@@ -181,17 +221,19 @@
         line-height: 1.2;
         letter-spacing: 1px;
         margin: 0 0 10px 0;
-        color: var(--text-primary);
+        color: #ffffff;
         text-transform: uppercase;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
 
     .hero-tagline {
         font-size: clamp(1.1rem, 2vw, 1.8rem);
-        color: var(--text-secondary);
+        color: #f1f5f9;
         font-weight: 500;
         max-width: 900px;
         margin: 0 auto 40px;
         line-height: 1.4;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
     }
 
     /* Hero Stats Row */
@@ -202,9 +244,11 @@
         margin-bottom: 50px;
         flex-wrap: wrap;
     }
+
     .hero-stat {
         text-align: center;
     }
+
     .hero-stat .stat-number {
         font-size: 1.9rem;
         font-weight: 800;
@@ -216,6 +260,7 @@
         line-height: 1;
         margin-bottom: 5px;
     }
+
     .hero-stat .stat-label {
         font-size: 0.82rem;
         color: var(--text-secondary);
@@ -254,7 +299,8 @@
         justify-content: center;
         align-items: center;
         position: relative;
-        z-index: 100; /* Ensure this is above the button container */
+        z-index: 100;
+        /* Ensure this is above the button container */
     }
 
     .search-field {
@@ -280,7 +326,7 @@
         box-shadow: 0 8px 20px -6px rgba(37, 99, 235, 0.15);
         transform: translateY(-2px);
     }
-    
+
     .search-field:focus-within {
         background: #ffffff;
         border-color: var(--neon-blue);
@@ -310,13 +356,14 @@
         color: var(--neon-blue);
         transition: transform 0.3s ease;
     }
-    
+
     .search-field:hover label i,
     .search-field:focus-within label i {
         transform: scale(1.15);
     }
 
-    .search-field input, .search-field select {
+    .search-field input,
+    .search-field select {
         background: transparent;
         border: none;
         color: var(--text-primary);
@@ -328,19 +375,19 @@
         font-family: inherit;
         cursor: pointer;
     }
-    
+
     .search-field input::placeholder {
         color: #94a3b8;
         font-weight: 500;
     }
-    
+
     .search-field input[type="date"]::-webkit-calendar-picker-indicator {
         filter: none;
         cursor: pointer;
         opacity: 0.7;
         transition: opacity 0.3s ease;
     }
-    
+
     .search-field:hover input[type="date"]::-webkit-calendar-picker-indicator,
     .search-field:focus-within input[type="date"]::-webkit-calendar-picker-indicator {
         opacity: 1;
@@ -351,7 +398,8 @@
         display: flex;
         justify-content: center;
         position: relative;
-        z-index: 10; /* Lower than inputs container for the dropdown */
+        z-index: 10;
+        /* Lower than inputs container for the dropdown */
     }
 
     .btn-neon {
@@ -377,14 +425,22 @@
 
     /* Professional Shimmer Effect */
     @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
+        0% {
+            transform: translateX(-100%);
+        }
+
+        100% {
+            transform: translateX(100%);
+        }
     }
 
     .btn-neon::after {
         content: '';
         position: absolute;
-        top: 0; left: 0; width: 50%; height: 100%;
+        top: 0;
+        left: 0;
+        width: 50%;
+        height: 100%;
         background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
         transform: skewX(-20deg) translateX(-150%);
         animation: shimmer 3s infinite;
@@ -405,7 +461,7 @@
     .search-field {
         background: #ffffff;
         border: 1px solid #e2e8f0;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
 
     .search-field:hover {
@@ -415,7 +471,7 @@
 
     .search-field:focus-within {
         border-color: rgba(37, 99, 235, 0.5);
-        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 10px 15px -3px rgba(0,0,0,0.05);
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1), 0 10px 15px -3px rgba(0, 0, 0, 0.05);
     }
 
     @media (max-width: 768px) {
@@ -440,7 +496,7 @@
         text-align: center;
         margin-bottom: 60px;
     }
-    
+
     .neon-badge {
         display: inline-block;
         padding: 6px 16px;
@@ -488,13 +544,18 @@
     .sj-card::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; width: 100%; height: 4px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
         background: linear-gradient(90deg, transparent, var(--neon-blue), transparent);
         opacity: 0;
         transition: opacity 0.3s;
     }
 
-    .sj-card:hover::before { opacity: 1; }
+    .sj-card:hover::before {
+        opacity: 1;
+    }
 
     .sj-icon {
         font-size: 2.5rem;
@@ -528,13 +589,13 @@
     .route-dot {
         width: 14px;
         height: 14px;
-        background: white;
+        background: #cbd5e1;
         border-radius: 50%;
         position: relative;
         z-index: 2;
-        box-shadow: 0 0 10px rgba(255,255,255,0.5);
+        box-shadow: 0 0 10px rgba(203, 213, 225, 0.5);
     }
-    
+
     .route-dot.glow {
         background: var(--neon-blue);
         box-shadow: 0 0 15px var(--neon-blue);
@@ -546,7 +607,7 @@
         left: 10px;
         right: 10px;
         height: 2px;
-        background: rgba(255,255,255,0.2);
+        background: #e2e8f0;
         z-index: 1;
         transform: translateY(-50%);
     }
@@ -608,7 +669,7 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
-        border-top: 1px solid rgba(255,255,255,0.05);
+        border-top: 1px solid #e2e8f0;
         padding-top: 15px;
     }
 
@@ -629,8 +690,8 @@
     .split-layout.reverse {
         direction: rtl;
     }
-    
-    .split-layout.reverse > * {
+
+    .split-layout.reverse>* {
         direction: ltr;
     }
 
@@ -663,9 +724,11 @@
 
     .map-radar {
         position: absolute;
-        top: 50%; left: 50%;
+        top: 50%;
+        left: 50%;
         transform: translate(-50%, -50%);
-        width: 100px; height: 100px;
+        width: 100px;
+        height: 100px;
         border-radius: 50%;
         border: 2px solid rgba(0, 240, 255, 0.5);
         animation: radarPing 2s ease-out infinite;
@@ -673,20 +736,33 @@
 
     .bus-marker {
         position: absolute;
-        top: 50%; left: 50%;
+        top: 50%;
+        left: 50%;
         transform: translate(-50%, -50%);
-        width: 40px; height: 40px;
+        width: 40px;
+        height: 40px;
         background: var(--neon-blue);
         border-radius: 50%;
-        display: flex; align-items: center; justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         box-shadow: 0 0 20px var(--neon-blue);
         color: #000;
         font-size: 1.2rem;
     }
-    
+
     @keyframes radarPing {
-        0% { width: 0; height: 0; opacity: 1; }
-        100% { width: 300px; height: 300px; opacity: 0; }
+        0% {
+            width: 0;
+            height: 0;
+            opacity: 1;
+        }
+
+        100% {
+            width: 300px;
+            height: 300px;
+            opacity: 0;
+        }
     }
 
     .live-info {
@@ -694,7 +770,8 @@
         justify-content: space-between;
         align-items: center;
         padding: 15px;
-        background: rgba(255,255,255,0.03);
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
         border-radius: 16px;
     }
 
@@ -705,15 +782,29 @@
     }
 
     .driver-avatar {
-        width: 50px; height: 50px;
+        width: 50px;
+        height: 50px;
         border-radius: 50%;
         background: var(--accent-blue);
-        display: flex; justify-content: center; align-items: center;
-        font-weight: 700; font-size: 1.2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: 700;
+        font-size: 1.2rem;
     }
 
-    .live-eta h4 { margin: 0; font-size: 1.8rem; color: var(--neon-blue); }
-    .live-eta p { margin: 0; font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; }
+    .live-eta h4 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: var(--neon-blue);
+    }
+
+    .live-eta p {
+        margin: 0;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+    }
 
     /* Features Grid */
     .features-grid {
@@ -733,13 +824,21 @@
         margin-bottom: 20px;
         display: inline-block;
         padding: 15px;
-        background: rgba(0, 240, 255, 0.05);
+        background: #eff6ff;
         border-radius: 50%;
-        border: 1px solid rgba(0, 240, 255, 0.2);
+        border: 1px solid #bfdbfe;
     }
 
-    .feature-item h3 { font-size: 1.2rem; margin-bottom: 10px; }
-    .feature-item p { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.5; }
+    .feature-item h3 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+    }
+
+    .feature-item p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
 
     /* Seat Selection Preview */
     .seat-preview-mockup {
@@ -753,29 +852,39 @@
     }
 
     .steering-wheel {
-        width: 60px; height: 60px;
-        border: 6px solid rgba(255,255,255,0.2);
+        width: 60px;
+        height: 60px;
+        border: 6px solid #cbd5e1;
         border-radius: 50%;
         margin-bottom: 20px;
         position: relative;
     }
-    
+
     .steering-wheel::after {
         content: '';
         position: absolute;
-        top: 50%; left: 5px; right: 5px; height: 4px;
-        background: rgba(255,255,255,0.2);
+        top: 50%;
+        left: 5px;
+        right: 5px;
+        height: 4px;
+        background: #cbd5e1;
         transform: translateY(-50%);
     }
 
     .seat-row {
-        display: flex; gap: 15px; width: 100%; justify-content: center;
+        display: flex;
+        gap: 15px;
+        width: 100%;
+        justify-content: center;
     }
 
-    .aisle-space { width: 40px; }
+    .aisle-space {
+        width: 40px;
+    }
 
     .bus-seat {
-        width: 45px; height: 55px;
+        width: 45px;
+        height: 55px;
         border-radius: 12px 12px 8px 8px;
         background: #f1f5f9;
         border: 2px solid #e2e8f0;
@@ -803,14 +912,37 @@
     }
 
     .legend-row {
-        display: flex; gap: 20px; margin-top: 20px;
+        display: flex;
+        gap: 20px;
+        margin-top: 20px;
     }
 
-    .legend-item { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; }
-    .legend-box { width: 16px; height: 16px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.2); }
-    .legend-box.av { background: #1e293b; }
-    .legend-box.bk { background: rgba(239, 68, 68, 0.2); border-color: rgba(239, 68, 68, 0.5); }
-    .legend-box.sl { background: var(--neon-blue); }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+    }
+
+    .legend-box {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+    }
+
+    .legend-box.av {
+        background: #f1f5f9;
+    }
+
+    .legend-box.bk {
+        background: #fee2e2;
+        border-color: #fca5a5;
+    }
+
+    .legend-box.sl {
+        background: var(--neon-blue);
+    }
 
     /* Mobile Promo & Reviews */
     .app-promo-card {
@@ -825,29 +957,52 @@
         position: relative;
         overflow: hidden;
     }
-    
+
     .app-promo-card::before {
         content: '';
         position: absolute;
-        top: -50%; right: -10%;
-        width: 400px; height: 400px;
+        top: -50%;
+        right: -10%;
+        width: 400px;
+        height: 400px;
         background: radial-gradient(circle, rgba(59, 130, 246, 0.2) 0%, transparent 60%);
         border-radius: 50%;
     }
 
-    .store-btns { display: flex; gap: 15px; margin-top: 30px; }
-    
+    .store-btns {
+        display: flex;
+        gap: 15px;
+        margin-top: 30px;
+    }
+
     .store-btn {
-        background: white; color: black;
-        padding: 12px 24px; border-radius: 12px;
-        display: flex; align-items: center; gap: 12px;
-        font-weight: 700; cursor: pointer; border: none;
+        background: white;
+        color: black;
+        padding: 12px 24px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        border: none;
         transition: transform 0.3s;
     }
 
-    .store-btn:hover { transform: translateY(-5px); }
-    .store-btn i { font-size: 1.8rem; }
-    .store-btn span { display: block; font-size: 0.7rem; font-weight: 500; text-transform: uppercase; }
+    .store-btn:hover {
+        transform: translateY(-5px);
+    }
+
+    .store-btn i {
+        font-size: 1.8rem;
+    }
+
+    .store-btn span {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
 
     /* Testimonials */
     .reviews-container {
@@ -856,32 +1011,57 @@
         overflow-x: auto;
         padding-bottom: 20px;
         scrollbar-width: thin;
-        scrollbar-color: var(--neon-blue) rgba(255,255,255,0.05);
+        scrollbar-color: var(--neon-blue) rgba(255, 255, 255, 0.05);
     }
-    
+
     .review-card {
         min-width: 350px;
         padding: 30px;
     }
 
-    .review-stars { color: #facc15; font-size: 1.2rem; margin-bottom: 15px; }
-    .review-text { font-size: 1.1rem; line-height: 1.6; font-style: italic; margin-bottom: 20px; }
-    .review-author { display: flex; align-items: center; gap: 15px; }
-    .author-img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: #334155; }
+    .review-stars {
+        color: #facc15;
+        font-size: 1.2rem;
+        margin-bottom: 15px;
+    }
+
+    .review-text {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        font-style: italic;
+        margin-bottom: 20px;
+    }
+
+    .review-author {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .author-img {
+        width: 45px;
+        height: 45px;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #334155;
+    }
 
     /* Footer */
     .premium-footer {
         background: #02040a;
         padding: 80px 0 30px 0;
-        border-top: 1px solid rgba(255,255,255,0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
         position: relative;
         overflow: hidden;
     }
-    
+
     .footer-glowing-lines {
         position: absolute;
-        bottom: 0; left: 0; width: 100%; height: 200px;
-        background: 
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 200px;
+        background:
             radial-gradient(ellipse at bottom, rgba(0, 240, 255, 0.15) 0%, transparent 70%);
         pointer-events: none;
     }
@@ -895,41 +1075,84 @@
         z-index: 2;
     }
 
-    .footer-brand h2 { font-size: 2rem; margin-bottom: 20px; }
-    .footer-brand p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 25px; max-width: 300px; }
-
-    .social-icons { display: flex; gap: 15px; }
-    .social-icons a {
-        width: 40px; height: 40px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.05);
-        display: flex; justify-content: center; align-items: center;
-        color: white; transition: all 0.3s;
+    .footer-brand h2 {
+        font-size: 2rem;
+        margin-bottom: 20px;
     }
-    .social-icons a:hover { background: var(--neon-blue); color: black; transform: translateY(-3px); }
 
-    .footer-links h4 { font-size: 1.2rem; margin-bottom: 25px; color: white; }
-    .footer-links ul { list-style: none; padding: 0; margin: 0; }
-    .footer-links li { margin-bottom: 12px; }
-    .footer-links a { color: var(--text-secondary); text-decoration: none; transition: color 0.3s; }
-    .footer-links a:hover { color: var(--neon-blue); }
+    .footer-brand p {
+        color: #94a3b8;
+        line-height: 1.6;
+        margin-bottom: 25px;
+        max-width: 300px;
+    }
+
+    .social-icons {
+        display: flex;
+        gap: 15px;
+    }
+
+    .social-icons a {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.05);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        transition: all 0.3s;
+    }
+
+    .social-icons a:hover {
+        background: var(--neon-blue);
+        color: black;
+        transform: translateY(-3px);
+    }
+
+    .footer-links h4 {
+        font-size: 1.2rem;
+        margin-bottom: 25px;
+        color: white;
+    }
+
+    .footer-links ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .footer-links li {
+        margin-bottom: 12px;
+    }
+
+    .footer-links a {
+        color: #94a3b8;
+        text-decoration: none;
+        transition: color 0.3s;
+    }
+
+    .footer-links a:hover {
+        color: var(--neon-blue);
+    }
 
     .footer-bottom {
         text-align: center;
         padding-top: 30px;
-        border-top: 1px solid rgba(255,255,255,0.05);
-        color: var(--text-secondary);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        color: #94a3b8;
         font-size: 0.9rem;
         position: relative;
         z-index: 2;
     }
+
     .search-panel-wrapper {
         position: relative;
         z-index: 100;
     }
 
-    .search-panel { 
-        overflow: visible !important; 
+    .search-panel {
+        overflow: visible !important;
     }
 
     /* City Selector Grid Styling - Premium Redesign */
@@ -941,22 +1164,33 @@
         background: #ffffff;
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
-        border: 2px solid var(--neon-blue); /* Stronger border for visibility */
+        border: 2px solid var(--neon-blue);
+        /* Stronger border for visibility */
         border-radius: 20px;
         padding: 10px;
         display: none;
         flex-direction: column;
         gap: 5px;
-        z-index: 5000; /* Extremely high z-index to stay on top of everything */
-        box-shadow: 0 35px 70px -15px rgba(0, 0, 0, 0.35); /* Stronger shadow */
-        max-height: 400px; /* Slight increase in height */
+        z-index: 5000;
+        /* Extremely high z-index to stay on top of everything */
+        box-shadow: 0 35px 70px -15px rgba(0, 0, 0, 0.35);
+        /* Stronger shadow */
+        max-height: 400px;
+        /* Slight increase in height */
         overflow-y: auto;
         animation: drop-reveal 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     @keyframes drop-reveal {
-        from { opacity: 0; transform: translateY(-10px) scale(0.98); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+        from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.98);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
     }
 
     .city-selector-header {
@@ -1032,24 +1266,66 @@
     .city-selector-grid::-webkit-scrollbar-thumb:hover {
         background: var(--neon-blue);
     }
+
     /* Responsive */
     @media (max-width: 1024px) {
-        .split-layout { grid-template-columns: 1fr; gap: 50px; }
-        .search-panel { grid-template-columns: 1fr 1fr; }
-        .features-grid { grid-template-columns: repeat(2, 1fr); }
-        .footer-grid { grid-template-columns: 1fr 1fr; }
-        .hero-stats { gap: 25px; }
-        .stat-divider { display: none; }
+        .split-layout {
+            grid-template-columns: 1fr;
+            gap: 50px;
+        }
+
+        .search-panel {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .features-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .footer-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .hero-stats {
+            gap: 25px;
+        }
+
+        .stat-divider {
+            display: none;
+        }
     }
 
     @media (max-width: 768px) {
-        .search-panel { padding: 20px; }
-        .search-field { flex: 1 1 100%; min-width: 100%; }
-        .features-grid { grid-template-columns: 1fr; }
-        .footer-grid { grid-template-columns: 1fr; }
-        .app-promo-card { flex-direction: column; text-align: center; padding: 40px 20px; }
-        .store-btns { justify-content: center; }
-        .hero-title { letter-spacing: -1px; }
+        .search-panel {
+            padding: 20px;
+        }
+
+        .search-field {
+            flex: 1 1 100%;
+            min-width: 100%;
+        }
+
+        .features-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .footer-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .app-promo-card {
+            flex-direction: column;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .store-btns {
+            justify-content: center;
+        }
+
+        .hero-title {
+            letter-spacing: -1px;
+        }
     }
 </style>
 {% endblock %}
@@ -1061,18 +1337,28 @@
     <div class="hero-bg-lines"></div>
     <div class="sky-routes">
         <svg viewBox="0 0 1000 400" preserveAspectRatio="none" style="width:100%; height:100%;">
-            <path d="M-100,200 Q200,50 400,250 T800,100 T1200,200" fill="none" stroke="var(--neon-blue)" stroke-width="2" opacity="0.4"/>
-            <path d="M-100,250 Q150,300 350,150 T700,200 T1200,150" fill="none" stroke="var(--accent-purple)" stroke-width="2" opacity="0.3"/>
-            <path d="M0,100 Q250,100 500,250 T1000,150 T1200,50" fill="none" stroke="#fff" stroke-width="1" opacity="0.2"/>
+            <path d="M-100,200 Q200,50 400,250 T800,100 T1200,200" fill="none" stroke="var(--neon-blue)"
+                stroke-width="2" opacity="0.4" />
+            <path d="M-100,250 Q150,300 350,150 T700,200 T1200,150" fill="none" stroke="var(--accent-purple)"
+                stroke-width="2" opacity="0.3" />
+            <path d="M0,100 Q250,100 500,250 T1000,150 T1200,50" fill="none" stroke="#fff" stroke-width="1"
+                opacity="0.2" />
         </svg>
     </div>
 
-    <div class="hero-container" style="width: 100%; display: flex; flex-direction: column; align-items: center; max-width: 1200px; margin: 0 auto; text-align: center;">
-        <div class="hero-content" style="max-width: 900px; margin-bottom: 30px;">
-            <h1 class="hero-title" style="margin-bottom: 5px; font-weight: 800;">SMARTBUS AI</h1>
-            <p class="hero-subtitle" style="font-size: 1.3rem; color: var(--neon-blue); margin-bottom: 15px; font-weight: 600;">Smarter Routes. Better Journeys.</p>
-            <p class="hero-tagline" style="color: var(--text-secondary); text-transform: none; max-width: 700px;">
-                Discover the fastest, cheapest, and most comfortable bus journeys with<br>intelligent route optimization. Step into the future of transport.
+    <div class="hero-container"
+        style="width: 100%; display: flex; flex-direction: column; align-items: center; max-width: 1200px; margin: 0 auto; text-align: center;">
+        <div class="hero-content" style="max-width: 900px; margin-bottom: 30px; text-align: center;">
+            <h1 class="hero-title"
+                style="margin-bottom: 5px; font-weight: 800; color: #ffffff; text-shadow: 0 2px 10px rgba(0,0,0,0.6);">
+                SMARTBUS AI</h1>
+            <p class="hero-subtitle"
+                style="font-size: 1.3rem; color: #60a5fa; margin-bottom: 15px; font-weight: 600; text-shadow: 0 2px 8px rgba(0,0,0,0.6);">
+                Smarter Routes. Better Journeys.</p>
+            <p class="hero-tagline"
+                style="color: rgba(255, 255, 255, 0.95); text-transform: none; max-width: 700px; text-shadow: 0 2px 8px rgba(0,0,0,0.6); margin: 0 auto;">
+                Discover the fastest, cheapest, and most comfortable bus journeys with<br>intelligent route
+                optimization. Step into the future of transport.
             </p>
         </div>
 
@@ -1081,12 +1367,14 @@
                 <div class="search-inputs-container">
                     <div class="search-field" style="position: relative;">
                         <label><i class="fa-solid fa-location-dot"></i> Departure City</label>
-                        <input type="text" id="origin-input" name="origin" placeholder="Where from?" required autocomplete="off" oninput="filterCities('origin-input', 'origin-selector')">
+                        <input type="text" id="origin-input" name="origin" placeholder="Where from?" required
+                            autocomplete="off" oninput="filterCities('origin-input', 'origin-selector')">
                         <div id="origin-selector" class="city-selector-grid card-hover">
                             <div class="city-selector-header">Popular Cities <i class="fa-solid fa-star"></i></div>
                             <div class="cities-list" id="origin-list">
                                 {% for city in cities %}
-                                <button type="button" class="city-btn" onclick="selectCity('origin-input', '{{ city.name.title() }}', 'origin-selector')">
+                                <button type="button" class="city-btn"
+                                    onclick="selectCity('origin-input', '{{ city.name.title() }}', 'origin-selector')">
                                     <i class="fa-solid fa-city text-glow"></i>
                                     <span>{{ city.name.title() }}</span>
                                 </button>
@@ -1095,15 +1383,38 @@
                             <div class="city-empty-state" id="origin-empty">No cities found matching your search.</div>
                         </div>
                     </div>
-                    
+
+                    <button type="button" class="btn-swap-cities" onclick="swapCities()"
+                        title="Swap Origin and Destination" style="
+                        background: #f1f5f9;
+                        border: 1px solid #cbd5e1;
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 50%;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        cursor: pointer;
+                        color: #2563eb;
+                        font-size: 1.1rem;
+                        transition: all 0.3s ease;
+                        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+                        flex-shrink: 0;
+                    ">
+                        <i class="fa-solid fa-arrow-right-arrow-left" id="swap-icon"></i>
+                    </button>
+
                     <div class="search-field" style="position: relative;">
                         <label><i class="fa-solid fa-map-pin"></i> Destination City</label>
-                        <input type="text" id="dest-input" name="dest" placeholder="Where to?" required autocomplete="off" oninput="filterCities('dest-input', 'dest-selector')">
+                        <input type="text" id="dest-input" name="dest" placeholder="Where to?" required
+                            autocomplete="off" oninput="filterCities('dest-input', 'dest-selector')">
                         <div id="dest-selector" class="city-selector-grid card-hover">
-                            <div class="city-selector-header">All Destinations <i class="fa-solid fa-map-location-dot"></i></div>
+                            <div class="city-selector-header">All Destinations <i
+                                    class="fa-solid fa-map-location-dot"></i></div>
                             <div class="cities-list" id="dest-list">
                                 {% for city in cities %}
-                                <button type="button" class="city-btn" onclick="selectCity('dest-input', '{{ city.name.title() }}', 'dest-selector')">
+                                <button type="button" class="city-btn"
+                                    onclick="selectCity('dest-input', '{{ city.name.title() }}', 'dest-selector')">
                                     <i class="fa-solid fa-city text-glow"></i>
                                     <span>{{ city.name.title() }}</span>
                                 </button>
@@ -1112,15 +1423,15 @@
                             <div class="city-empty-state" id="dest-empty">No cities found matching your search.</div>
                         </div>
                     </div>
-                    
+
                     <div class="search-field">
                         <label><i class="fa-solid fa-calendar-alt"></i> Travel Date</label>
-                        <input type="date" name="date" required>
+                        <input type="date" id="date-input" name="date" required>
                     </div>
-                    
+
                     <div class="search-field">
                         <label><i class="fa-solid fa-users"></i> Passenger Count</label>
-                        <select name="passengers">
+                        <select name="passengers" id="passengers-input">
                             <option value="1">1 Passenger</option>
                             <option value="2">2 Passengers</option>
                             <option value="3">3 Passengers</option>
@@ -1147,7 +1458,8 @@
         <div class="section-header">
             <span class="neon-badge">AI INNOVATION</span>
             <h2 class="section-title">Intelligent <span class="highlight-text">Split Journeys</span></h2>
-            <p class="section-subtitle">Our AI analyzes thousands of routes in milliseconds to suggest connected journeys that are significantly cheaper or faster than direct buses.</p>
+            <p class="section-subtitle">Our AI analyzes thousands of routes in milliseconds to suggest connected
+                journeys that are significantly cheaper or faster than direct buses.</p>
         </div>
 
         <div class="split-journey-grid">
@@ -1163,7 +1475,8 @@
                 <div class="btn-outline-neon" style="border-color: #cbd5e1; color: #0f172a;">Cost: ₹950</div>
             </div>
 
-            <div class="glass-card sj-card" style="border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);">
+            <div class="glass-card sj-card"
+                style="border-color: #3b82f6; box-shadow: 0 0 15px rgba(59, 130, 246, 0.1);">
                 <i class="fa-solid fa-wand-magic-sparkles sj-icon" style="color: var(--neon-blue);"></i>
                 <h3 class="sj-title">Smart Split Journey</h3>
                 <p class="sj-desc">AI-suggested double connection saving you up to 30% on fare.</p>
@@ -1197,19 +1510,25 @@
     <div class="container-inner">
         <div class="section-header">
             <h2 class="section-title">Popular <span class="highlight-text">Routes</span></h2>
-            <p class="section-subtitle">Explore the most frequently booked destinations globally powered by SmartBus.</p>
+            <p class="section-subtitle">Explore the most frequently booked destinations globally powered by SmartBus.
+            </p>
         </div>
         <div class="routes-grid">
             {% for route in popular_routes %}
             <div class="glass-card route-item">
-                <div class="route-cities">{{ route.origin.title() }} <i class="fa-solid fa-arrow-right-long"></i> {{ route.destination.title() }}</div>
+                <div class="route-cities">{{ route.origin.title() }} <i class="fa-solid fa-arrow-right-long"></i> {{
+                    route.destination.title() }}</div>
                 <div class="route-operator">SmartBus Express #{{ route.id }}</div>
                 <div class="route-type">Eco AC Sleeper</div>
-                <p style="color: var(--text-secondary); margin-bottom: 10px;"><i class="fa-solid fa-road"></i> {{ route.distance_km }} km</p>
-                <p style="color: var(--text-secondary); margin-bottom: 15px;"><i class="fa-regular fa-clock"></i> Projected: {{ (route.distance_km / 60)|round(1) }}h</p>
+                <p style="color: var(--text-secondary); margin-bottom: 10px;"><i class="fa-solid fa-road"></i> {{
+                    route.distance_km }} km</p>
+                <p style="color: var(--text-secondary); margin-bottom: 15px;"><i class="fa-regular fa-clock"></i>
+                    Projected: {{ (route.distance_km / 60)|round(1) }}h</p>
                 <div class="route-footer">
                     <span class="route-price">₹{{ route.base_fare }}</span>
-                    <button type="button" class="btn-outline-neon" onclick="quickFill('{{ route.origin.title() }}', '{{ route.destination.title() }}')">Select Path</button>
+                    <button type="button" class="btn-outline-neon"
+                        onclick="quickFill('{{ route.origin.title() }}', '{{ route.destination.title() }}')">Select
+                        Path</button>
                 </div>
             </div>
             {% else %}
@@ -1217,7 +1536,8 @@
                 No routes available currently. Check back soon.
             </div>
             {% endfor %}
-        </div>      </div>
+        </div>
+    </div>
     </div>
 </section>
 
@@ -1226,13 +1546,22 @@
     <div class="container-inner split-layout">
         <div class="split-content">
             <span class="neon-badge">REAL-TIME TRACKING</span>
-            <h2 class="section-title">Track your bus in <span class="highlight-text">real-time</span> and travel with confidence.</h2>
-            <p class="section-subtitle" style="margin: 0 0 30px 0; text-align: left;">Say goodbye to uncertainty. Our advanced GPS-integrated tracking dashboard gives you live map views, down-to-the-minute ETAs, and direct communication with ground staff.</p>
-            
+            <h2 class="section-title">Track your bus in <span class="highlight-text">real-time</span> and travel with
+                confidence.</h2>
+            <p class="section-subtitle" style="margin: 0 0 30px 0; text-align: left;">Say goodbye to uncertainty. Our
+                advanced GPS-integrated tracking dashboard gives you live map views, down-to-the-minute ETAs, and direct
+                communication with ground staff.</p>
+
             <ul style="list-style: none; padding: 0; margin-bottom: 40px;">
-                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Live GPS Map Tracking</li>
-                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Instant Route Diversion Alerts</li>
-                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Verified Driver Details</li>
+                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i
+                        class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Live GPS Map Tracking
+                </li>
+                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i
+                        class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Instant Route Diversion
+                    Alerts</li>
+                <li style="margin-bottom: 15px; display: flex; align-items: center; gap: 15px; font-size: 1.1rem;"><i
+                        class="fa-solid fa-circle-check" style="color: var(--neon-blue);"></i> Verified Driver Details
+                </li>
             </ul>
             <button class="btn-neon">Experience Live Track</button>
         </div>
@@ -1266,7 +1595,8 @@
     <div class="container-inner">
         <div class="section-header">
             <h2 class="section-title">Why Choose <span class="highlight-text">SmartBus AI</span></h2>
-            <p class="section-subtitle">Experience transportation redefined with military-grade security and zero-friction booking flows.</p>
+            <p class="section-subtitle">Experience transportation redefined with military-grade security and
+                zero-friction booking flows.</p>
         </div>
 
         <div class="features-grid">
@@ -1309,13 +1639,21 @@
     <div class="container-inner split-layout reverse">
         <div class="split-content">
             <h2 class="section-title">Immersive <span class="highlight-text">Seat Selection</span></h2>
-            <p class="section-subtitle" style="margin: 0 0 30px 0; text-align: left;">Our modern HD seat mapping interface allows you to view inside the bus before booking. Pick seats near charging ports, verify legroom, and travel your way.</p>
+            <p class="section-subtitle" style="margin: 0 0 30px 0; text-align: left;">Our modern HD seat mapping
+                interface allows you to view inside the bus before booking. Pick seats near charging ports, verify
+                legroom, and travel your way.</p>
             <button class="btn-neon">Choose Your Seat</button>
-            
+
             <div class="legend-row">
-                <div class="legend-item"><div class="legend-box av"></div> Available</div>
-                <div class="legend-item"><div class="legend-box bk"></div> Booked</div>
-                <div class="legend-item"><div class="legend-box sl"></div> Selected</div>
+                <div class="legend-item">
+                    <div class="legend-box av"></div> Available
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box bk"></div> Booked
+                </div>
+                <div class="legend-item">
+                    <div class="legend-box sl"></div> Selected
+                </div>
             </div>
         </div>
 
@@ -1361,7 +1699,8 @@
                     <i class="fa-solid fa-bus-simple" style="color: var(--neon-blue);"></i>
                     Smart<span style="color: var(--neon-blue);">Bus AI</span>
                 </h2>
-                <p>Next-generation travel booking platform powered by smart route technology. Redefining how the world connects across highways.</p>
+                <p>Next-generation travel booking platform powered by smart route technology. Redefining how the world
+                    connects across highways.</p>
                 <div class="social-icons">
                     <a href="#"><i class="fa-brands fa-instagram"></i></a>
                     <a href="#"><i class="fa-brands fa-twitter"></i></a>
@@ -1369,7 +1708,7 @@
                     <a href="#"><i class="fa-brands fa-linkedin-in"></i></a>
                 </div>
             </div>
-            
+
             <div class="footer-links">
                 <h4>Company</h4>
                 <ul>
@@ -1379,7 +1718,7 @@
                     <li><a href="#">Blog</a></li>
                 </ul>
             </div>
-            
+
             <div class="footer-links">
                 <h4>Support</h4>
                 <ul>
@@ -1389,7 +1728,7 @@
                     <li><a href="#">Report an Issue</a></li>
                 </ul>
             </div>
-            
+
             <div class="footer-links">
                 <h4>Travel Routes</h4>
                 <ul>
@@ -1400,7 +1739,7 @@
                 </ul>
             </div>
         </div>
-        
+
         <div class="footer-bottom">
             <p>&copy; 2026 SmartBus AI. Designed for the Future of Travel.</p>
         </div>
@@ -1422,11 +1761,11 @@
         }
 
         document.getElementById(inputId).value = cityName;
-        
+
         // Hide selector
         const selector = document.getElementById(selectorId);
         selector.style.display = 'none';
-        
+
         // Visual feedback
         const parent = document.getElementById(inputId).closest('.search-field');
         parent.style.borderColor = 'var(--neon-blue)';
@@ -1442,10 +1781,10 @@
         const list = selector.querySelector('.cities-list');
         const btns = list.getElementsByClassName('city-btn');
         const emptyState = selector.querySelector('.city-empty-state');
-        
+
         // Show selector if hidden
         selector.style.display = 'flex';
-        
+
         let found = 0;
         for (let i = 0; i < btns.length; i++) {
             const cityName = btns[i].querySelector('span').textContent.toLowerCase();
@@ -1456,7 +1795,7 @@
                 btns[i].style.display = "none";
             }
         }
-        
+
         if (found === 0) {
             emptyState.style.display = 'block';
             list.style.display = 'none';
@@ -1471,7 +1810,7 @@
         document.getElementById('dest-input').value = dest;
         // Scroll to search panel
         document.querySelector('.search-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
-        
+
         // Add a temporary glow to show it's filled
         const fields = document.querySelectorAll('.search-field');
         fields.forEach(f => {
@@ -1480,22 +1819,56 @@
         });
     }
 
+    function swapCities() {
+        const originInp = document.getElementById('origin-input');
+        const destInp = document.getElementById('dest-input');
+        const icon = document.getElementById('swap-icon');
+
+        const temp = originInp.value;
+        originInp.value = destInp.value;
+        destInp.value = temp;
+
+        if (icon) {
+            icon.style.transform = 'rotate(180deg)';
+            setTimeout(() => { icon.style.transform = 'rotate(0deg)'; }, 300);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const dateInp = document.getElementById('date-input');
+        if (dateInp) {
+            const todayDate = new Date();
+            const today = todayDate.toISOString().split('T')[0];
+            dateInp.setAttribute('min', today);
+
+            // 45 days (approx 1.5 months) limit
+            const maxDateObj = new Date(todayDate);
+            maxDateObj.setDate(maxDateObj.getDate() + 45);
+            const maxDate = maxDateObj.toISOString().split('T')[0];
+            dateInp.setAttribute('max', maxDate);
+
+            if (!dateInp.value) {
+                dateInp.value = today;
+            }
+        }
+    });
+
     // Close selectors when clicking outside
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         const originField = document.getElementById('origin-input').closest('.search-field');
         const destField = document.getElementById('dest-input').closest('.search-field');
         const originSelector = document.getElementById('origin-selector');
         const destSelector = document.getElementById('dest-selector');
-        
-        if (!originField.contains(event.target)) {
+
+        if (originField && !originField.contains(event.target)) {
             originSelector.style.display = 'none';
-        } else if (event.target.id === 'origin-input' || originField.contains(event.target)) {
+        } else if (originField && (event.target.id === 'origin-input' || originField.contains(event.target))) {
             originSelector.style.display = 'flex';
         }
 
-        if (!destField.contains(event.target)) {
+        if (destField && !destField.contains(event.target)) {
             destSelector.style.display = 'none';
-        } else if (event.target.id === 'dest-input' || destField.contains(event.target)) {
+        } else if (destField && (event.target.id === 'dest-input' || destField.contains(event.target))) {
             destSelector.style.display = 'flex';
         }
     });

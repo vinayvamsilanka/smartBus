@@ -8,6 +8,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const bus = JSON.parse(rawData);
 
+    // Multi-Seat State & Validation
+    let selectedSeats = [];
+    const passengerCount = parseInt(localStorage.getItem('passengerCount') || '1', 10);
+
     // Populate Header
     document.getElementById('bus-operator').innerText = bus.operator;
     document.getElementById('bus-type').innerText = bus.type;
@@ -142,34 +146,77 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         container.innerHTML = html;
+        
+        // --- AI Seat Recommendation Engine ---
+        // Find the first available window seat to recommend
+        const availableWindowSeats = seats.filter(s => !s.is_booked && s.is_window);
+        if (availableWindowSeats.length > 0 && selectedSeats.length === 0) {
+            const recommendedSeat = availableWindowSeats[0];
+            // Small delay to allow DOM to render
+            setTimeout(() => {
+                const seatEl = document.querySelector(`[data-id="${recommendedSeat.id}"]`);
+                if (seatEl) {
+                    seatEl.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.8)';
+                    seatEl.style.border = '2px solid #10b981';
+                    seatEl.innerHTML += `<div style="position:absolute; top:-8px; right:-8px; background:#10b981; color:#000; border-radius:50%; width:20px; height:20px; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index: 5;" title="AI Recommended Seat"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
+                }
+            }, 100);
+        }
+
         attachSeatEvents(seats, fare);
     }
 
     function attachSeatEvents(seats, fare) {
+        const pHeading = document.getElementById('selected-seat-title');
+        if (pHeading) {
+            pHeading.innerHTML = `Select exactly <strong>${passengerCount}</strong> seat(s) (Selected: <span id="sel-count">${selectedSeats.length}</span>)`;
+        }
+
         document.querySelectorAll('.seat-btn').forEach(seatEl => {
             if (seatEl.dataset.booked === 'true') return;
-            seatEl.addEventListener('click', () => {
-                document.querySelectorAll('.seat-btn').forEach(s => {
-                    const booked = s.dataset.booked === 'true';
-                    s.style.background = booked ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.8)';
-                    s.style.borderColor = booked ? 'transparent' : 'rgba(0,0,0,0.05)';
-                    s.style.color = booked ? 'rgba(0,0,0,0.1)' : 'rgba(15, 23, 42, 0.6)';
-                    s.style.transform = 'translateZ(0)';
-                    s.classList.remove('selected-seat-3d');
-                });
-                
-                seatEl.style.background = 'var(--accent-primary)';
-                seatEl.style.borderColor = 'var(--accent-primary)';
-                seatEl.style.color = '#fff';
-                seatEl.classList.add('selected-seat-3d');
-                seatEl.style.boxShadow = '0 10px 25px rgba(37, 99, 235, 0.3)';
+            
+            // Restore visual style if the seat is already selected (e.g. after changing decks)
+            const seatId = seatEl.dataset.id;
+            const isSelected = selectedSeats.some(s => s.id === seatId);
+            if (isSelected) {
+                setSelectedSeatStyle(seatEl);
+            } else {
+                resetSeatStyle(seatEl);
+            }
 
-                const seatId = seatEl.dataset.id;
+            // Click listener
+            seatEl.addEventListener('click', () => {
                 const seatData = seats.find(s => s.id === seatId);
-                showSeatDetails(seatData, fare);
+                if (!seatData) return; // safety check
+                
+                const idx = selectedSeats.findIndex(s => s.id === seatId);
+                if (idx > -1) {
+                    // Already selected, deselect it
+                    selectedSeats.splice(idx, 1);
+                    resetSeatStyle(seatEl);
+                } else {
+                    // Not selected yet
+                    if (selectedSeats.length >= passengerCount) {
+                        // FIFO replacement: deselect oldest
+                        const oldest = selectedSeats.shift();
+                        if (oldest) {
+                            const oldestEl = document.querySelector(`[data-id="${oldest.id}"]`);
+                            if (oldestEl) resetSeatStyle(oldestEl);
+                        }
+                    }
+                    
+                    selectedSeats.push(seatData);
+                    setSelectedSeatStyle(seatEl);
+                }
+                
+                updateSeatSelectionStatus(fare);
             });
         });
+
+        // Initialize status on load/deck change
+        updateSeatSelectionStatus(fare);
     }
+
 
     function animateProgress(idPrefix, value) {
         const el = document.getElementById(`${idPrefix}-score`);
@@ -186,8 +233,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const canvas = document.getElementById('reliabilityChart');
         if (!canvas) return;
         const ctx = canvas.getContext('2d');
-        let gradient = ctx.createLinearGradient(0, 0, 0, 100);
-        gradient.addColorStop(0, 'rgba(56, 189, 248, 0.4)');
+        let gradient = ctx.createLinearGradient(0, 0, 0, 160);
+        gradient.addColorStop(0, 'rgba(99, 102, 241, 0.5)');
+        gradient.addColorStop(0.5, 'rgba(56, 189, 248, 0.3)');
         gradient.addColorStop(1, 'rgba(56, 189, 248, 0.0)');
 
         new Chart(ctx, {
@@ -197,9 +245,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 datasets: [{
                     label: 'On-Time %',
                     data: data,
-                    borderColor: 'var(--accent-primary)',
+                    borderColor: '#6366f1',
                     backgroundColor: gradient,
-                    borderWidth: 2,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#6366f1',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
                     fill: true,
                     tension: 0.4
                 }]
@@ -219,34 +271,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     function generateSeatHTML(seat, rowNum, isSleeper) {
         if (!seat) return '<div></div>';
         const isBooked = !seat.available;
-        let icon = seat.type === 'Window' ? '🪟' : '💺';
+        const isWindow = seat.type === 'Window' || (seat.align && (seat.align === 'left' || seat.id.includes('RB')));
+        
+        let iconHTML = '';
         if (isSleeper) {
-            icon = seat.type.includes('Double') ? '🛌🛌' : '🛌';
+            const isDouble = seat.type && seat.type.includes('Double');
+            iconHTML = `<div style="font-size: 1.6rem; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5)); opacity: ${isBooked ? 0.3 : 0.95}; margin-bottom: 2px;">${isBooked ? '🔒' : (isDouble ? '🛏️' : '🛌')}</div>`;
+        } else {
+            iconHTML = `<div style="font-size: 1.3rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); opacity: ${isBooked ? 0.3 : 0.95}; margin-bottom: 2px;">${isBooked ? '🔒' : '💺'}</div>`;
         }
         
-        return `<div class="seat-btn ${isSleeper ? 'berth-btn' : ''}"
+        const sleeperClass = isSleeper ? `berth-btn ${seat.type && seat.type.includes('Double') ? 'double-berth' : ''}` : 'seater-btn';
+        
+        return `<div class="seat-btn ${sleeperClass}"
             data-id="${seat.id}"
             data-booked="${isBooked}"
-            title="${seat.id} · ${seat.type} · ${seat.zone}"
+            title="${seat.id} · ${seat.type || 'Standard'} · Zone: ${seat.zone || 'Main'}"
             style="
-                background: ${isBooked ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.8)'};
-                border: 1.5px solid ${isBooked ? 'transparent' : 'rgba(0,0,0,0.05)'};
-                border-radius: ${isSleeper ? '15px' : '12px'};
-                padding: 12px 6px;
-                text-align: center;
                 cursor: ${isBooked ? 'not-allowed' : 'pointer'};
-                transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-                color: ${isBooked ? 'rgba(0,0,0,0.1)' : 'rgba(15, 23, 42, 0.7)'};
-                font-size: 0.75rem;
-                font-weight: 700;
-                user-select: none;
-                position: relative;
-                transform-style: preserve-3d;
-                box-shadow: ${isBooked ? 'none' : '0 4px 10px rgba(0,0,0,0.05)'};
+                color: ${isBooked ? 'rgba(255,255,255,0.2)' : '#ffffff'};
             ">
-            <div style="font-size: ${isSleeper ? '1.8rem' : '1.4rem'}; margin-bottom: 6px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); transform: translateZ(10px);">${isBooked ? '🚫' : icon}</div>
-            <div style="transform: translateZ(5px); transition: 0.3s; color: inherit;">${seat.id}</div>
-            ${isSleeper && !isBooked ? '<div style="position:absolute; bottom:5px; left:50%; transform:translateX(-50%); font-size:0.5rem; opacity:0.6; letter-spacing:1px; color: var(--text-secondary);">SLEEPER</div>' : ''}
+            ${isWindow && !isBooked ? '<span style="position: absolute; top: 4px; right: 6px; font-size: 0.65rem; opacity: 0.7;" title="Window View">🪟</span>' : ''}
+            ${iconHTML}
+            <div style="font-weight: 800; font-size: 0.78rem; letter-spacing: 0.5px; z-index: 2;">${seat.id}</div>
+            <div style="font-size: 0.58rem; opacity: 0.6; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; margin-top: 2px;">
+                ${isBooked ? 'BOOKED' : (isSleeper ? (seat.type && seat.type.includes('Double') ? 'DBL BERTH' : 'SLEEPER') : (seat.type === 'Window' ? 'WINDOW' : 'AISLE'))}
+            </div>
         </div>`;
     }
 
@@ -304,66 +354,112 @@ document.addEventListener('DOMContentLoaded', async () => {
         applyView();
     });
 
-    function showSeatDetails(seat, fare) {
-        document.getElementById('seat-metrics').style.opacity = '1';
-        document.getElementById('selected-seat-title').innerHTML =
-            `Seat <strong>${seat.id}</strong> <span style="background:#2563eb;color:#fff;padding:2px 10px;border-radius:20px;font-size:0.8rem;margin-left:6px;">₹${fare}</span>`;
-        document.getElementById('seat-noise').innerText = `${seat.noise_db} dB`;
-        document.getElementById('seat-vibe').innerText = seat.vibration;
-        document.getElementById('seat-type').innerText = seat.type;
-        document.getElementById('seat-zone').innerText = seat.zone;
+    function resetSeatStyle(el) {
+        el.style.background = '';
+        el.style.borderColor = '';
+        el.style.color = '#ffffff';
+        el.style.transform = '';
+        el.style.boxShadow = '';
+        el.classList.remove('selected-seat-3d');
+        el.classList.remove('seat-pop');
+    }
 
-        if (seat.zone === 'Back') {
-            document.getElementById('seat-vibe').style.color = '#ef4444';
-        } else if (seat.zone === 'Front') {
-            document.getElementById('seat-vibe').style.color = '#10b981';
+    function setSelectedSeatStyle(el) {
+        el.classList.add('selected-seat-3d');
+        el.classList.remove('seat-pop');
+        void el.offsetWidth; // Trigger reflow
+        el.classList.add('seat-pop');
+    }
+
+    function updateSeatSelectionStatus(fare) {
+        const countSpan = document.getElementById('sel-count');
+        if (countSpan) countSpan.innerText = selectedSeats.length;
+
+        const metricsDiv = document.getElementById('seat-metrics');
+        const bookBtn = document.getElementById('btn-book');
+        const titleEl = document.getElementById('selected-seat-title');
+
+        if (selectedSeats.length === 0) {
+            metricsDiv.style.opacity = '0.4';
+            titleEl.innerHTML = `Select exactly <strong style="color:#38bdf8;">${passengerCount}</strong> seat(s)`;
+            
+            document.getElementById('seat-noise').innerText = '-- dB';
+            document.getElementById('seat-vibe').innerText = '--';
+            document.getElementById('seat-type').innerText = '--';
+            document.getElementById('seat-zone').innerText = '--';
+            
+            bookBtn.disabled = true;
+            bookBtn.classList.remove('pulse-glow');
+            bookBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Secure Seat`;
         } else {
-            document.getElementById('seat-vibe').style.color = '';
+            metricsDiv.style.opacity = '1';
+            // Show latest seat info
+            const latest = selectedSeats[selectedSeats.length - 1];
+            titleEl.innerHTML = `Selected <strong style="color:#38bdf8;">${selectedSeats.length}/${passengerCount}</strong> Seat(s) <span style="background:linear-gradient(135deg, #2563eb, #1d4ed8);color:#fff;padding:4px 12px;border-radius:20px;font-size:0.8rem;margin-left:8px;box-shadow:0 4px 10px rgba(37,99,235,0.4);border:1px solid #60a5fa;">₹${fare * selectedSeats.length}</span>`;
+            
+            const noiseVal = latest.noise_db || (latest.zone === 'Front' ? 32 : (latest.zone === 'Back' ? 42 : 36));
+            const vibeVal = latest.vibration || (latest.zone === 'Front' ? 'Ultra Smooth' : (latest.zone === 'Back' ? 'Engine Zone' : 'Medium'));
+            
+            document.getElementById('seat-noise').innerText = `${noiseVal} dB`;
+            document.getElementById('seat-vibe').innerText = vibeVal;
+            document.getElementById('seat-type').innerText = latest.type || 'Executive Pod';
+            document.getElementById('seat-zone').innerText = `${latest.zone || 'Mid'} Cabin`;
+
+            if (latest.zone === 'Back') {
+                document.getElementById('seat-vibe').style.color = '#f87171';
+            } else if (latest.zone === 'Front') {
+                document.getElementById('seat-vibe').style.color = '#34d399';
+            } else {
+                document.getElementById('seat-vibe').style.color = '#38bdf8';
+            }
+
+            // Enable check out button only when exact seats count matched
+            if (selectedSeats.length === passengerCount) {
+                bookBtn.disabled = false;
+                bookBtn.classList.add('pulse-glow');
+                bookBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Secure ${selectedSeats.length} Seat(s) · ₹${fare * selectedSeats.length}`;
+            } else {
+                bookBtn.disabled = true;
+                bookBtn.classList.remove('pulse-glow');
+                bookBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Select ${passengerCount - selectedSeats.length} more seat(s)`;
+            }
         }
+    }
 
-        const btn = document.getElementById('btn-book');
-        btn.disabled = false;
-        btn.classList.add('pulse-glow');
-        btn.innerHTML = `<i class="fa-solid fa-lock"></i> Secure Seat ${seat.id}`;
+    // Interactive Checkout Modal
+    const modal = document.getElementById('checkout-modal');
+    const modalContent = document.getElementById('checkout-modal-content');
+    const closeModalBtn = document.getElementById('close-checkout-modal');
+    
+    // Progress Indicators
+    const step1Ind = document.getElementById('step-1-indicator');
+    const step2Ind = document.getElementById('step-2-indicator');
+    const step3Ind = document.getElementById('step-3-indicator');
+    const line1 = document.getElementById('line-step-1');
+    const line2 = document.getElementById('line-step-2');
+    const lbl1 = document.getElementById('lbl-step-1');
+    const lbl2 = document.getElementById('lbl-step-2');
+    const lbl3 = document.getElementById('lbl-step-3');
 
-        // Multi-Step Checkout Modal Setup
-        const modal = document.getElementById('checkout-modal');
-        const modalContent = document.getElementById('checkout-modal-content');
-        const closeModalBtn = document.getElementById('close-checkout-modal');
-        
-        // Progress elements
-        const step1Ind = document.getElementById('step-1-indicator');
-        const step2Ind = document.getElementById('step-2-indicator');
-        const step3Ind = document.getElementById('step-3-indicator');
-        const line1 = document.getElementById('line-step-1');
-        const line2 = document.getElementById('line-step-2');
-        const lbl1 = document.getElementById('lbl-step-1');
-        const lbl2 = document.getElementById('lbl-step-2');
-        const lbl3 = document.getElementById('lbl-step-3');
+    // Panels
+    const stepAuth = document.getElementById('checkout-step-auth');
+    const stepPassenger = document.getElementById('checkout-step-passenger');
+    const stepPayment = document.getElementById('checkout-step-payment');
+    const stepProcessing = document.getElementById('checkout-step-processing');
+    const stepSuccess = document.getElementById('checkout-step-success');
 
-        // Containers
-        const stepAuth = document.getElementById('checkout-step-auth');
-        const stepPassenger = document.getElementById('checkout-step-passenger');
-        const stepPayment = document.getElementById('checkout-step-payment');
-        const stepProcessing = document.getElementById('checkout-step-processing');
-        const stepSuccess = document.getElementById('checkout-step-success');
+    // Auth fields
+    const emailInput = document.getElementById('modal-email-input');
+    const passwordInput = document.getElementById('modal-password-input');
+    const phoneInput = document.getElementById('modal-phone-input');
 
-        // Inputs
-        const emailInput = document.getElementById('modal-email-input');
-        const passwordInput = document.getElementById('modal-password-input');
-        const phoneInput = document.getElementById('modal-phone-input');
-        const passengerNameInput = document.getElementById('passenger-name-input');
-        const passengerAgeInput = document.getElementById('passenger-age-input');
-        const passengerGenderInput = document.getElementById('passenger-gender-input');
+    const tabEmail = document.getElementById('modal-tab-email');
+    const tabOtp = document.getElementById('modal-tab-otp');
+    const emailForm = document.getElementById('modal-auth-email-form');
+    const otpForm = document.getElementById('modal-auth-otp-form');
+    let currentAuthMode = 'email';
 
-        // Tabs
-        const tabEmail = document.getElementById('modal-tab-email');
-        const tabOtp = document.getElementById('modal-tab-otp');
-        const emailForm = document.getElementById('modal-auth-email-form');
-        const otpForm = document.getElementById('modal-auth-otp-form');
-        let currentAuthMode = 'email';
-
-        // Tab Switching
+    if (tabEmail && tabOtp) {
         tabEmail.onclick = () => {
             tabEmail.classList.add('active-tab');
             tabOtp.classList.remove('active-tab');
@@ -378,23 +474,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             emailForm.style.display = 'none';
             currentAuthMode = 'otp';
         };
+    }
 
-        // OTP inputs autofocus hopping
-        const digits = document.querySelectorAll('.modal-otp-digit');
-        digits.forEach((digit, idx) => {
-            digit.oninput = () => {
-                if (digit.value && idx < digits.length - 1) {
-                    digits[idx + 1].focus();
-                }
-            };
-            digit.onkeydown = (e) => {
-                if (e.key === 'Backspace' && !digit.value && idx > 0) {
-                    digits[idx - 1].focus();
-                }
-            };
-        });
+    // OTP auto hop
+    const digits = document.querySelectorAll('.modal-otp-digit');
+    digits.forEach((digit, idx) => {
+        digit.oninput = () => {
+            if (digit.value && idx < digits.length - 1) {
+                digits[idx + 1].focus();
+            }
+        };
+        digit.onkeydown = (e) => {
+            if (e.key === 'Backspace' && !digit.value && idx > 0) {
+                digits[idx - 1].focus();
+            }
+        };
+    });
 
-        // Close modal
+    if (closeModalBtn) {
         closeModalBtn.onclick = () => {
             modal.style.opacity = '0';
             modalContent.style.transform = 'scale(0.95)';
@@ -402,16 +499,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 modal.style.display = 'none';
             }, 400);
         };
+    }
 
-        // Click secure button
+    const btn = document.getElementById('btn-book');
+    if (btn) {
         btn.onclick = () => {
-            // Setup seat and fare parameters
-            document.getElementById('modal-seat-id-1').innerText = seat.id;
-            document.getElementById('modal-seat-id-2').innerText = seat.id;
-            document.getElementById('modal-seat-id-3').innerText = seat.id;
-            document.getElementById('modal-fare-amount').innerText = `₹${bus.fare}`;
+            const seatsListStr = selectedSeats.map(s => s.id).join(', ');
+            document.getElementById('modal-seat-id-1').innerText = seatsListStr;
+            document.getElementById('modal-seat-id-3').innerText = seatsListStr;
+            const totalFare = bus.fare * selectedSeats.length;
+            document.getElementById('modal-fare-amount').innerText = `₹${totalFare}`;
 
-            // Reset containers
             stepAuth.style.display = 'none';
             stepPassenger.style.display = 'none';
             stepPayment.style.display = 'none';
@@ -419,7 +517,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             stepSuccess.style.display = 'none';
             document.getElementById('auth-modal-error').style.display = 'none';
 
-            // Show Modal with animation
             modal.style.display = 'flex';
             setTimeout(() => {
                 modal.style.opacity = '1';
@@ -427,234 +524,629 @@ document.addEventListener('DOMContentLoaded', async () => {
             }, 10);
 
             if (window.USER_ID) {
-                // User is already logged in, proceed to passenger details directly
                 goToPassengerStep();
             } else {
-                // Show Auth verification step
                 stepAuth.style.display = 'block';
                 updateStepProgress(1);
             }
         };
+    }
 
-        function updateStepProgress(step) {
-            // Reset indicators
-            step1Ind.style.background = 'rgba(255,255,255,0.05)';
-            step1Ind.style.color = 'rgba(255,255,255,0.4)';
-            step1Ind.style.borderColor = 'rgba(255,255,255,0.1)';
-            step1Ind.innerHTML = '1';
+    function updateStepProgress(step) {
+        step1Ind.style.background = 'rgba(255,255,255,0.05)';
+        step1Ind.style.color = 'rgba(255,255,255,0.4)';
+        step1Ind.style.borderColor = 'rgba(255,255,255,0.1)';
+        step1Ind.innerHTML = '1';
 
-            step2Ind.style.background = 'rgba(255,255,255,0.05)';
-            step2Ind.style.color = 'rgba(255,255,255,0.4)';
-            step2Ind.style.borderColor = 'rgba(255,255,255,0.1)';
-            step2Ind.innerHTML = '2';
+        step2Ind.style.background = 'rgba(255,255,255,0.05)';
+        step2Ind.style.color = 'rgba(255,255,255,0.4)';
+        step2Ind.style.borderColor = 'rgba(255,255,255,0.1)';
+        step2Ind.innerHTML = '2';
 
-            step3Ind.style.background = 'rgba(255,255,255,0.05)';
-            step3Ind.style.color = 'rgba(255,255,255,0.4)';
-            step3Ind.style.borderColor = 'rgba(255,255,255,0.1)';
-            step3Ind.innerHTML = '3';
+        step3Ind.style.background = 'rgba(255,255,255,0.05)';
+        step3Ind.style.color = 'rgba(255,255,255,0.4)';
+        step3Ind.style.borderColor = 'rgba(255,255,255,0.1)';
+        step3Ind.innerHTML = '3';
 
-            line1.style.background = 'rgba(255,255,255,0.1)';
-            line2.style.background = 'rgba(255,255,255,0.1)';
+        line1.style.background = 'rgba(255,255,255,0.1)';
+        line2.style.background = 'rgba(255,255,255,0.1)';
 
-            lbl1.style.color = 'var(--text-secondary)';
-            lbl2.style.color = 'var(--text-secondary)';
-            lbl3.style.color = 'var(--text-secondary)';
+        lbl1.style.color = 'var(--text-secondary)';
+        lbl2.style.color = 'var(--text-secondary)';
+        lbl3.style.color = 'var(--text-secondary)';
 
-            if (step === 1) {
-                step1Ind.style.background = 'var(--accent-primary)';
-                step1Ind.style.color = '#000';
-                step1Ind.style.borderColor = 'var(--accent-primary)';
-                lbl1.style.color = '#cbd5e1';
-            } else if (step === 2) {
-                step1Ind.style.background = 'rgba(16, 185, 129, 0.15)';
-                step1Ind.style.color = '#10b981';
-                step1Ind.style.borderColor = '#10b981';
-                step1Ind.innerHTML = '✓';
+        if (step === 1) {
+            step1Ind.style.background = 'var(--accent-primary)';
+            step1Ind.style.color = '#000';
+            step1Ind.style.borderColor = 'var(--accent-primary)';
+            lbl1.style.color = '#cbd5e1';
+        } else if (step === 2) {
+            step1Ind.style.background = 'rgba(16, 185, 129, 0.15)';
+            step1Ind.style.color = '#10b981';
+            step1Ind.style.borderColor = '#10b981';
+            step1Ind.innerHTML = '✓';
 
-                step2Ind.style.background = 'var(--accent-primary)';
-                step2Ind.style.color = '#000';
-                step2Ind.style.borderColor = 'var(--accent-primary)';
-                line1.style.background = 'var(--accent-primary)';
-                lbl2.style.color = '#cbd5e1';
-            } else if (step === 3) {
-                step1Ind.style.background = 'rgba(16, 185, 129, 0.15)';
-                step1Ind.style.color = '#10b981';
-                step1Ind.style.borderColor = '#10b981';
-                step1Ind.innerHTML = '✓';
+            step2Ind.style.background = 'var(--accent-primary)';
+            step2Ind.style.color = '#000';
+            step2Ind.style.borderColor = 'var(--accent-primary)';
+            line1.style.background = 'var(--accent-primary)';
+            lbl2.style.color = '#cbd5e1';
+        } else if (step === 3) {
+            step1Ind.style.background = 'rgba(16, 185, 129, 0.15)';
+            step1Ind.style.color = '#10b981';
+            step1Ind.style.borderColor = '#10b981';
+            step1Ind.innerHTML = '✓';
 
-                step2Ind.style.background = 'rgba(16, 185, 129, 0.15)';
-                step2Ind.style.color = '#10b981';
-                step2Ind.style.borderColor = '#10b981';
-                step2Ind.innerHTML = '✓';
+            step2Ind.style.background = 'rgba(16, 185, 129, 0.15)';
+            step2Ind.style.color = '#10b981';
+            step2Ind.style.borderColor = '#10b981';
+            step2Ind.innerHTML = '✓';
 
-                step3Ind.style.background = 'var(--accent-primary)';
-                step3Ind.style.color = '#000';
-                step3Ind.style.borderColor = 'var(--accent-primary)';
-                line1.style.background = '#10b981';
-                line2.style.background = 'var(--accent-primary)';
-                lbl3.style.color = '#cbd5e1';
-            }
+            step3Ind.style.background = 'var(--accent-primary)';
+            step3Ind.style.color = '#000';
+            step3Ind.style.borderColor = 'var(--accent-primary)';
+            line1.style.background = '#10b981';
+            line2.style.background = 'var(--accent-primary)';
+            lbl3.style.color = '#cbd5e1';
         }
+    }
 
-        function goToPassengerStep() {
-            stepAuth.style.display = 'none';
-            stepPassenger.style.display = 'block';
-            updateStepProgress(2);
-            passengerNameInput.value = window.USER_NAME || '';
-        }
+    function goToPassengerStep() {
+        stepAuth.style.display = 'none';
+        stepPassenger.style.display = 'block';
+        updateStepProgress(2);
 
-        // Authenticate Button Click
-        document.getElementById('modal-auth-submit').onclick = async () => {
-            const errDiv = document.getElementById('auth-modal-error');
-            errDiv.style.display = 'none';
+        const container = document.getElementById('passenger-forms-container');
+        container.innerHTML = '';
 
-            if (currentAuthMode === 'email') {
-                const email = emailInput.value.trim();
-                const password = passwordInput.value;
+        selectedSeats.forEach((seat, idx) => {
+            container.innerHTML += `
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 15px;" class="passenger-form-item" data-seat="${seat.id}">
+                    <h4 style="margin-top:0; margin-bottom:12px; font-size:0.95rem; color: var(--accent-primary); display:flex; align-items:center; gap:6px;">
+                        <i class="fa-solid fa-circle-user"></i> Passenger ${idx + 1} (Seat ${seat.id})
+                    </h4>
+                    <div style="margin-bottom: 12px;">
+                        <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 4px;">Passenger Full Name</label>
+                        <input type="text" class="passenger-name-input" data-seat="${seat.id}" placeholder="e.g. Charan Kumar" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; font-size:0.85rem; font-weight:600;" value="${idx === 0 ? (window.USER_NAME || '') : ''}">
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 4px;">Age</label>
+                            <input type="number" class="passenger-age-input" data-seat="${seat.id}" placeholder="Age" min="1" max="120" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; font-size:0.85rem;">
+                        </div>
+                        <div style="flex: 1.2;">
+                            <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 4px;">Gender</label>
+                            <select class="passenger-gender-input" data-seat="${seat.id}" style="width: 100%; padding: 10px; background: rgba(30, 41, 59, 0.95); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; cursor: pointer; font-size:0.85rem;">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
 
-                if (!email || !password) {
-                    errDiv.innerText = 'Please enter both email and password.';
-                    errDiv.style.display = 'block';
-                    return;
-                }
+    // Authenticate Button Click
+    document.getElementById('modal-auth-submit').onclick = async () => {
+        const errDiv = document.getElementById('auth-modal-error');
+        errDiv.style.display = 'none';
 
-                try {
-                    const res = await fetch('/api/auth/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email, password })
-                    });
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        window.USER_ID = data.user.id;
-                        window.USER_NAME = data.user.name;
-                        // Dynamically update main navbar profile if present
-                        const navLoginBtn = document.getElementById('navbar-login-btn') || document.querySelector('.navbar-end .glass-panel');
-                        if (navLoginBtn) {
-                            navLoginBtn.innerHTML = `<span style="color: var(--accent-primary);"><i class="fa-solid fa-user-check"></i> Hi, ${data.user.name}</span>`;
-                        }
-                        goToPassengerStep();
-                    } else {
-                        errDiv.innerText = data.message || 'Invalid email or password.';
-                        errDiv.style.display = 'block';
-                    }
-                } catch (e) {
-                    errDiv.innerText = 'Server error during authentication.';
-                    errDiv.style.display = 'block';
-                }
-            } else {
-                // OTP Mobile Mode
-                const phone = phoneInput.value.trim();
-                let otp = '';
-                digits.forEach(d => otp += d.value);
+        if (currentAuthMode === 'email') {
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
 
-                if (phone.length < 10 || otp.length < 4) {
-                    errDiv.innerText = 'Please enter a valid 10-digit phone number and 4-digit OTP.';
-                    errDiv.style.display = 'block';
-                    return;
-                }
-
-                // Simulating seamless OTP checkout by logging in Charan Kumar backend credentials!
-                try {
-                    const res = await fetch('/api/auth/login', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: 'charan@example.com', password: 'password123' })
-                    });
-                    const data = await res.json();
-                    if (res.ok && data.success) {
-                        window.USER_ID = data.user.id;
-                        window.USER_NAME = data.user.name;
-                        const navLoginBtn = document.getElementById('navbar-login-btn') || document.querySelector('.navbar-end .glass-panel');
-                        if (navLoginBtn) {
-                            navLoginBtn.innerHTML = `<span style="color: var(--accent-primary);"><i class="fa-solid fa-user-check"></i> Hi, ${data.user.name}</span>`;
-                        }
-                        goToPassengerStep();
-                    } else {
-                        errDiv.innerText = 'OTP Verification failed.';
-                        errDiv.style.display = 'block';
-                    }
-                } catch (e) {
-                    errDiv.innerText = 'Server error during OTP verification.';
-                    errDiv.style.display = 'block';
-                }
-            }
-        };
-
-        // Passenger Form Submit
-        document.getElementById('passenger-details-submit').onclick = () => {
-            const name = passengerNameInput.value.trim();
-            const age = passengerAgeInput.value.trim();
-
-            if (!name || !age) {
-                alert('Please enter passenger name and age.');
+            if (!email || !password) {
+                errDiv.innerText = 'Please enter both email and password.';
+                errDiv.style.display = 'block';
                 return;
             }
 
-            document.getElementById('credit-card-holder-name').innerText = name.toUpperCase();
-            
-            // Go to step 3 (Payment)
-            stepPassenger.style.display = 'none';
-            stepPayment.style.display = 'block';
-            updateStepProgress(3);
-        };
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.USER_ID = data.user.id;
+                    window.USER_NAME = data.user.name;
+                    fetchUserProfileNav();
+                    goToPassengerStep();
+                } else {
+                    errDiv.innerText = data.message || 'Invalid email or password.';
+                    errDiv.style.display = 'block';
+                }
+            } catch (e) {
+                errDiv.innerText = 'Server error during authentication.';
+                errDiv.style.display = 'block';
+            }
+        } else {
+            const phone = phoneInput.value.trim();
+            let otp = '';
+            digits.forEach(d => otp += d.value);
 
-        // Payment Submit (Pay & Confirm)
-        document.getElementById('payment-confirm-submit').onclick = async () => {
-            stepPayment.style.display = 'none';
-            stepProcessing.style.display = 'block';
+            if (phone.length < 10 || otp.length < 4) {
+                errDiv.innerText = 'Please enter a valid 10-digit phone number and 4-digit OTP.';
+                errDiv.style.display = 'block';
+                return;
+            }
 
             try {
-                // 1. Lock the seat
+                const res = await fetch('/api/auth/verify-otp', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, code: otp })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    window.USER_ID = data.user.id;
+                    window.USER_NAME = data.user.name;
+                    fetchUserProfileNav();
+                    goToPassengerStep();
+                } else {
+                    errDiv.innerText = data.msg || 'OTP Verification failed.';
+                    errDiv.style.display = 'block';
+                }
+            } catch (e) {
+                errDiv.innerText = 'Server error during OTP verification.';
+                errDiv.style.display = 'block';
+            }
+        }
+    };
+    
+    const sendOtpBtn = document.getElementById('modal-send-otp-btn');
+    if(sendOtpBtn) {
+        sendOtpBtn.onclick = async () => {
+            const phone = phoneInput.value.trim();
+            if(phone.length < 10) {
+                document.getElementById('auth-modal-error').innerText = 'Enter valid 10-digit number.';
+                document.getElementById('auth-modal-error').style.display = 'block';
+                return;
+            }
+            sendOtpBtn.innerText = 'Sending...';
+            try {
+                const res = await fetch('/api/auth/send-otp', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({phone})
+                });
+                if(res.ok) {
+                    document.getElementById('modal-otp-verify-section').style.display = 'block';
+                    document.getElementById('auth-modal-error').style.display = 'none';
+                    sendOtpBtn.innerText = 'Sent!';
+                } else {
+                    sendOtpBtn.innerText = 'Send';
+                    document.getElementById('auth-modal-error').innerText = 'Failed to send OTP.';
+                    document.getElementById('auth-modal-error').style.display = 'block';
+                }
+            } catch(e) {
+                sendOtpBtn.innerText = 'Send';
+            }
+        };
+    }
+
+    function fetchUserProfileNav() {
+        fetch('/api/auth/profile').then(r => r.json()).then(d => {
+            if (d.success) {
+                const navLinks = document.querySelector('.nav-links');
+                if (navLinks) {
+                    const loginBtn = navLinks.querySelector('.btn-login-nav');
+                    if (loginBtn) {
+                        loginBtn.outerHTML = `
+                            <span class="user-profile-badge" style="background: rgba(37, 99, 235, 0.08); color: var(--accent-primary); border: 1.5px solid rgba(37, 99, 235, 0.15); padding: 6px 14px; border-radius: 20px; font-weight: 700; font-size: 0.88rem; display: flex; align-items: center; gap: 6px;">
+                                <i class="fa-solid fa-circle-user"></i> Hi, ${d.user.name}
+                            </span>
+                            <a href="/logout" class="btn-logout-nav" style="background: rgba(239, 68, 68, 0.08); color: var(--accent-error); border: 1.5px solid rgba(239, 68, 68, 0.2); padding: 8px 16px; border-radius: 10px; font-weight: 700; font-size: 0.88rem; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: all 0.2s;">
+                                <i class="fa-solid fa-right-from-bracket"></i> Logout
+                            </a>
+                        `;
+                        const adminNav = navLinks.querySelector('.btn-admin-nav');
+                        if (adminNav) adminNav.remove();
+                    }
+                }
+            }
+        });
+    }
+
+    let passengersInfo = [];
+    document.getElementById('passenger-details-submit').onclick = () => {
+        passengersInfo = [];
+        let valid = true;
+
+        document.querySelectorAll('.passenger-form-item').forEach(form => {
+            const seatId = form.dataset.seat;
+            const nameVal = form.querySelector('.passenger-name-input').value.trim();
+            const ageVal = form.querySelector('.passenger-age-input').value.trim();
+            const genderVal = form.querySelector('.passenger-gender-input').value;
+
+            if (!nameVal || !ageVal) {
+                valid = false;
+                return;
+            }
+
+            passengersInfo.push({
+                seat_number: seatId,
+                fare: bus.fare,
+                passenger_name: nameVal,
+                passenger_age: parseInt(ageVal, 10),
+                passenger_gender: genderVal
+            });
+        });
+
+        if (!valid) {
+            alert('Please enter passenger name and age for all seats.');
+            return;
+        }
+
+        stepPassenger.style.display = 'none';
+        stepPayment.style.display = 'block';
+        updateStepProgress(3);
+
+        let totalFare = bus.fare * selectedSeats.length;
+        window.CURRENT_FARE = totalFare;
+        window.APPLIED_COUPON = null;
+        
+        document.getElementById('modal-fare-amount').innerText = `₹${totalFare}`;
+        
+        // Handle Coupon Application
+        const applyBtn = document.getElementById('apply-coupon-btn');
+        const codeInp = document.getElementById('checkout-coupon-code');
+        
+        if(applyBtn && codeInp) {
+            applyBtn.onclick = async () => {
+                const msg = document.getElementById('coupon-message');
+                const code = codeInp.value.trim();
+                if(!code) return;
+                
+                applyBtn.disabled = true;
+                applyBtn.innerText = '...';
+                
+                try {
+                    const res = await fetch('/api/rewards/validate-coupon', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({coupon_code: code})
+                    });
+                    const data = await res.json();
+                    
+                    if(data.success) {
+                        window.APPLIED_COUPON = code;
+                        const newFare = window.CURRENT_FARE * (1.0 - data.discount_pct);
+                        document.getElementById('modal-fare-amount').innerHTML = `<strike style="color:var(--text-secondary);font-size:0.8rem;">₹${window.CURRENT_FARE}</strike> ₹${newFare.toFixed(2)}`;
+                        totalFare = newFare;
+                        msg.style.display = 'block';
+                        msg.style.color = 'var(--accent-green)';
+                        msg.innerText = `Coupon Applied! You get ${data.discount_pct * 100}% off with ${data.product_name}`;
+                        
+                        // Update UPI QR with new fare
+                        const upiId = document.getElementById('payment-upi-id').innerText.trim() || '9390378365@axl';
+                        const upiUrl = `upi://pay?pa=${upiId}&pn=SmartBus%20AI&am=${newFare.toFixed(2)}&cu=INR&tn=SmartBus%20Booking`;
+                        document.getElementById('upi-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`;
+                    } else {
+                        msg.style.display = 'block';
+                        msg.style.color = 'var(--accent-error)';
+                        msg.innerText = data.msg || 'Invalid Coupon';
+                        window.APPLIED_COUPON = null;
+                        totalFare = window.CURRENT_FARE;
+                        document.getElementById('modal-fare-amount').innerText = `₹${totalFare}`;
+                    }
+                } catch(e) {
+                    msg.style.display = 'block';
+                    msg.style.color = 'var(--accent-error)';
+                    msg.innerText = 'Network error checking coupon';
+                }
+                applyBtn.disabled = false;
+                applyBtn.innerText = 'Apply';
+            };
+
+            // Check if user clicked "Use in Bus Booking" from Eco Travel board
+            const savedCoupon = localStorage.getItem('autoApplyCoupon');
+            if (savedCoupon) {
+                codeInp.value = savedCoupon;
+                setTimeout(() => {
+                    applyBtn.click();
+                    localStorage.removeItem('autoApplyCoupon');
+                }, 300);
+            }
+        }
+        
+        const upiId = document.getElementById('payment-upi-id').innerText.trim() || '9390378365@axl';
+        const upiUrl = `upi://pay?pa=${upiId}&pn=SmartBus%20AI&am=${totalFare}&cu=INR&tn=SmartBus%20Booking`;
+        document.getElementById('upi-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`;
+
+        document.getElementById('card-preview-name').innerText = passengersInfo[0].passenger_name.toUpperCase();
+    };
+
+    // Payment Tab Switching
+    let selectedPaymentMethod = 'UPI';
+    const tabUpi = document.getElementById('pay-tab-upi');
+    const tabCard = document.getElementById('pay-tab-card');
+    const tabBank = document.getElementById('pay-tab-bank');
+
+    const panelUpi = document.getElementById('pay-panel-upi');
+    const panelCard = document.getElementById('pay-panel-card');
+    const panelBank = document.getElementById('pay-panel-bank');
+
+    if (tabUpi && tabCard && tabBank) {
+        tabUpi.onclick = () => {
+            tabUpi.classList.add('active-tab');
+            tabCard.classList.remove('active-tab');
+            tabBank.classList.remove('active-tab');
+            panelUpi.style.display = 'block';
+            panelCard.style.display = 'none';
+            panelBank.style.display = 'none';
+            selectedPaymentMethod = 'UPI';
+        };
+
+        tabCard.onclick = () => {
+            tabCard.classList.add('active-tab');
+            tabUpi.classList.remove('active-tab');
+            tabBank.classList.remove('active-tab');
+            panelCard.style.display = 'block';
+            panelUpi.style.display = 'none';
+            panelBank.style.display = 'none';
+            selectedPaymentMethod = 'Card';
+        };
+
+        tabBank.onclick = () => {
+            tabBank.classList.add('active-tab');
+            tabUpi.classList.remove('active-tab');
+            tabCard.classList.remove('active-tab');
+            panelBank.style.display = 'block';
+            panelUpi.style.display = 'none';
+            panelCard.style.display = 'none';
+            selectedPaymentMethod = 'Netbanking';
+        };
+    }
+
+    // Card Input Formatting & Sync
+    const cardNumInp = document.getElementById('card-number-input');
+    const cardNameInp = document.getElementById('card-name-input');
+    const cardExpInp = document.getElementById('card-expiry-input');
+    const cardCvvInp = document.getElementById('card-cvv-input');
+    const cardPreview = document.getElementById('credit-card-preview');
+
+    if (cardNumInp) {
+        cardNumInp.oninput = (e) => {
+            let val = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            let formatted = '';
+            for (let i = 0; i < val.length; i++) {
+                if (i > 0 && i % 4 === 0) formatted += ' ';
+                formatted += val[i];
+            }
+            e.target.value = formatted;
+            document.getElementById('card-preview-number').innerText = formatted || '•••• •••• •••• ••••';
+        };
+    }
+
+    if (cardNameInp) {
+        cardNameInp.oninput = (e) => {
+            document.getElementById('card-preview-name').innerText = e.target.value.toUpperCase() || 'CHARAN KUMAR';
+        };
+    }
+
+    if (cardExpInp) {
+        cardExpInp.oninput = (e) => {
+            let val = e.target.value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
+            if (val.length >= 2) {
+                val = val.slice(0, 2) + '/' + val.slice(2, 4);
+            }
+            e.target.value = val;
+            document.getElementById('card-preview-expiry').innerText = val || 'MM/YY';
+        };
+    }
+
+    if (cardCvvInp) {
+        cardCvvInp.onfocus = () => { cardPreview.classList.add('flipped'); };
+        cardCvvInp.onblur = () => { cardPreview.classList.remove('flipped'); };
+        cardCvvInp.oninput = (e) => {
+            document.getElementById('card-preview-cvv').innerText = e.target.value || '•••';
+        };
+    }
+
+    // Netbanking Bank Selection Buttons
+    let selectedBankName = '';
+    document.querySelectorAll('.bank-select-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.bank-select-btn').forEach(b => b.classList.remove('selected-bank'));
+            btn.classList.add('selected-bank');
+            selectedBankName = btn.dataset.bank;
+            document.getElementById('bank-dropdown').value = '';
+        };
+    });
+
+    const bankDropdown = document.getElementById('bank-dropdown');
+    if (bankDropdown) {
+        bankDropdown.onchange = (e) => {
+            if (e.target.value) {
+                document.querySelectorAll('.bank-select-btn').forEach(b => b.classList.remove('selected-bank'));
+                selectedBankName = e.target.value;
+            }
+        };
+    }
+
+    function luhnCheck(val) {
+        let sum = 0;
+        for (let i = 0; i < val.length; i++) {
+            let intVal = parseInt(val.substr(i, 1));
+            if (i % 2 === val.length % 2) {
+                intVal *= 2;
+                if (intVal > 9) intVal -= 9;
+            }
+            sum += intVal;
+        }
+        return (sum % 10) === 0;
+    }
+
+    // Confirm Payment
+    document.getElementById('payment-confirm-submit').onclick = async () => {
+        let paymentData = {};
+        if (selectedPaymentMethod === 'Card') {
+            const rawCard = cardNumInp.value.replace(/\s+/g, '');
+            if (!rawCard || !cardNameInp.value || !cardExpInp.value || !cardCvvInp.value) {
+                alert('Please fill out all credit card fields.');
+                return;
+            }
+            if (!luhnCheck(rawCard)) {
+                alert('Invalid Card Number (Failed Luhn Check). Please use a valid card format.');
+                return;
+            }
+            paymentData = {
+                method: 'Card',
+                card_number: rawCard,
+                cvv: cardCvvInp.value,
+                expiry: cardExpInp.value,
+                amount: bus.fare * selectedSeats.length
+            };
+        } else if (selectedPaymentMethod === 'Netbanking') {
+            if (!selectedBankName) {
+                alert('Please select a bank to proceed.');
+                return;
+            }
+            paymentData = { method: 'Netbanking', amount: bus.fare * selectedSeats.length };
+        } else {
+            paymentData = { method: 'UPI', upi_id: 'user@upi', amount: bus.fare * selectedSeats.length };
+        }
+
+        stepPayment.style.display = 'none';
+        stepProcessing.style.display = 'block';
+
+        const procTitle = document.getElementById('payment-processing-title');
+        const procDesc = document.getElementById('payment-processing-desc');
+
+        const messages = [
+            { t: "Locking Seats...", d: "Securing temporary database locks for your seats..." },
+            { t: "Processing Payment...", d: "Validating transaction with Secure Payment Gateway..." },
+            { t: "Confirming Transaction...", d: "Committing booking status, logging ledger and updating footprint data..." }
+        ];
+
+        let msgIdx = 0;
+        const msgInterval = setInterval(() => {
+            if (msgIdx < messages.length) {
+                procTitle.innerText = messages[msgIdx].t;
+                procDesc.innerText = messages[msgIdx].d;
+                msgIdx++;
+            }
+        }, 500);
+
+        try {
+            // Lock all selected seats
+            for (let seat of selectedSeats) {
                 await fetch('/api/booking/lock-seat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ schedule_id: bus.schedule_id, seat_number: seat.id })
                 });
+            }
 
-                // 2. Perform the database checkout!
-                const res = await fetch('/api/booking/checkout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: window.USER_ID,
-                        schedule_id: bus.schedule_id,
-                        seat_number: seat.id,
-                        fare: bus.fare
-                    })
-                });
-
-                const data = await res.json();
-                
-                // Add simulated glowing delay for absolute premium payment experience
-                setTimeout(() => {
-                    if (res.ok) {
-                        stepProcessing.style.display = 'none';
-                        stepSuccess.style.display = 'block';
-
-                        // Fill success summary card details
-                        document.getElementById('success-ticket-id').innerText = `#TXN-${data.booking_id}`;
-                        document.getElementById('success-passenger-name').innerText = passengerNameInput.value.trim();
-                        document.getElementById('success-seat-id').innerText = `Seat ${seat.id}`;
-                        document.getElementById('success-fare-amount').innerText = `₹${bus.fare}`;
-                    } else {
-                        stepProcessing.style.display = 'none';
-                        stepPayment.style.display = 'block';
-                        alert(`Double booking or transaction error: ${data.error || data.msg}`);
-                    }
-                }, 1800);
-
-            } catch (err) {
-                console.error(err);
+            // Process secure payment handshake
+            const payRes = await fetch('/api/booking/process-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(paymentData)
+            });
+            const payResult = await payRes.json();
+            
+            if(!payRes.ok || !payResult.success) {
+                clearInterval(msgInterval);
+                alert('Payment Processing Failed: ' + (payResult.error || 'Gateway Error'));
                 stepProcessing.style.display = 'none';
                 stepPayment.style.display = 'block';
-                alert('Booking failed due to a network or server error.');
+                return;
             }
-        };
 
-        // Final Dashboard Redirect
-        document.getElementById('success-dashboard-redirect').onclick = () => {
-            window.location.href = '/dashboard';
-        };
-    }
+            // Perform checkout
+            const res = await fetch('/api/booking/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: window.USER_ID || 1,
+                    schedule_id: bus.schedule_id,
+                    payment_method: selectedPaymentMethod === 'Netbanking' ? `Netbanking (${selectedBankName})` : selectedPaymentMethod,
+                    bookings: passengersInfo,
+                    transaction_id: payResult.transaction_id,
+                    card_number: selectedPaymentMethod === 'Card' ? cardNumInp.value.replace(/\s+/g, '') : undefined,
+                    cvv: selectedPaymentMethod === 'Card' ? cardCvvInp.value : undefined,
+                    expiry: selectedPaymentMethod === 'Card' ? cardExpInp.value : undefined,
+                    upi_id: selectedPaymentMethod === 'UPI' ? 'user@upi' : undefined,
+                    coupon_code: window.APPLIED_COUPON || undefined
+                })
+            });
+
+            clearInterval(msgInterval);
+
+            if (res.ok) {
+                const checkoutResult = await res.json();
+                
+                setTimeout(() => {
+                    stepProcessing.style.display = 'none';
+                    stepSuccess.style.display = 'block';
+
+                    const successContainer = document.getElementById('success-tickets-container');
+                    successContainer.innerHTML = '';
+                    
+                    if(checkoutResult.booking_ids && checkoutResult.booking_ids.length > 0) {
+                        const dlBtn = document.getElementById('success-download-ticket');
+                        if (dlBtn) {
+                            dlBtn.onclick = () => {
+                                window.open('/api/booking/download-ticket?ids=' + checkoutResult.booking_ids.join(','), '_blank');
+                            };
+                        }
+                    }
+
+                    const details = checkoutResult.payment.details || [];
+                    
+                    details.forEach((ticket, idx) => {
+                        const pass = passengersInfo[idx] || {};
+                        successContainer.innerHTML += `
+                            <div style="border-bottom: 1px dashed rgba(255,255,255,0.1); padding-bottom: 10px; margin-bottom: 12px; font-size:0.85rem;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                    <span style="color: var(--text-secondary);">Ticket ID</span>
+                                    <strong style="color: #fff;">#TXN-${ticket.booking_id}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span style="color: var(--text-secondary);">Passenger</span>
+                                    <strong style="color: #fff;">${pass.passenger_name} (${pass.passenger_age < 18 ? 'Child' : 'Adult'}, Age: ${pass.passenger_age}, ${pass.passenger_gender})</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                                    <span style="color: var(--text-secondary);">Seat Assigned</span>
+                                    <strong style="color: var(--accent-primary);">Seat ${ticket.seat_number}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Amount Charged</span>
+                                    <strong style="color: #fff;">₹${ticket.amount}</strong>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    successContainer.innerHTML += `
+                        <div style="font-size:0.8rem; color: rgba(255,255,255,0.6); margin-top: 10px;">
+                            Payment processed securely via <strong>${selectedPaymentMethod}</strong>.
+                        </div>
+                    `;
+                }, 800);
+            } else {
+                const data = await res.json();
+                stepProcessing.style.display = 'none';
+                stepPayment.style.display = 'block';
+                alert(`Booking error: ${data.error || data.msg}`);
+            }
+
+        } catch (err) {
+            clearInterval(msgInterval);
+            console.error(err);
+            stepProcessing.style.display = 'none';
+            stepPayment.style.display = 'block';
+            alert('Booking failed due to a network or server error.');
+        }
+    };
+
+    // Final Dashboard Redirect
+    document.getElementById('success-dashboard-redirect').onclick = () => {
+        window.location.href = '/dashboard';
+    };
 });
