@@ -15,10 +15,34 @@ document.addEventListener('DOMContentLoaded', () => {
     fetchUserProfile();
     fetchUserBookings();
 
-    // 1. Initialize Toggles from LocalStorage
+    // 1. Initialize Toggles from LocalStorage and Handle Modal
     function initializeThemeAndPreferences() {
         const toggleNight = document.getElementById('toggle-night-travel');
         const toggleWomen = document.getElementById('toggle-women-safety');
+        const editPrefBtn = document.getElementById('edit-preferences-btn');
+        const closePrefBtn = document.getElementById('close-preferences-btn');
+        const prefModal = document.getElementById('preferences-modal');
+
+        if (editPrefBtn && prefModal) {
+            editPrefBtn.addEventListener('click', () => {
+                prefModal.style.display = 'flex';
+            });
+        }
+
+        if (closePrefBtn && prefModal) {
+            closePrefBtn.addEventListener('click', () => {
+                prefModal.style.display = 'none';
+            });
+        }
+
+        if (prefModal) {
+            // Close on click outside
+            prefModal.addEventListener('click', (e) => {
+                if (e.target === prefModal) {
+                    prefModal.style.display = 'none';
+                }
+            });
+        }
 
         if (toggleNight) {
             // Default to checked if not set
@@ -28,8 +52,8 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleNight.addEventListener('change', (e) => {
                 localStorage.setItem('smartbus_avoid_night', e.target.checked);
                 showToast(
-                    e.target.checked 
-                        ? 'AI Dispatch updated: Strict Night Travel avoidance policy is now Active! 🌙' 
+                    e.target.checked
+                        ? 'AI Dispatch updated: Strict Night Travel avoidance policy is now Active! 🌙'
                         : 'AI Dispatch updated: Night Travel avoidance policy is now Inactive.',
                     'info'
                 );
@@ -44,8 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleWomen.addEventListener('change', (e) => {
                 localStorage.setItem('smartbus_women_safety', e.target.checked);
                 showToast(
-                    e.target.checked 
-                        ? 'Safety Filters updated: Women Safety rating prioritized in future search optimization. 🛡️' 
+                    e.target.checked
+                        ? 'Safety Filters updated: Women Safety rating prioritized in future search optimization. 🛡️'
                         : 'Safety Filters updated: standard prioritization restored.',
                     'success'
                 );
@@ -82,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (welcomeName) welcomeName.textContent = globalUser.name;
         if (emailText) emailText.textContent = globalUser.email;
-        
+
         if (avatarInitials && globalUser.name) {
             avatarInitials.textContent = globalUser.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
         }
@@ -132,13 +156,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (!globalBookings || globalBookings.length === 0) {
                 tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" style="text-align: center; padding: 4rem 1rem; color: var(--text-secondary);">
-                            <i class="fa-solid fa-ticket-simple" style="font-size: 2.2rem; opacity: 0.15; margin-bottom: 1.2rem; display: block; margin-left: auto; margin-right: auto;"></i>
-                            <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">No active dispatches found</div>
-                            Ready to start your AI-optimized travel journey? Search routes on the main page.
-                        </td>
-                    </tr>
+                    <div style="text-align: center; padding: 4rem 1rem; color: var(--text-secondary); background: rgba(0,0,0,0.02); border-radius: 12px; border: 1px dashed rgba(0,0,0,0.08);">
+                        <i class="fa-solid fa-ticket-simple" style="font-size: 2.2rem; opacity: 0.15; margin-bottom: 1.2rem; display: block; margin-left: auto; margin-right: auto;"></i>
+                        <div style="font-weight: 700; color: var(--text-primary); margin-bottom: 0.25rem;">No active dispatches found</div>
+                        Ready to start your AI-optimized travel journey? Search routes on the main page.
+                    </div>
                 `;
                 renderTravelAnalyticsChart([0, 0, 0, 0]);
                 updateMetricsUI(0, 0); // zero base
@@ -164,7 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
             globalBookings.forEach((b, idx) => {
                 let badgeClass = 'confirmed';
                 let secureIcon = '<i class="fa-solid fa-circle-check"></i>';
-                
+
                 if (b.status === 'Confirmed') {
                     badgeClass = 'confirmed';
                 } else if (b.status === 'Pending') {
@@ -176,34 +198,39 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 tbody.innerHTML += `
-                    <tr class="tr-premium">
-                        <td style="padding: 1.3rem 1rem;">
-                            <div style="font-weight: 700; color: var(--text-primary); display:flex; align-items:center; gap: 8px;">
-                                <i class="fa-solid fa-bus" style="color: var(--accent-primary); font-size:0.85rem;"></i>
-                                ${b.origin} ➔ ${b.destination}
+                    <div class="glass-panel" style="display: flex; gap: 1rem; padding: 1.25rem 1.5rem; align-items: center; border-radius: 12px; border: 1px solid var(--border-light); background: rgba(255, 255, 255, 0.4); box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+                        <div style="flex: 0 0 24%; min-width: 0;">
+                            <div style="font-weight: 700; color: var(--text-primary); display:flex; align-items:flex-start; gap: 8px; padding-bottom: 6px;">
+                                <i class="fa-solid fa-bus" style="color: var(--accent-primary); font-size:0.9rem; flex-shrink: 0; margin-top: 2px;"></i>
+                                <div style="display: flex; flex-direction: column; line-height: 1.4; min-width: 0;">
+                                    <span style="white-space: nowrap; overflow-x: auto; scrollbar-width: none;">${b.origin} <i class="fa-solid fa-arrow-right" style="font-size:0.75rem; opacity:0.6; margin: 0 4px;"></i></span>
+                                    <span style="white-space: nowrap; overflow-x: auto; scrollbar-width: none; color: var(--text-secondary);">${b.destination}</span>
+                                </div>
                             </div>
-                            <div style="font-size:0.75rem; color: var(--text-secondary); margin-top:0.25rem;">
-                                ${b.bus_type} • Plate: <strong>${b.bus_number}</strong> • Passenger: <strong style="color: var(--accent-primary);">${b.passenger_name}</strong>
+                            <div style="font-size:0.75rem; color: var(--text-secondary); margin-top:0.2rem; white-space: nowrap; overflow-x: auto; padding-bottom: 2px; scrollbar-width: none;">
+                                ${b.bus_type} • Plate: <strong>${b.bus_number}</strong> • Pass: <strong style="color: var(--accent-primary);">${b.passenger_name}</strong>
                             </div>
-                        </td>
-                        <td style="padding: 1.3rem 1rem; font-weight: 600; color: var(--text-primary);">${b.date}</td>
-                        <td style="padding: 1.3rem 1rem;">
-                            <span class="badge blue" style="background: rgba(37, 99, 235, 0.08); color: var(--accent-primary); font-size: 0.75rem; border-radius: 4px; padding: 2px 8px; font-weight:700;">Seat ${b.seat}</span>
-                            <strong style="margin-left: 10px; color: var(--text-primary);">₹${b.fare}</strong>
-                        </td>
-                        <td style="padding: 1.3rem 1rem;">
-                            <span class="badge-premium ${badgeClass}">${secureIcon} ${b.status}</span>
-                        </td>
-                        <td style="padding: 1.3rem 1rem; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center;">
-                            <button class="btn-table-action view-ticket-btn" data-booking-id="${b.id}">
+                        </div>
+                        <div style="flex: 0 0 15%; font-weight: 700; color: var(--text-primary); font-size: 0.95rem; text-align: center;">
+                            ${b.date}
+                        </div>
+                        <div style="flex: 0 0 14%; text-align: center;">
+                            <span class="badge blue" style="background: rgba(37, 99, 235, 0.08); color: var(--accent-primary); font-size: 0.75rem; border-radius: 6px; padding: 4px 8px; font-weight:800; display: inline-block;">Seat ${b.seat}</span>
+                            <div style="margin-top: 0.4rem; font-weight: 800; color: var(--text-primary); font-size: 1rem;">₹${b.fare}</div>
+                        </div>
+                        <div style="flex: 0 0 16%; min-width: 0; text-align: center;">
+                            <span class="badge-premium ${badgeClass}" style="display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 6px 12px; border-radius: 8px; white-space: nowrap;">${secureIcon} ${b.status}</span>
+                        </div>
+                        <div style="flex: 1; text-align: right; display: flex; gap: 0.5rem; justify-content: flex-end; min-width: 0;">
+                            <button class="btn-table-action view-ticket-btn" data-booking-id="${b.id}" style="padding: 0.45rem 0.8rem; font-size: 0.9rem; border-radius: 8px; border: 1px solid var(--border-light); background: white; cursor: pointer; display: flex; align-items: center; gap: 6px; color: var(--text-primary); font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                                 <i class="fa-solid fa-receipt"></i> Pass
                             </button>
-                            <button class="btn-table-action track-bus-btn" data-bus-id="${b.bus_id}" data-schedule-id="${b.schedule_id}" data-origin="${b.origin}" data-destination="${b.destination}">
+                            <button class="btn-table-action track-bus-btn" data-bus-id="${b.bus_id}" data-schedule-id="${b.schedule_id}" data-origin="${b.origin}" data-destination="${b.destination}" data-date="${b.date}" style="padding: 0.45rem 0.8rem; font-size: 0.9rem; border-radius: 8px; border: 1px solid var(--border-light); background: white; cursor: pointer; display: flex; align-items: center; gap: 6px; color: var(--text-primary); font-weight: 600; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
                                 <i class="fa-solid fa-location-crosshairs"></i> Track
                             </button>
-                        </td>
-                    </tr>
-                `;
+                        </div>
+                    </div>
+                    `;
             });
 
             // Dynamically assign event listeners to newly created buttons
@@ -220,7 +247,61 @@ document.addEventListener('DOMContentLoaded', () => {
                     const scheduleId = e.currentTarget.getAttribute('data-schedule-id');
                     const origin = e.currentTarget.getAttribute('data-origin');
                     const destination = e.currentTarget.getAttribute('data-destination');
+
+                    const bookingDateStr = e.currentTarget.getAttribute('data-date');
+                    if (bookingDateStr) {
+                        const bookingDate = new Date(bookingDateStr);
+                        const now = new Date();
+                        const diffHours = (now - bookingDate) / (1000 * 60 * 60);
+
+                        if (diffHours > 24) {
+                            if (typeof trackingInterval !== 'undefined' && trackingInterval) clearInterval(trackingInterval);
+                            const mapContainer = document.getElementById('live-map');
+                            if (mapContainer) {
+                                if (liveMap) {
+                                    liveMap.remove();
+                                    liveMap = null;
+                                }
+                                mapContainer.innerHTML = `
+                                    <style>
+                                        @keyframes floatingBounce {
+                                            0%, 100% { transform: translateY(0); }
+                                            50% { transform: translateY(-12px); }
+                                        }
+                                        .animated-bounce-text {
+                                            animation: floatingBounce 2s ease-in-out infinite;
+                                        }
+                                    </style>
+                                    <div style="display:flex; height:100%; justify-content:center; align-items:center; flex-direction:column; background:rgba(255,255,255,0.02); text-align:center; padding: 2rem;">
+                                        <i class="fa-solid fa-bus-slash animated-bounce-text" style="font-size:3.5rem; color:var(--text-secondary); opacity:0.3; margin-bottom:1rem;"></i>
+                                        <h3 class="animated-bounce-text" style="color:var(--text-primary); font-family:var(--font-heading); margin-bottom:0.25rem;">The bus has been departed from the location</h3>
+                                        <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:0;">Tracking is disabled (24 hours after booking).</p>
+                                    </div>
+                    `;
+                            }
+
+                            const assessmentContainer = document.getElementById('delay-assessment-content');
+                            if (assessmentContainer) {
+                                assessmentContainer.innerHTML = `
+                                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                                        <i class="fa-solid fa-ban" style="font-size: 1.5rem; margin-bottom: 0.5rem; display:block; margin-left:auto; margin-right:auto; opacity:0.5;"></i>
+                                        AI telemetry unavailable.
+                                    </div>
+                                `;
+                            }
+
+                            showToast(`GPS Offline: The bus has already departed.`, 'error');
+                            return;
+                        }
+                    }
+
                     showToast(`Refocusing live satellite tracking on Bus #${busId} (${origin} ➔ ${destination}) 📡`, 'info');
+                    if (!liveMap) {
+                        // Re-initialize map if it was previously destroyed
+                        const mapContainer = document.getElementById('live-map');
+                        if (mapContainer) mapContainer.innerHTML = '';
+                        initLiveTrackingMap();
+                    }
                     updateTrackingBus(parseInt(busId), parseInt(scheduleId));
                 });
             });
@@ -233,11 +314,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             console.error("Error fetching bookings:", err);
             tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" style="text-align: center; padding: 3rem; color: var(--accent-error);">
-                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem; margin-bottom: 0.5rem; display:block; margin-left:auto; margin-right:auto;"></i> Error loading travel analytics. Please refresh.
-                    </td>
-                </tr>
+                <div style="text-align: center; padding: 3rem; color: var(--accent-error); background: rgba(239, 68, 68, 0.05); border-radius: 12px; border: 1px dashed rgba(239, 68, 68, 0.2);">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.5rem; margin-bottom: 0.5rem; display:block; margin-left:auto; margin-right:auto;"></i> Error loading travel analytics.Please refresh.
+                </div>
             `;
         }
     }
@@ -252,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ecoVal.innerHTML = `${displayCo2} <span style="font-size: 1.2rem; color: var(--text-secondary); font-weight:600;">kg</span>`;
         }
         if (savingsVal) {
-            const displaySavings = savings > 0 ? `₹${Math.round(savings).toLocaleString('en-IN')}` : "₹4,250";
+            const displaySavings = savings > 0 ? `₹${Math.round(savings).toLocaleString('en-IN')} ` : "₹4,250";
             savingsVal.textContent = displaySavings;
         }
     }
@@ -329,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Populate Modal Fields
         document.getElementById('modal-status-badge').textContent = booking.status.toUpperCase();
-        
+
         // Dynamic color badge based on status
         const statusBadge = document.getElementById('modal-status-badge');
         statusBadge.className = 'badge-premium';
@@ -351,20 +430,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('modal-passenger-name').textContent = booking.passenger_name || globalUser.name;
         document.getElementById('modal-date-val').textContent = booking.date;
-        document.getElementById('modal-seat-val').textContent = `Seat ${booking.seat}`;
-        
+        document.getElementById('modal-seat-val').textContent = `Seat ${booking.seat} `;
+
         document.getElementById('modal-dep-time-val').textContent = booking.departure_time || "09:30 PM";
         document.getElementById('modal-arr-time-val').textContent = booking.arrival_time || "05:30 AM";
         document.getElementById('modal-bus-type-val').textContent = `${booking.bus_type} (${booking.eco_rating} Eco)`;
-        
+
         document.getElementById('modal-bus-number-val').textContent = booking.bus_number || "AI-SMART-707";
-        
+
         const distance = parseFloat(booking.distance_km) || 350.0;
         document.getElementById('modal-distance-eco').textContent = `${distance} km | ${(distance * 0.15).toFixed(1)} kg CO₂ saved`;
-        
-        document.getElementById('modal-pay-gateway').textContent = `Stripe Gateway (${booking.payment_method})`;
-        document.getElementById('modal-fare-val').textContent = `₹${booking.fare}`;
-        document.getElementById('modal-transaction-val').textContent = booking.transaction_id || `txn_${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
+
+        document.getElementById('modal-pay-gateway').textContent = `Stripe Gateway(${booking.payment_method})`;
+        document.getElementById('modal-fare-val').textContent = `₹${booking.fare} `;
+        document.getElementById('modal-transaction-val').textContent = booking.transaction_id || `txn_${Math.random().toString(36).substr(2, 9).toUpperCase()} `;
 
         // Reset Email button state
         if (btnEmailTicket) {
@@ -379,20 +458,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Show Modal
         if (modalOverlay) {
-            modalOverlay.classList.add('active');
+            modalOverlay.style.display = 'flex';
         }
     }
 
     if (btnCloseTicket) {
         btnCloseTicket.addEventListener('click', () => {
-            if (modalOverlay) modalOverlay.classList.remove('active');
+            if (modalOverlay) modalOverlay.style.display = 'none';
         });
     }
 
     if (modalOverlay) {
         modalOverlay.addEventListener('click', (e) => {
             if (e.target === modalOverlay) {
-                modalOverlay.classList.remove('active');
+                modalOverlay.style.display = 'none';
             }
         });
     }
@@ -406,46 +485,46 @@ document.addEventListener('DOMContentLoaded', () => {
             // Simple high fidelity iframe or print window approach
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
-                <html>
-                    <head>
-                        <title>SmartBus AI - Digital Boarding Pass</title>
-                        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=Inter:wght@500;700&display=swap" rel="stylesheet">
-                        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-                        <style>
-                            body { font-family: 'Inter', sans-serif; background: #fff; color: #000; padding: 2rem; }
-                            .boarding-pass {
-                                background: #0f172a;
-                                color: white;
-                                padding: 2.5rem;
-                                border-radius: 20px;
-                                max-width: 580px;
-                                margin: 0 auto;
-                                box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    < html >
+    <head>
+        <title>SmartBus AI - Digital Boarding Pass</title>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=Inter:wght@500;700&display=swap" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+                <style>
+                    body {font - family: 'Inter', sans-serif; background: #fff; color: #000; padding: 2rem; }
+                    .boarding-pass {
+                        background: #0f172a;
+                    color: white;
+                    padding: 2.5rem;
+                    border-radius: 20px;
+                    max-width: 580px;
+                    margin: 0 auto;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
                             }
-                            .pass-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255, 255, 255, 0.2); padding-bottom: 1rem; margin-bottom: 1.5rem; }
-                            .pass-header-logo { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.2rem; }
-                            .pass-route { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
-                            .airport-code { font-size: 2rem; font-weight: 800; font-family: 'Outfit', sans-serif; }
-                            .city-name { font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; }
-                            .route-plane-icon { font-size: 1.4rem; color: #38bdf8; }
-                            .pass-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; margin-bottom: 2rem; }
-                            .pass-item { display: flex; flex-direction: column; }
-                            .pass-item-label { font-size: 0.7rem; opacity: 0.5; text-transform: uppercase; }
-                            .pass-item-value { font-size: 0.95rem; font-weight: 700; }
-                            .pass-footer-ticket { border-top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-                            .ticket-qr { background: white; padding: 0.5rem; border-radius: 8px; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
-                            .ticket-qr i { font-size: 3rem; color: #000; }
-                            .badge-premium { border-radius: 30px; font-size: 0.75rem; font-weight:700; padding: 4px 10px; text-transform: uppercase; }
-                            .badge-premium.confirmed { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-                        </style>
-                    </head>
-                    <body onload="window.print();window.close();">
-                        <div class="boarding-pass">
-                            ${printContent}
-                        </div>
-                    </body>
-                </html>
-            `);
+                    .pass-header {display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255, 255, 255, 0.2); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+                    .pass-header-logo {font - family: 'Outfit', sans-serif; font-weight: 800; font-size: 1.2rem; }
+                    .pass-route {display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+                    .airport-code {font - size: 2rem; font-weight: 800; font-family: 'Outfit', sans-serif; }
+                    .city-name {font - size: 0.8rem; opacity: 0.6; text-transform: uppercase; }
+                    .route-plane-icon {font - size: 1.4rem; color: #38bdf8; }
+                    .pass-grid {display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.2rem; margin-bottom: 2rem; }
+                    .pass-item {display: flex; flex-direction: column; }
+                    .pass-item-label {font - size: 0.7rem; opacity: 0.5; text-transform: uppercase; }
+                    .pass-item-value {font - size: 0.95rem; font-weight: 700; }
+                    .pass-footer-ticket {border - top: 1px dashed rgba(255, 255, 255, 0.2); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+                    .ticket-qr {background: white; padding: 0.5rem; border-radius: 8px; width: 70px; height: 70px; display: flex; align-items: center; justify-content: center; }
+                    .ticket-qr i {font - size: 3rem; color: #000; }
+                    .badge-premium {border - radius: 30px; font-size: 0.75rem; font-weight:700; padding: 4px 10px; text-transform: uppercase; }
+                    .badge-premium.confirmed {background: rgba(16, 185, 129, 0.2); color: #10b981; }
+                </style>
+            </head>
+            <body onload="window.print();window.close();">
+                <div class="boarding-pass">
+                    ${printContent}
+                </div>
+            </body>
+        </html>
+        `);
             printWindow.document.close();
         });
     }
@@ -465,7 +544,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 if (planeIcon) planeIcon.className = 'fa-solid fa-circle-check';
                 if (btnText) btnText.textContent = "Pass Dispatched!";
-                
+
                 showToast(`Journey pass & secure login credentials sent successfully to ${globalUser.email}! 📩`, 'success');
             }, 1500);
         });
@@ -478,7 +557,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const toast = document.createElement('div');
         toast.className = `toast-alert ${type}`;
-        
+
         let icon = '<i class="fa-solid fa-circle-check" style="color:var(--accent-green);"></i>';
         if (type === 'info') {
             icon = '<i class="fa-solid fa-circle-info" style="color:var(--accent-primary);"></i>';
@@ -487,8 +566,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         toast.innerHTML = `
-            ${icon}
-            <span>${message}</span>
+        ${icon}
+        <span>${message}</span>
         `;
 
         container.appendChild(toast);
@@ -542,66 +621,66 @@ document.addEventListener('DOMContentLoaded', () => {
     async function fetchDelayPrediction(scheduleId) {
         const assessmentContainer = document.getElementById('delay-assessment-content');
         if (!assessmentContainer) return;
-        
+
         assessmentContainer.innerHTML = `
-            <div style="text-align: center; padding: 2rem;">
-                <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--accent-purple); display:block; margin-left:auto; margin-right:auto; margin-bottom:0.5rem;"></i>
-                <p style="font-size: 0.8rem; color: var(--text-secondary);">Analyzing route telemetry...</p>
-            </div>
+        <div style="text-align: center; padding: 2rem;">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--accent-purple); display:block; margin-left:auto; margin-right:auto; margin-bottom:0.5rem;"></i>
+            <p style="font-size: 0.8rem; color: var(--text-secondary);">Analyzing route telemetry...</p>
+        </div>
         `;
-        
+
         try {
             const res = await fetch(`/api/tracking/predict-delay/${scheduleId}`);
             const data = await res.json();
             if (data && !data.error) {
                 const reasonsList = data.reasons.map(r => `<li style="margin-bottom:4px;"><i class="fa-solid fa-triangle-exclamation" style="color:var(--accent-gold); font-size:0.75rem;"></i> ${r}</li>`).join('');
                 const delayColor = data.delay_minutes > 15 ? '#ef4444' : (data.delay_minutes > 0 ? '#f59e0b' : '#10b981');
-                
+
                 assessmentContainer.innerHTML = `
-                    <div style="display:flex; flex-direction:column; gap:0.6rem; height:100%; justify-content:space-between; text-align: left;">
-                        <div style="flex-grow:1;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.6rem;">
-                                <span style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Delay Forecast</span>
-                                <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; font-size: 0.7rem; border-radius:4px; padding:2px 6px; font-weight:700;">Conf: ${data.ai_confidence_score}%</span>
-                            </div>
-                            
-                            <!-- ETA Panel -->
-                            <div style="background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.04); border-radius:10px; padding:0.6rem; display:flex; justify-content:space-around; align-items:center; text-align:center; margin-bottom:0.6rem;">
-                                <div>
-                                    <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600; text-transform:uppercase;">Scheduled</div>
-                                    <div style="font-size:0.9rem; font-weight:800; color:var(--text-primary);">${data.scheduled_arrival}</div>
-                                </div>
-                                <div style="font-size:1rem; color:var(--text-secondary);"><i class="fa-solid fa-arrow-right-long"></i></div>
-                                <div>
-                                    <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600; text-transform:uppercase;">AI-Adjusted</div>
-                                    <div style="font-size:0.9rem; font-weight:800; color:${delayColor};">${data.adjusted_arrival}</div>
-                                </div>
-                            </div>
-                            
-                            <!-- Delay Details -->
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem; font-size:0.8rem;">
-                                <span style="font-weight:600; color:var(--text-primary);">Traffic Congestion:</span>
-                                <strong style="color:#6366f1;">${data.congestion}</strong>
-                            </div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; font-size:0.8rem;">
-                                <span style="font-weight:600; color:var(--text-primary);">Predicted Delay:</span>
-                                <strong style="color:${delayColor};">${data.delay_minutes} mins</strong>
-                            </div>
-                            
-                            <!-- Bottleneck List -->
-                            <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px;">Congestion Factors:</div>
-                            <ul style="list-style:none; padding-left:0; margin:0; font-size:0.75rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:2px;">
-                                ${reasonsList}
-                            </ul>
-                        </div>
-                        
-                        <!-- simulated SMS button -->
-                        <button class="btn-action-glow notify-sms-btn" style="width:100%; border-radius:8px; font-size:0.75rem; padding:8px 12px; margin-top:0.4rem; justify-content:center;">
-                            <i class="fa-solid fa-paper-plane"></i> Notify Status via SMS
-                        </button>
+        <div style="display:flex; flex-direction:column; gap:0.6rem; height:100%; justify-content:space-between; text-align: left;">
+            <div style="flex-grow:1;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.6rem;">
+                    <span style="font-size:0.72rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.5px;">Delay Forecast</span>
+                    <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: #6366f1; font-size: 0.7rem; border-radius:4px; padding:2px 6px; font-weight:700;">Conf: ${data.ai_confidence_score}%</span>
+                </div>
+
+                <!-- ETA Panel -->
+                <div style="background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.04); border-radius:10px; padding:0.6rem; display:flex; justify-content:space-around; align-items:center; text-align:center; margin-bottom:0.6rem;">
+                    <div>
+                        <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600; text-transform:uppercase;">Scheduled</div>
+                        <div style="font-size:0.9rem; font-weight:800; color:var(--text-primary);">${data.scheduled_arrival}</div>
                     </div>
-                `;
-                
+                    <div style="font-size:1rem; color:var(--text-secondary);"><i class="fa-solid fa-arrow-right-long"></i></div>
+                    <div>
+                        <div style="font-size:0.7rem; color:var(--text-secondary); font-weight:600; text-transform:uppercase;">AI-Adjusted</div>
+                        <div style="font-size:0.9rem; font-weight:800; color:${delayColor};">${data.adjusted_arrival}</div>
+                    </div>
+                </div>
+
+                <!-- Delay Details -->
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem; font-size:0.8rem;">
+                    <span style="font-weight:600; color:var(--text-primary);">Traffic Congestion:</span>
+                    <strong style="color:#6366f1;">${data.congestion}</strong>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.6rem; font-size:0.8rem;">
+                    <span style="font-weight:600; color:var(--text-primary);">Predicted Delay:</span>
+                    <strong style="color:${delayColor};">${data.delay_minutes} mins</strong>
+                </div>
+
+                <!-- Bottleneck List -->
+                <div style="font-size:0.75rem; font-weight:700; color:var(--text-secondary); text-transform:uppercase; margin-bottom:0.3rem; letter-spacing:0.5px;">Congestion Factors:</div>
+                <ul style="list-style:none; padding-left:0; margin:0; font-size:0.75rem; color:var(--text-secondary); display:flex; flex-direction:column; gap:2px;">
+                    ${reasonsList}
+                </ul>
+            </div>
+
+            <!-- simulated SMS button -->
+            <button class="btn-action-glow notify-sms-btn" style="width:100%; border-radius:8px; font-size:0.75rem; padding:8px 12px; margin-top:0.4rem; justify-content:center;">
+                <i class="fa-solid fa-paper-plane"></i> Notify Status via SMS
+            </button>
+        </div>
+        `;
+
                 const smsBtn = assessmentContainer.querySelector('.notify-sms-btn');
                 if (smsBtn) {
                     smsBtn.onclick = () => {
@@ -621,13 +700,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function pollTracking(fitBounds = false) {
+        // --- 24 Hour Expiration Logic ---
+        const activeBooking = globalBookings.find(b => parseInt(b.bus_id) === currentTrackedBusId);
+        if (activeBooking && activeBooking.date) {
+            const bookingDate = new Date(activeBooking.date);
+            const now = new Date();
+            const diffHours = (now - bookingDate) / (1000 * 60 * 60);
+
+            if (diffHours > 24) {
+                if (typeof trackingInterval !== 'undefined' && trackingInterval) clearInterval(trackingInterval);
+                const mapContainer = document.getElementById('live-map');
+                if (mapContainer) {
+                    if (liveMap) { liveMap.remove(); liveMap = null; }
+                    mapContainer.innerHTML = `
+        <div style="display:flex; height:100%; justify-content:center; align-items:center; flex-direction:column; background:rgba(255,255,255,0.02); text-align:center; padding: 2rem;">
+            <i class="fa-solid fa-bus-slash" style="font-size:3.5rem; color:var(--text-secondary); opacity:0.3; margin-bottom:1rem;"></i>
+            <h3 style="color:var(--text-primary); font-family:var(--font-heading); margin-bottom:0.25rem;">The bus has been departed from the location</h3>
+            <p style="color:var(--text-secondary); font-size:0.9rem; margin-top:0;">Tracking is disabled (24 hours after booking).</p>
+        </div>
+        `;
+                }
+                const badge = document.getElementById('live-status-badge');
+                if (badge) {
+                    badge.innerHTML = `<i class="fa-solid fa-ban"></i> Departed • Offline`;
+                    badge.className = 'badge-premium';
+                    badge.style.background = 'rgba(255,255,255,0.05)';
+                    badge.style.color = 'var(--text-secondary)';
+                }
+                const assessmentContainer = document.getElementById('delay-assessment-content');
+                if (assessmentContainer) {
+                    assessmentContainer.innerHTML = `
+                        <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                            <i class="fa-solid fa-ban" style="font-size: 1.5rem; margin-bottom: 0.5rem; display:block; margin-left:auto; margin-right:auto; opacity:0.5;"></i>
+                            AI telemetry unavailable.
+                        </div>
+                    `;
+                }
+                return; // Stop polling and API fetching completely!
+            }
+        }
+
         try {
             const res = await fetch(`/api/tracking/live/${currentTrackedBusId}`);
             const data = await res.json();
             if (data && data.location) {
                 const latLng = data.location;
                 const speed = Math.round(data.speed_kmh);
-                
+
                 // Update status badge
                 const badge = document.getElementById('live-status-badge');
                 if (badge) {
@@ -696,7 +815,7 @@ document.addEventListener('DOMContentLoaded', () => {
             await pollTracking(false);
         }, 2000);
     }
-    
+
     // Call init
     initLiveTrackingMap();
 });

@@ -67,7 +67,7 @@
             <div class="header-profile">
                 <span style="color:var(--text-secondary); font-size:0.9rem;">
                     <i class="fa-solid fa-circle" style="color:var(--accent-green); font-size:0.6rem;"></i>
-                    {{ current_admin.name }} ({{ current_admin.role.name }})
+                    {{ current_admin.name }} ({{ current_admin.role_id.name }})
                 </span>
                 <a href="{{ url_for('admin_ui.logout') }}" class="btn-logout"><i
                         class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>

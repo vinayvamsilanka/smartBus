@@ -4,7 +4,7 @@ from app.config import Config
 from flask_cors import CORS
 
 def create_app(config_class=Config):
-    app = Flask(__name__, template_folder='../templates', static_folder='../static')
+    app = Flask(__name__, template_folder='../../frontend/templates', static_folder='../../frontend/static')
     app.config.from_object(config_class)
 
     # Initialize extensions

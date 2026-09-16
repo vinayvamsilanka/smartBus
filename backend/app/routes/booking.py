@@ -109,22 +109,22 @@ def checkout():
                 status='Confirmed'
             )
             db.session.add(new_booking)
-            db.session.flush()
+            db.session.commit()
             
             # Gamification: Award Carbon Credits
             eco_points = 50
             try:
-                sch = BusSchedule.query.get(schedule_id)
+                sch = BusSchedule.query.filter_by(id=schedule_id).first()
                 if sch and sch.bus and sch.bus.eco_rating != 'High':
                     eco_points = 20
             except:
                 pass
             
-            user = User.query.get(user_id)
+            user = User.query.filter_by(id=user_id).first()
             if user:
                 user.eco_points = (user.eco_points or 0) + eco_points
                 
-            db.session.flush()
+            pass
             
             transaction_id = f"{payment_method}:{txn_id}:{txn_uuid}-{idx+1}"
             payment = Payment(
@@ -135,6 +135,7 @@ def checkout():
                 status='Completed'
             )
             db.session.add(payment)
+            db.session.commit()
             
             booking_ids.append(new_booking.id)
             payment_details.append({
@@ -146,8 +147,7 @@ def checkout():
 
         if applied_redemption:
             applied_redemption.status = 'Used'
-
-        db.session.commit()
+            db.session.commit()
 
         return jsonify({
             "msg": "Bookings confirmed",
@@ -162,7 +162,7 @@ def checkout():
         }), 200
 
     except Exception as e:
-        db.session.rollback()
+        pass
         return jsonify({"msg": "Double booking detected or logic error", "error": str(e)}), 400
 
 @booking_bp.route('/webhook', methods=['POST'])
@@ -171,10 +171,10 @@ def payment_webhook():
     payload = request.json
     booking_id = payload.get('booking_id')
     if payload.get('event') == 'payment.captured':
-        booking = Booking.query.get(booking_id)
+        booking = Booking.query.filter_by(id=booking_id).first()
         if booking:
             booking.status = 'Confirmed'
-            db.session.commit()
+            pass
     return jsonify({"status": "acknowledged"}), 200
 
 @booking_bp.route('/user/<int:user_id>', methods=['GET'])
@@ -247,7 +247,7 @@ def download_ticket():
         return "Bookings not found", 404
         
     payment = Payment.query.filter_by(booking_id=bookings[0].id).first()
-    schedule = BusSchedule.query.get(bookings[0].schedule_id)
+    schedule = BusSchedule.query.filter_by(id=bookings[0].schedule_id).first()
     
     pdf_buffer = generate_ticket_pdf(bookings, payment, schedule)
     

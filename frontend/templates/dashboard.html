@@ -21,10 +21,38 @@
     }
 
     @keyframes dashFadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
-    
+
+    /* Toggle Switch CSS */
+    .switch input:checked+.slider {
+        background-color: var(--accent-primary);
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    .switch input:checked+.slider:before {
+        transform: translateX(20px);
+    }
+
     /* Leaflet Overrides */
     .leaflet-container {
         font-family: var(--font-primary);
@@ -32,37 +60,90 @@
 </style>
 
 <!-- Leaflet CSS & JS for Live Tracking -->
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
-    <div class="dashboard-header" style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+    <div class="dashboard-header"
+        style="margin-top: 4rem; display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
         <div>
             <h1 class="hero-title" style="margin-bottom: 0.5rem;">User <span class="highlight">Analytics</span></h1>
             <p class="hero-subtitle text-secondary">Your AI-driven travel footprint.</p>
         </div>
         <div style="text-align: right;">
-            <button class="btn-primary" style="background: rgba(255,255,255,0.1); border: 1px solid var(--border-light); color: white;">Edit Preferences <i class="fa-solid fa-gear"></i></button>
+            <button id="edit-preferences-btn" class="btn-primary"
+                style="background: rgba(37, 99, 235, 0.08); border: 1.5px solid rgba(37, 99, 235, 0.2); color: var(--accent-primary);">Edit
+                Preferences <i class="fa-solid fa-gear"></i></button>
+        </div>
+    </div>
+
+    <!-- Preferences Modal -->
+    <div id="preferences-modal" class="modal-overlay"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center;">
+        <div class="glass-panel card"
+            style="width: 400px; padding: 2rem; border-radius: 16px; position: relative; max-width: 90%;">
+            <h3 style="margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px;">
+                <i class="fa-solid fa-sliders" style="color: var(--accent-primary);"></i> Smart Travel Preferences
+            </h3>
+
+            <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="display: block; margin-bottom: 0.2rem;">Strict Night Travel Avoidance</strong>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">AI optimizes for daytime
+                        dispatches.</span>
+                </div>
+                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                    <input type="checkbox" id="toggle-night-travel" style="opacity: 0; width: 0; height: 0;">
+                    <span class="slider round"
+                        style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                </label>
+            </div>
+
+            <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong style="display: block; margin-bottom: 0.2rem;">Prioritize Women's Safety</strong>
+                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Highlight secure routes and
+                        operators.</span>
+                </div>
+                <label class="switch" style="position: relative; display: inline-block; width: 44px; height: 24px;">
+                    <input type="checkbox" id="toggle-women-safety" style="opacity: 0; width: 0; height: 0;">
+                    <span class="slider round"
+                        style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px;"></span>
+                </label>
+            </div>
+
+            <button id="close-preferences-btn" class="btn-primary" style="width: 100%; justify-content: center;">Save &
+                Close</button>
         </div>
     </div>
 
     <!-- Live GPS Tracking Map -->
     <div class="bottom-panel-premium glass-panel card" style="margin-bottom: 2.5rem; padding: 1.5rem;">
         <div class="panel-header-premium" style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
-            <h2><i class="fa-solid fa-map-location-dot" style="color: var(--accent-purple);"></i> Live Fleet Tracking & AI Dispatch</h2>
-            <span class="badge-premium confirmed" id="live-status-badge" style="background: var(--glow-green); color: var(--accent-green); padding: 5px 10px; border-radius: 20px;"><i class="fa-solid fa-satellite-dish fa-beat"></i> Live connection active</span>
+            <h2><i class="fa-solid fa-map-location-dot" style="color: var(--accent-purple);"></i> Live Fleet Tracking &
+                AI Dispatch</h2>
+            <span class="badge-premium confirmed" id="live-status-badge"
+                style="background: var(--glow-green); color: var(--accent-green); padding: 5px 10px; border-radius: 20px;"><i
+                    class="fa-solid fa-satellite-dish fa-beat"></i> Live connection active</span>
         </div>
         <div class="tracking-layout-grid" style="display: grid; grid-template-columns: 2.2fr 1fr; gap: 1.5rem;">
-            <div id="live-map" style="height: 400px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); z-index: 1;"></div>
-            <div class="delay-assessment-card" style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; height: 400px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
-                <h4 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; color: var(--text-primary); border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
+            <div id="live-map"
+                style="height: 400px; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); z-index: 1;"></div>
+            <div class="delay-assessment-card"
+                style="background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(0, 0, 0, 0.05); border-radius: 16px; padding: 1.25rem; display: flex; flex-direction: column; justify-content: space-between; height: 400px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                <h4
+                    style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 800; color: var(--text-primary); border-bottom: 1px solid rgba(0,0,0,0.04); padding-bottom: 0.5rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 6px;">
                     <i class="fa-solid fa-brain" style="color: var(--accent-purple);"></i> AI Dispatch Insights
                 </h4>
-                <div id="delay-assessment-content" style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
+                <div id="delay-assessment-content"
+                    style="flex-grow: 1; display: flex; flex-direction: column; justify-content: center;">
                     <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                        <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 1.5rem; color: var(--accent-purple); margin-bottom: 0.5rem; display:block; margin-left:auto; margin-right:auto;"></i>
+                        <i class="fa-solid fa-circle-notch fa-spin"
+                            style="font-size: 1.5rem; color: var(--accent-purple); margin-bottom: 0.5rem; display:block; margin-left:auto; margin-right:auto;"></i>
                         Awaiting route telemetry selection...
                     </div>
                 </div>
@@ -70,39 +151,163 @@
         </div>
     </div>
 
-    <div class="dashboard-grid show" style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
-        <!-- Past Bookings -->
-        <div class="glass-panel card span-2 card-hover" style="grid-column: span 2;">
-            <div class="card-header">
+    <div class="dashboard-grid show"
+        style="margin-top: 2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem;">
+        <!-- Past Bookings Box Layout -->
+        <div class="glass-panel card span-2 card-hover"
+            style="grid-column: span 2; display: flex; flex-direction: column;">
+            <div class="card-header" style="margin-bottom: 1.5rem;">
                 <h2><i class="fa-solid fa-ticket-simple"></i> Past Iterations & Bookings</h2>
             </div>
-            <table style="width: 100%; border-collapse: collapse; margin-top: 1rem;">
-                <thead>
-                    <tr style="border-bottom: 1px solid var(--border-light); text-align: left; color: var(--text-secondary);">
-                        <th style="padding: 1rem;">Route</th>
-                        <th style="padding: 1rem;">Date</th>
-                        <th style="padding: 1rem;">Seat & Fare</th>
-                        <th style="padding: 1rem;">Status</th>
-                    </tr>
-                </thead>
-                <tbody id="bookings-table-body">
-                    <!-- Injected dynamically via dashboard.js -->
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
-                            <i class="fa-solid fa-circle-notch fa-spin"></i> Retrieving travel profile...
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+
+            <!-- Boxed Header Layout -->
+            <div
+                style="display: flex; gap: 1rem; padding: 1rem 1.5rem; background: rgba(0,0,0,0.03); border-radius: 12px; margin-bottom: 1rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; border: 1px solid var(--border-light);">
+                <div style="flex: 0 0 24%;">Route Details</div>
+                <div style="flex: 0 0 15%; text-align: center;">Departure</div>
+                <div style="flex: 0 0 14%; text-align: center;">Seat & Fare</div>
+                <div style="flex: 0 0 16%; text-align: center;">Status</div>
+                <div style="flex: 1; text-align: right;">Actions</div>
+            </div>
+
+            <div id="bookings-table-body" style="display: flex; flex-direction: column; gap: 1rem; flex-grow: 1;">
+                <!-- Injected dynamically via dashboard.js -->
+                <div
+                    style="text-align: center; padding: 4rem; background: var(--glass-bg); border-radius: 16px; border: 1px solid var(--glass-border);">
+                    <i class="fa-solid fa-circle-notch fa-spin"
+                        style="font-size: 2rem; color: var(--accent-primary); margin-bottom: 1rem;"></i>
+                    <div style="font-weight: 700; color: var(--text-primary);">Retrieving travel profile...</div>
+                </div>
+            </div>
         </div>
 
-        <!-- Travel Stats Chart -->
-        <div class="glass-panel card card-hover">
-            <div class="card-header">
+        <!-- Travel Stats & Anticipations -->
+        <div class="glass-panel card card-hover" style="display: flex; flex-direction: column;">
+            <div class="card-header" style="margin-bottom: 1rem;">
                 <h2><i class="fa-solid fa-chart-pie"></i> Travel Analytics</h2>
             </div>
-            <div class="chart-container" style="height: 200px; display: flex; justify-content: center; margin-top: 1rem;">
+
+            <!-- Metric Boxes (Anticipations) -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+                <div
+                    style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 14px; padding: 1.25rem 1rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                    <div
+                        style="font-size: 0.72rem; color: #10b981; text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-leaf"></i> Eco CO₂ Saved
+                    </div>
+                    <div id="eco-val"
+                        style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading);">
+                        0.0</div>
+                </div>
+                <div
+                    style="background: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.15); border-radius: 14px; padding: 1.25rem 1rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                    <div
+                        style="font-size: 0.72rem; color: #2563eb; text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-wallet"></i> Total Savings
+                    </div>
+                    <div id="savings-val"
+                        style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading);">
+                        ₹0</div>
+                </div>
+            </div>
+
+            <div class="chart-container"
+                style="height: 240px; display: flex; justify-content: center; flex-grow: 1; align-items: center; border-top: 1px dashed var(--border-light); padding-top: 2rem;">
                 <canvas id="userTravelStats"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ticket Pass Modal -->
+    <div id="ticket-modal" class="modal-overlay"
+        style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center;">
+        <div class="glass-panel card"
+            style="width: 600px; max-width: 95%; position: relative; padding: 0; overflow: hidden;">
+            <div id="print-area" style="padding: 2.5rem; background: #0f172a; color: white;">
+                <div
+                    style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 1rem; margin-bottom: 1.5rem;">
+                    <span style="font-family: var(--font-heading); font-weight: 800; font-size: 1.25rem;">SmartBus AI
+                        Pass</span>
+                    <span id="modal-status-badge" class="badge-premium confirmed">CONFIRMED</span>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                    <div style="text-align: left;">
+                        <div id="modal-origin-code"
+                            style="font-size: 2.5rem; font-weight: 800; font-family: var(--font-heading);">BLR</div>
+                        <div id="modal-origin-name"
+                            style="font-size: 0.85rem; opacity: 0.7; text-transform: uppercase;">BANGALORE</div>
+                        <div id="modal-dep-time-val" style="margin-top: 0.5rem; font-weight: bold;">09:30 PM</div>
+                    </div>
+                    <div style="font-size: 2rem; color: #38bdf8;">
+                        <i class="fa-solid fa-bus"></i>
+                    </div>
+                    <div style="text-align: right;">
+                        <div id="modal-dest-code"
+                            style="font-size: 2.5rem; font-weight: 800; font-family: var(--font-heading);">MAA</div>
+                        <div id="modal-dest-name" style="font-size: 0.85rem; opacity: 0.7; text-transform: uppercase;">
+                            CHENNAI</div>
+                        <div id="modal-arr-time-val" style="margin-top: 0.5rem; font-weight: bold;">05:30 AM</div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase;">Passenger</div>
+                        <div id="modal-passenger-name" style="font-weight: 700; font-size: 1rem;">Traveler</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase;">Date</div>
+                        <div id="modal-date-val" style="font-weight: 700; font-size: 1rem;">2024-05-15</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase;">Seat</div>
+                        <div id="modal-seat-val" style="font-weight: 700; font-size: 1rem; color: #38bdf8;">Seat 4A
+                        </div>
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase;">Bus Details</div>
+                        <div id="modal-bus-type-val" style="font-weight: 700; font-size: 0.9rem;">Volvo A/C Sleeper
+                        </div>
+                        <div id="modal-bus-number-val" style="font-size: 0.8rem; opacity: 0.8;">AI-SMART-707</div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase;">Route Eco</div>
+                        <div id="modal-distance-eco" style="font-weight: 700; font-size: 0.85rem; color: #10b981;">350
+                            km</div>
+                    </div>
+                </div>
+
+                <div
+                    style="border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 1.5rem; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase;">Payment / Txn</div>
+                        <div id="modal-pay-gateway" style="font-weight: bold; font-size: 0.85rem;">Stripe Gateway</div>
+                        <div id="modal-transaction-val"
+                            style="font-size: 0.7rem; opacity: 0.7; font-family: monospace;">txn_XXXXX</div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 0.7rem; opacity: 0.6; text-transform: uppercase;">Total Fare</div>
+                        <div id="modal-fare-val" style="font-weight: 800; font-size: 1.25rem;">₹750</div>
+                    </div>
+                </div>
+            </div>
+
+            <div
+                style="background: var(--glass-bg); padding: 1.5rem; display: flex; gap: 1rem; justify-content: flex-end; border-top: 1px solid var(--border-light);">
+                <button id="btn-print-ticket" class="btn-secondary"
+                    style="background: white; border: 1px solid #ccc; padding: 8px 16px; border-radius: 8px; cursor: pointer;">
+                    <i class="fa-solid fa-print"></i> Print
+                </button>
+                <button id="btn-email-ticket" class="btn-primary"
+                    style="background: var(--accent-primary); color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; display: flex; gap: 6px; align-items: center;">
+                    <i id="email-plane-icon" class="fa-solid fa-paper-plane"></i> <span id="email-btn-text">Email
+                        Journey Details</span>
+                </button>
+                <button id="btn-close-ticket" class="btn-primary"
+                    style="background: rgba(0,0,0,0.1); color: var(--text-primary); border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">
+                    Close
+                </button>
             </div>
         </div>
     </div>

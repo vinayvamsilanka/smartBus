@@ -115,3 +115,84 @@ def predict_schedule_delay(schedule_id):
         }), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@tracking_bp.route('/notify-email', methods=['POST'])
+def notify_email():
+    from flask import request, session, current_app
+    from app.models import User
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    try:
+        data = request.json
+        user_id = session.get('user_id')
+        user = User.query.get(user_id) if user_id else None
+        
+        # Determine recipient
+        to_email = user.email if user else 'traveler@smartbus.ai'
+        
+        # Get SMTP config
+        sender_email = current_app.config.get('MAIL_USERNAME')
+        sender_password = current_app.config.get('MAIL_PASSWORD')
+        smtp_server = current_app.config.get('MAIL_SERVER')
+        smtp_port = current_app.config.get('MAIL_PORT')
+
+        if not sender_email or not sender_password:
+            return jsonify({"success": False, "error": "SMTP config missing"}), 500
+
+        # Construct email content
+        subject = f"SmartBus AI - Dispatch Insights & Delay Alert for Bus #{data.get('bus_id', 'N/A')}"
+        
+        reasons_html = "".join([f"<li>{r}</li>" for r in data.get('reasons', [])])
+        
+        html_content = f"""
+        <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+            <div style="max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px;">
+                <h2 style="color: #6366f1; border-bottom: 2px solid #eee; padding-bottom: 10px;">SmartBus AI - Dispatch Insights</h2>
+                
+                <p>Hello,</p>
+                <p>Here is your requested telemetry and delay forecast for your tracked journey.</p>
+                
+                <div style="background-color: #f8fafc; padding: 15px; border-radius: 6px; margin: 20px 0;">
+                    <h3 style="margin-top: 0; color: #475569;">Forecast Details</h3>
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Scheduled Arrival:</strong></td><td style="text-align: right; border-bottom: 1px solid #eee;">{data.get('scheduled_arrival', 'N/A')}</td></tr>
+                        <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>AI-Adjusted ETA:</strong></td><td style="text-align: right; border-bottom: 1px solid #eee; font-weight: bold; color: #ef4444;">{data.get('adjusted_arrival', 'N/A')}</td></tr>
+                        <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Predicted Delay:</strong></td><td style="text-align: right; border-bottom: 1px solid #eee; color: #ef4444;">{data.get('delay_minutes', 0)} mins</td></tr>
+                        <tr><td style="padding: 8px 0; border-bottom: 1px solid #eee;"><strong>Traffic Congestion:</strong></td><td style="text-align: right; border-bottom: 1px solid #eee;">{data.get('congestion', 'N/A')}</td></tr>
+                        <tr><td style="padding: 8px 0;"><strong>AI Confidence:</strong></td><td style="text-align: right;">{data.get('ai_confidence_score', 'N/A')}%</td></tr>
+                    </table>
+                </div>
+
+                <h3 style="color: #475569;">Congestion Factors</h3>
+                <ul style="color: #64748b;">
+                    {reasons_html}
+                </ul>
+                
+                <p style="margin-top: 30px; font-size: 0.9em; color: #94a3b8; text-align: center;">
+                    <em>Thank you for traveling with SmartBus AI. Travel Safe!</em>
+                </p>
+            </div>
+        </body>
+        </html>
+        """
+
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"SmartBus AI <{sender_email}>"
+        msg["To"] = to_email
+        msg.attach(MIMEText(html_content, "html"))
+
+        # Send email
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.send_message(msg)
+        server.quit()
+
+        return jsonify({"success": True, "email": to_email})
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

@@ -175,7 +175,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function renderBuses(buses) {
         const container = document.getElementById('buses-container');
-        container.innerHTML = '';
+        container.innerHTML = `
+            <style>
+                @keyframes slideBusAnim {
+                    0% { left: 5%; opacity: 0; }
+                    15% { opacity: 1; }
+                    85% { opacity: 1; }
+                    100% { left: 95%; opacity: 0; }
+                }
+            </style>
+        `;
 
         buses.forEach((bus, index) => {
             const cardHTML = `
@@ -198,18 +207,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </div>
                     
-                    <div class="journey-row">
-                        <div class="journey-point">
-                            <span class="point-time">${bus.departure_time}</span>
-                            <span class="point-loc">${origin}</span>
+                    <div class="journey-row" style="display: flex; align-items: center; justify-content: space-between; margin: 2rem 0;">
+                        <div class="journey-point" style="text-align: left; display: flex; flex-direction: column;">
+                            <span class="point-time" style="font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1.1;">${bus.departure_time.split(' ')[1] || bus.departure_time}</span>
+                            <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; margin-top: 4px; letter-spacing: 0.5px;">${bus.departure_time.split(' ')[0] || ''}</span>
+                            <span class="point-loc" style="font-size: 1.1rem; font-weight: 700; margin-top: 8px;">${origin}</span>
                         </div>
-                        <div class="journey-path">
-                            <span class="path-duration">${bus.duration}</span>
-                            <div class="path-line"></div>
+                        <div class="journey-path" style="flex: 1; margin: 0 2.5rem; position: relative; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                            <span class="path-duration" style="position: absolute; top: -30px; left: 50%; transform: translateX(-50%); background: #f8fafc; padding: 6px 14px; border-radius: 20px; font-weight: 800; color: var(--text-primary); font-size: 1.05rem; letter-spacing: 1px; z-index: 3; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border: 1px solid #e2e8f0;">${bus.duration}</span>
+                            <div class="path-line" style="width: 100%; height: 2px; background: ${(bus.stops && bus.stops.length > 0) ? 'var(--accent-primary)' : 'repeating-linear-gradient(90deg, var(--border-light) 0, var(--border-light) 6px, transparent 6px, transparent 12px)'}; position: absolute; top: 50%; transform: translateY(-50%); opacity: 0.8; z-index: 1;">
+                                ${(bus.stops && bus.stops.length > 0) ? bus.stops.map((stop, i) => `
+                                    <div style="position: absolute; left: ${((i + 1) / (bus.stops.length + 1)) * 100}%; top: 50%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; z-index: 1;">
+                                        <div style="width: 12px; height: 12px; background: var(--accent-primary); border-radius: 50%; box-shadow: 0 0 0 3px white;"></div>
+                                        <span style="position: absolute; top: 16px; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); white-space: nowrap;">${stop}</span>
+                                    </div>
+                                `).join('') : ''}
+                            </div>
+                            
+                            <i class="fa-solid fa-bus-simple" style="color: var(--accent-primary); font-size: 1.15rem; position: absolute; top: 50%; left: 0%; transform: translate(-50%, -50%); z-index: 2; opacity: 1; animation: slideBusAnim 5.5s ease-in-out infinite;"></i>
                         </div>
-                        <div class="journey-point" style="text-align: right;">
-                            <span class="point-time">${bus.arrival_time}</span>
-                            <span class="point-loc">${dest}</span>
+                        <div class="journey-point" style="text-align: right; display: flex; flex-direction: column; align-items: flex-end;">
+                            <span class="point-time" style="font-size: 2rem; font-weight: 800; color: var(--text-primary); line-height: 1.1;">${bus.arrival_time.split(' ')[1] || bus.arrival_time}</span>
+                            <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; margin-top: 4px; letter-spacing: 0.5px;">${bus.arrival_time.split(' ')[0] || ''}</span>
+                            <span class="point-loc" style="font-size: 1.1rem; font-weight: 700; margin-top: 8px;">${dest}</span>
                         </div>
                     </div>
 

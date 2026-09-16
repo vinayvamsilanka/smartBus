@@ -243,6 +243,7 @@ def get_profile():
             "name": user.name,
             "email": user.email,
             "eco_points": user.eco_points if user.eco_points is not None else 0,
+            "booking_count": len(user.bookings),
             "role": user.role.name if user.role else "Elite Voyager"
         }
     }), 200

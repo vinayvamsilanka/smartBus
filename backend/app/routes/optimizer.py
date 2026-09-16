@@ -25,8 +25,8 @@ def predict():
             log = AnalyticsLogs(endpoint_accessed='/api/optimizer/predict', search_origin=origin, search_dest=dest)
             db.session.add(log)
             db.session.commit()
-        except:
-            db.session.rollback() # Don't fail if logging fails
+        except Exception:
+            db.session.rollback() # <-- CRITICAL FIX: Ensure session isn't poisoned by IntegrityError
 
         today = datetime.now()
         trends = []
@@ -93,7 +93,7 @@ def predict():
         dest_clean = dest.strip()
 
         # Query active schedules for this route
-        active_schedules = db.session.query(BusSchedule).join(Route).join(Bus).filter(
+        active_schedules = BusSchedule.query.join(Route).join(Bus).filter(
             Route.origin.ilike(f"%{origin_clean}%"),
             Route.destination.ilike(f"%{dest_clean}%"),
             BusSchedule.is_active == True,
@@ -112,23 +112,43 @@ def predict():
                 Route.origin.ilike(f"%{origin_clean}%"),
                 Route.destination.ilike(f"%{dest_clean}%")
             ).first()
-            
             if not existing_route:
-                existing_route = Route(
-                    origin=origin_clean.title(),
-                    destination=dest_clean.title(),
-                    distance_km=350.0,
-                    base_fare=650.0
-                )
-                db.session.add(existing_route)
-                db.session.flush()
+                try:
+                    existing_route = Route(
+                        origin=origin_clean.title(),
+                        destination=dest_clean.title(),
+                        distance_km=350.0, # Approximate static fallback
+                        base_fare=650.0
+                    )
+                    db.session.add(existing_route)
+                    db.session.commit()
+                except Exception:
+                    db.session.rollback()
+                    existing_route = Route.query.filter(
+                        Route.origin.ilike(f"%{origin_clean}%"),
+                        Route.destination.ilike(f"%{dest_clean}%")
+                    ).first()
 
             # Create transient schedule objects for UI display
             for idx, b_item in enumerate(all_buses):
                 dep_hour = (7 + idx * 3) % 24
-                arr_hour = (dep_hour + 6) % 24
                 dep_dt = datetime.combine(travel_date, datetime.min.time().replace(hour=dep_hour, minute=0))
-                arr_dt = datetime.combine(travel_date, datetime.min.time().replace(hour=arr_hour, minute=30))
+                
+                # Dynamic speed calculation ML logic loosely simulated
+                dist = existing_route.distance_km if existing_route else 350.0
+                b_type = getattr(b_item, 'type', '').lower()
+                
+                if 'volvo' in b_type or 'scania' in b_type or 'luxury' in b_type or 'premium' in b_type:
+                    speed = 68.0  # Faster cruising
+                elif 'express' in b_type:
+                    speed = 58.0  # Regular stops
+                elif 'sleeper' in b_type:
+                    speed = 48.0  # Slower for sleeper comfort
+                else:
+                    speed = 55.0
+                    
+                base_time_hours = dist / speed
+                arr_dt = dep_dt + timedelta(hours=base_time_hours)
                 
                 sch = BusSchedule(
                     bus_id=b_item.id,
@@ -152,7 +172,19 @@ def predict():
             safety_score = safety_m.overall_score if safety_m else random.randint(85, 95)
             eco_score_val = eco_m.eco_rating if eco_m else "High"
             
-            bus_fare = schedule.route.base_fare if schedule.route else 650.0
+            base_fare = schedule.route.base_fare if schedule.route else 650.0
+            b_type = getattr(bus, 'type', '').lower() if hasattr(bus, 'type') else ''
+            mult = 1.0
+            if 'volvo' in b_type or 'luxury' in b_type or 'scania' in b_type or 'premium' in b_type:
+                mult = 1.45
+            elif 'ac sleeper' in b_type:
+                mult = 1.30
+            elif 'sleeper' in b_type:
+                mult = 1.15
+            elif 'express' in b_type:
+                mult = 0.85
+            
+            bus_fare = round(base_fare * mult, -1)
             badge = badges[idx % len(badges)]
             
             otp = random.randint(80, 99)
@@ -176,6 +208,27 @@ def predict():
             dep_str = schedule.departure_time.strftime('%Y-%m-%d %H:%M') if isinstance(schedule.departure_time, datetime) else f"{travel_date} {schedule.departure_time}"
             arr_str = schedule.arrival_time.strftime('%Y-%m-%d %H:%M') if isinstance(schedule.arrival_time, datetime) else f"{travel_date} {schedule.arrival_time}"
 
+            # Calculate dynamic eco metrics based on real-world emissions per passenger-km and route distance
+            dist = schedule.route.distance_km if schedule.route else 350.0
+            bus_emissions_per_km = eco_m.co2_emissions_per_km if eco_m and eco_m.co2_emissions_per_km else 0.082
+            
+            # Real-world averages (kg CO2 per passenger-km): Car ~ 0.170, Train ~ 0.040
+            bus_co2_calc = round(bus_emissions_per_km * dist, 1)
+            car_co2_calc = round(0.170 * dist, 1)
+            train_co2_calc = round(0.040 * dist, 1)
+
+            try:
+                if isinstance(schedule.departure_time, datetime) and isinstance(schedule.arrival_time, datetime):
+                    dur_td = schedule.arrival_time - schedule.departure_time
+                else:
+                    d_dt = datetime.strptime(str(schedule.departure_time), '%Y-%m-%d %H:%M:%S')
+                    a_dt = datetime.strptime(str(schedule.arrival_time), '%Y-%m-%d %H:%M:%S')
+                    dur_td = a_dt - d_dt
+                tm = dur_td.total_seconds() / 60
+                dur_str = f"{int(tm//60)}h {int(tm%60)}m"
+            except:
+                dur_str = "6h 30m" # absolute fallback
+
             buses.append({
                 'id': f"bus_{bus.id if hasattr(bus, 'id') else idx+1}",
                 'schedule_id': schedule.id if hasattr(schedule, 'id') else idx+1,
@@ -185,9 +238,9 @@ def predict():
                 'badge': badge,
                 'confidence': random.randint(88, 98),
                 'carbon_footprint': {
-                    'bus_co2': 18.5,
-                    'car_co2': 60.0,
-                    'train_co2': 15.0,
+                    'bus_co2': bus_co2_calc,
+                    'car_co2': car_co2_calc,
+                    'train_co2': train_co2_calc,
                     'eco_score': eco_score_val,
                     'badge': '🌱 Green Choice' if eco_score_val == 'High' else 'Standard'
                 },
@@ -206,7 +259,7 @@ def predict():
                 },
                 'departure_time': dep_str,
                 'arrival_time': arr_str,
-                'duration': "6h 30m",
+                'duration': dur_str,
                 'ai_reasoning': ai_msg
             })
         
@@ -348,7 +401,7 @@ def chat():
             else:
                 reply = f"Hi **{user_name}**! 🎫 I found **{len(bookings)}** confirmed booking(s) in your profile:\n\n"
                 for idx, b in enumerate(bookings, 1):
-                    schedule = BusSchedule.query.get(b.schedule_id)
+                    schedule = BusSchedule.query.filter_by(id=b.schedule_id).first()
                     route = schedule.route if schedule else None
                     origin = route.origin.title() if route else "Hub"
                     dest = route.destination.title() if route else "Hub"
@@ -361,7 +414,7 @@ def chat():
     if any(k in query for k in ['safe', 'reliability', 'accident', 'night travel', 'top safety']):
         top_safety = SafetyMetrics.query.order_by(SafetyMetrics.overall_score.desc()).first()
         if top_safety:
-            bus = Bus.query.get(top_safety.bus_id)
+            bus = Bus.query.filter_by(id=top_safety.bus_id).first()
             reply = f"🛡️ **Safety Telemetry Insights**\nThe safest asset in our fleet is **SmartTravel {bus.bus_number}** ({bus.type}) with a **Safety Rating of {top_safety.overall_score}%**!\n\n"
             reply += f"* **Driver Reliability:** `{top_safety.driver_reliability}%`\n"
             reply += f"* **Night Driving Safety:** `{top_safety.night_travel_safety}%`\n"
@@ -457,8 +510,8 @@ def chat():
             
             if schedules:
                 for sch in schedules:
-                    bus = Bus.query.get(sch.bus_id)
-                    route_info = Route.query.get(sch.route_id)
+                    bus = Bus.query.filter_by(id=sch.bus_id).first()
+                    route_info = Route.query.filter_by(id=sch.route_id).first()
                     
                     # Format exact details
                     dep_time = sch.departure_time.strftime("%H:%M | %d %b")

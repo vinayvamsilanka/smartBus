@@ -19,8 +19,15 @@
     }
 
     @keyframes rewardsFadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* High Fidelity Header Profile Card */
@@ -43,8 +50,10 @@
     .profile-hero::before {
         content: '';
         position: absolute;
-        top: -60%; right: -10%;
-        width: 450px; height: 450px;
+        top: -60%;
+        right: -10%;
+        width: 450px;
+        height: 450px;
         background: radial-gradient(circle, rgba(16, 185, 129, 0.06) 0%, transparent 70%);
         pointer-events: none;
     }
@@ -56,10 +65,13 @@
     }
 
     .avatar-glow {
-        width: 84px; height: 84px;
+        width: 84px;
+        height: 84px;
         border-radius: 50%;
         background: linear-gradient(135deg, var(--accent-green), var(--accent-purple));
-        display: flex; align-items: center; justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: white;
         font-size: 2.2rem;
         font-weight: 700;
@@ -71,8 +83,10 @@
 
     .avatar-glow .status-indicator {
         position: absolute;
-        bottom: 2px; right: 2px;
-        width: 18px; height: 18px;
+        bottom: 2px;
+        right: 2px;
+        width: 18px;
+        height: 18px;
         background: var(--accent-green);
         border: 3.5px solid white;
         border-radius: 50%;
@@ -190,7 +204,8 @@
         transition: all 0.2s;
     }
 
-    .filter-pill:hover, .filter-pill.active {
+    .filter-pill:hover,
+    .filter-pill.active {
         background: var(--accent-green);
         color: white;
         border-color: var(--accent-green);
@@ -210,7 +225,7 @@
         border: 1px solid var(--glass-border);
         border-radius: 20px;
         padding: 1.8rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.015);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.015);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -224,7 +239,10 @@
     .product-card::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; width: 100%; height: 4.5px;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4.5px;
         background: linear-gradient(90deg, var(--accent-green), #34d399);
     }
 
@@ -248,11 +266,14 @@
     }
 
     .prod-icon-wrapper {
-        width: 60px; height: 60px;
+        width: 60px;
+        height: 60px;
         border-radius: 16px;
         background: rgba(16, 185, 129, 0.05);
         color: var(--accent-green);
-        display: flex; align-items: center; justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         font-size: 1.8rem;
         margin-bottom: 1.2rem;
         border: 1px solid rgba(16, 185, 129, 0.1);
@@ -328,7 +349,7 @@
     }
 
     .btn-redeem:disabled {
-        background: rgba(0,0,0,0.06);
+        background: rgba(0, 0, 0, 0.06);
         color: var(--text-secondary);
         box-shadow: none;
         cursor: not-allowed;
@@ -340,7 +361,7 @@
         border: 1px solid var(--glass-border);
         border-radius: 24px;
         padding: 2.2rem;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.015);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.015);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
     }
@@ -383,7 +404,7 @@
         font-weight: 700;
         padding: 6px 12px;
         background: rgba(0, 0, 0, 0.03);
-        border: 1px solid rgba(0,0,0,0.05);
+        border: 1px solid rgba(0, 0, 0, 0.05);
         border-radius: 8px;
         color: var(--text-primary);
         display: inline-flex;
@@ -420,14 +441,15 @@
     }
 
     .badge-status.used {
-        background: rgba(0,0,0,0.06);
+        background: rgba(0, 0, 0, 0.06);
         color: var(--text-secondary);
     }
 
     /* Toast notification styling */
     .toast-container {
         position: fixed;
-        bottom: 2.5rem; right: 2.5rem;
+        bottom: 2.5rem;
+        right: 2.5rem;
         z-index: 10000;
         display: flex;
         flex-direction: column;
@@ -439,13 +461,13 @@
         color: white;
         padding: 1.1rem 1.6rem;
         border-radius: 16px;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
         display: flex;
         align-items: center;
         gap: 0.8rem;
         font-size: 0.92rem;
         font-weight: 600;
-        border: 1px solid rgba(255,255,255,0.06);
+        border: 1px solid rgba(255, 255, 255, 0.06);
         transform: translateY(20px);
         opacity: 0;
         animation: toastFlyIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
@@ -453,11 +475,19 @@
     }
 
     @keyframes toastFlyIn {
-        to { transform: translateY(0); opacity: 1; }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
     }
 
-    .toast-alert.success { border-left: 5px solid var(--accent-green); }
-    .toast-alert.error { border-left: 5px solid var(--accent-error); }
+    .toast-alert.success {
+        border-left: 5px solid var(--accent-green);
+    }
+
+    .toast-alert.error {
+        border-left: 5px solid var(--accent-error);
+    }
 
     /* Active Coupon Board Card Styling */
     .active-coupon-card {
@@ -473,22 +503,26 @@
         flex-direction: column;
         justify-content: space-between;
     }
-    
+
     .active-coupon-card:hover {
         transform: translateY(-4px);
         border-color: rgba(16, 185, 129, 0.6);
         box-shadow: 0 15px 35px rgba(16, 185, 129, 0.25);
     }
-    
+
     .active-coupon-card::before {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0; height: 3px;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
         background: linear-gradient(90deg, #10b981, #f59e0b, #3b82f6);
     }
 
     .pulse-dot {
-        width: 8px; height: 8px;
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
         background: #10b981;
         box-shadow: 0 0 10px #10b981;
@@ -497,9 +531,20 @@
     }
 
     @keyframes pulseDot {
-        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
-        70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
-        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+        }
+
+        70% {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+        }
+
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
     }
 </style>
 {% endblock %}
@@ -515,8 +560,10 @@
                 <div class="status-indicator"></div>
             </div>
             <div class="profile-meta">
-                <h2>Hi, <span id="welcome-user-name" class="highlight">Traveler</span> <span class="tier-badge" id="user-tier-badge"><i class="fa-solid fa-crown"></i> ECO PLATINUM</span></h2>
-                <p><i class="fa-solid fa-leaf" style="color: var(--accent-green);"></i> <span id="user-tier-text">Eco Voyager</span></p>
+                <h2>Hi, <span id="welcome-user-name" class="highlight">Traveler</span> <span class="tier-badge"
+                        id="user-tier-badge"><i class="fa-solid fa-crown"></i> ECO PLATINUM</span></h2>
+                <p><i class="fa-solid fa-leaf" style="color: var(--accent-green);"></i> <span id="user-tier-text">Eco
+                        Voyager</span></p>
             </div>
         </div>
 
@@ -538,27 +585,35 @@
     <!-- TOP-MEDIUM ACTIVE UNUSED ECO COUPONS BOARD -->
     <div id="active-coupons-section" style="margin-bottom: 2.5rem;">
         <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
-            <h3 class="section-title" style="margin: 0; display: flex; align-items: center; gap: 0.6rem; font-size: 1.25rem;">
-                <i class="fa-solid fa-ticket-simple" style="color: var(--accent-gold); font-size: 1.3rem;"></i> 
+            <h3 class="section-title"
+                style="margin: 0; display: flex; align-items: center; gap: 0.6rem; font-size: 1.25rem;">
+                <i class="fa-solid fa-ticket-simple" style="color: var(--accent-gold); font-size: 1.3rem;"></i>
                 Active Unused Eco Vouchers & Coupons
             </h3>
-            <span id="active-coupons-count-badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 14px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">
+            <span id="active-coupons-count-badge"
+                style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 5px 14px; border-radius: 20px; font-weight: 800; font-size: 0.8rem;">
                 0 Active
             </span>
         </div>
-        <div id="active-coupons-board-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
+        <div id="active-coupons-board-grid"
+            style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem;">
             <!-- Rendered dynamically by rewards.js -->
-            <div style="grid-column: 1 / -1; background: rgba(15, 23, 42, 0.5); border: 1.5px dashed rgba(255,255,255,0.1); border-radius: 20px; padding: 2rem; text-align: center; color: var(--text-secondary);">
-                <i class="fa-solid fa-ticket" style="font-size: 2rem; color: var(--accent-gold); opacity: 0.6; margin-bottom: 0.5rem; display: block;"></i>
-                <p style="font-size: 0.95rem; font-weight: 600; color: #ffffff; margin-bottom: 4px;">No active unused coupons currently</p>
-                <small style="color: var(--text-secondary);">Redeem your Green Miles in the catalog below to generate discount coupons that will stay active here on screen until you use them for bus booking!</small>
+            <div
+                style="grid-column: 1 / -1; background: rgba(0, 0, 0, 0.02); border: 1.5px dashed rgba(0,0,0,0.1); border-radius: 20px; padding: 2rem; text-align: center; color: var(--text-secondary);">
+                <i class="fa-solid fa-ticket"
+                    style="font-size: 2rem; color: var(--accent-gold); opacity: 0.6; margin-bottom: 0.5rem; display: block;"></i>
+                <p style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px;">No
+                    active unused coupons currently</p>
+                <small style="color: var(--text-secondary);">Redeem your Green Miles in the catalog below to generate
+                    discount coupons that will stay active here on screen until you use them for bus booking!</small>
             </div>
         </div>
     </div>
 
     <!-- Store Section -->
-    <h3 class="section-title"><i class="fa-solid fa-store" style="color: var(--accent-green);"></i> Eco-Rewards Catalog</h3>
-    
+    <h3 class="section-title"><i class="fa-solid fa-store" style="color: var(--accent-green);"></i> Eco-Rewards Catalog
+    </h3>
+
     <!-- Filter Pills -->
     <div class="filter-pills">
         <button class="filter-pill active" onclick="filterCatalog('All')">All Rewards</button>
@@ -571,14 +626,16 @@
     <div class="products-grid" id="products-catalog-grid">
         <!-- Rendered dynamically by rewards.js -->
         <div style="grid-column: 1 / -1; text-align: center; padding: 4rem; color: var(--text-secondary);">
-            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--accent-green); margin-bottom: 0.8rem; display:block; margin-left:auto; margin-right:auto;"></i>
+            <i class="fa-solid fa-circle-notch fa-spin"
+                style="font-size: 2rem; color: var(--accent-green); margin-bottom: 0.8rem; display:block; margin-left:auto; margin-right:auto;"></i>
             Loading rewards catalog...
         </div>
     </div>
 
     <!-- Claims Section -->
     <div class="claims-panel">
-        <h3 class="section-title" style="margin-bottom: 1.5rem;"><i class="fa-solid fa-clock-rotate-left" style="color: var(--accent-purple);"></i> Active Vouchers & Claims</h3>
+        <h3 class="section-title" style="margin-bottom: 1.5rem;"><i class="fa-solid fa-clock-rotate-left"
+                style="color: var(--accent-purple);"></i> Active Vouchers & Claims</h3>
         <div style="overflow-x: auto;">
             <table class="table-claims">
                 <thead>

@@ -104,7 +104,16 @@ with app.app_context():
                 if not schedules_exist:
                     for _ in range(2):
                         departure = datetime.now() + timedelta(days=random.randint(0, 2), hours=random.randint(0, 23))
-                        arrival = departure + timedelta(hours=dist/55.0 + 0.5)
+                        b_type_lower = bus.type.lower()
+                        speed = 55.0
+                        if 'volvo' in b_type_lower or 'scania' in b_type_lower or 'luxury' in b_type_lower or 'premium' in b_type_lower:
+                            speed = 68.0
+                        elif 'express' in b_type_lower:
+                            speed = 58.0
+                        elif 'sleeper' in b_type_lower:
+                            speed = 48.0
+                            
+                        arrival = departure + timedelta(hours=dist/speed)
                         bus = random.choice(all_buses)
                         db.session.add(BusSchedule(
                             bus_id=bus.id, route_id=r.id, 

@@ -1,0 +1,8 @@
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on http://127.0.0.1:8000
+Press CTRL+C to quit
+C:\Users\charan\OneDrive\Documents\Desktop\BTB.web\backend\app\routes\optimizer.py:157: SAWarning: Object of type <BusSchedule> not in session, add operation along 'Bus.schedules' will not proceed (This warning originated from the Session 'autoflush' process, which was invoked automatically in response to a user-initiated operation. Consider using ``no_autoflush`` context manager if this warning happened while initializing objects.)
+  safety_m = SafetyMetrics.query.filter_by(bus_id=bus.id).first() if hasattr(bus, 'id') else None
+C:\Users\charan\OneDrive\Documents\Desktop\BTB.web\backend\app\routes\optimizer.py:157: SAWarning: Object of type <BusSchedule> not in session, add operation along 'Route.schedules' will not proceed (This warning originated from the Session 'autoflush' process, which was invoked automatically in response to a user-initiated operation. Consider using ``no_autoflush`` context manager if this warning happened while initializing objects.)
+  safety_m = SafetyMetrics.query.filter_by(bus_id=bus.id).first() if hasattr(bus, 'id') else None
+127.0.0.1 - - [10/Sep/2026 01:05:15] "POST /api/optimizer/predict HTTP/1.1" 200 -
