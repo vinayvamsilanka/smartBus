@@ -65,6 +65,7 @@ class MailService:
             # 1. Try Brevo HTTP REST API (Port 443 - 100% works on Render Free)
             if brevo_key:
                 try:
+                    brevo_sender = os.environ.get('BREVO_SENDER_EMAIL') or 'lankavinayvamsi@gmail.com'
                     res = requests.post(
                         "https://api.brevo.com/v3/smtp/email",
                         headers={
@@ -73,7 +74,7 @@ class MailService:
                             "content-type": "application/json"
                         },
                         json={
-                            "sender": {"name": "SmartBus AI", "email": sender_email},
+                            "sender": {"name": "SmartBus AI", "email": brevo_sender},
                             "to": [{"email": user_email}],
                             "subject": subject,
                             "htmlContent": body_html,
