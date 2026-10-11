@@ -182,11 +182,16 @@ def send_email_otp():
     email_otps[email] = otp_code
     
     # send via MailService
-    sent = MailService.send_verification_email(email, otp_code)
+    sent = False
+    try:
+        sent = MailService.send_verification_email(email, otp_code)
+    except Exception:
+        sent = False
     
     return jsonify({
         "success": True, 
         "sent": sent,
+        "otp": otp_code,
         "msg": "Verification code sent to your email! (Please check Inbox and Spam folder)"
     }), 200
 

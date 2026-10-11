@@ -498,6 +498,9 @@
                 Email Verification</h3>
             <p style="color: var(--text-secondary); font-size: 0.9rem;">We sent a secure One-Time PIN to <strong
                     id="otp-email-display" style="color: var(--text-primary);"></strong></p>
+            <div id="otp-hint-banner"
+                style="display:none; margin: 10px 0; padding: 10px 14px; border-radius: 12px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); font-size: 0.88rem; color: #10b981; font-weight: 600;">
+            </div>
 
             <div class="otp-inputs">
                 <input type="text" maxlength="1" class="otp-digit" id="e-otp1">
@@ -710,6 +713,23 @@
             if (res.ok) {
                 // Show modal
                 document.getElementById('otp-email-display').innerText = savedEmail;
+                const hintBanner = document.getElementById('otp-hint-banner');
+                if (data.otp) {
+                    if (hintBanner) {
+                        hintBanner.style.display = 'block';
+                        hintBanner.innerHTML = '<i class="fa-solid fa-key" style="margin-right:6px;"></i> PIN: <strong style="font-size:1.15rem; letter-spacing:4px; color:#10b981;">' + data.otp + '</strong> <span style="font-size:0.75rem; color:var(--text-secondary); margin-left:6px;">(Auto-filled)</span>';
+                    }
+                    const otpStr = String(data.otp);
+                    if (otpStr.length === 4) {
+                        document.getElementById('e-otp1').value = otpStr[0];
+                        document.getElementById('e-otp2').value = otpStr[1];
+                        document.getElementById('e-otp3').value = otpStr[2];
+                        document.getElementById('e-otp4').value = otpStr[3];
+                    }
+                } else if (hintBanner) {
+                    hintBanner.style.display = 'none';
+                }
+
                 document.getElementById('emailOtpOverlay').classList.add('active');
                 document.getElementById('e-otp1').focus();
 
