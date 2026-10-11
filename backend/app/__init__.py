@@ -47,6 +47,34 @@ def create_app(config_class=Config):
             "timestamp": datetime.utcnow().isoformat()
         }), 200
 
+    @app.route('/google57f4fc5570ae169b.html')
+    def google_verification():
+        return "google-site-verification: google57f4fc5570ae169b.html", 200, {'Content-Type': 'text/html'}
+
+    @app.route('/robots.txt')
+    def robots_txt():
+        content = "User-agent: *\nAllow: /\nSitemap: https://smartbus-ai-r4ay.onrender.com/sitemap.xml\n"
+        return content, 200, {'Content-Type': 'text/plain'}
+
+    @app.route('/sitemap.xml')
+    def sitemap_xml():
+        content = """<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://smartbus-ai-r4ay.onrender.com/</loc>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://smartbus-ai-r4ay.onrender.com/safety</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://smartbus-ai-r4ay.onrender.com/eco-rewards</loc>
+    <priority>0.7</priority>
+  </url>
+</urlset>"""
+        return content, 200, {'Content-Type': 'application/xml'}
+
     @app.route('/')
     def index():
         from app.models import City
