@@ -192,9 +192,48 @@ def send_email_otp():
 
 @auth_bp.route('/test-mail', methods=['GET'])
 def test_mail():
-    to = request.args.get('email', 'smartbusai.noreply@gmail.com')
-    success = MailService.send_verification_email(to, '9999')
-    return jsonify({"success": success, "recipient": to})
+    import smtplib
+    from flask import current_app
+    to = request.args.get('email', 'charanreddy5638@gmail.com')
+    mail_user = current_app.config.get('MAIL_USERNAME', '')
+    mail_pass = current_app.config.get('MAIL_PASSWORD', '')
+    diag = {
+        "user_set": bool(mail_user),
+        "pass_set": bool(mail_pass),
+        "user_val": (mail_user[:5] + "***") if mail_user else None,
+        "pass_len": len(mail_pass) if mail_pass else 0,
+    }
+    # Test Port 465 SSL
+    try:
+        s = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=5)
+        diag['ssl_connect'] = "ok"
+        s.login(mail_user, mail_pass)
+        diag['ssl_login'] = "ok"
+        s.sendmail(mail_user, [to], f"Subject: Test\n\nCode 1234")
+        diag['ssl_send'] = "ok"
+        s.quit()
+        diag['success'] = True
+        return jsonify(diag)
+    except Exception as e:
+        diag['ssl_error'] = str(e)
+
+    # Test Port 587 TLS
+    try:
+        s2 = smtplib.SMTP('smtp.gmail.com', 587, timeout=5)
+        diag['tls_connect'] = "ok"
+        s2.starttls()
+        diag['tls_starttls'] = "ok"
+        s2.login(mail_user, mail_pass)
+        diag['tls_login'] = "ok"
+        s2.sendmail(mail_user, [to], f"Subject: Test\n\nCode 1234")
+        diag['tls_send'] = "ok"
+        s2.quit()
+        diag['success'] = True
+    except Exception as e2:
+        diag['tls_error'] = str(e2)
+        diag['success'] = False
+
+    return jsonify(diag)
 
 @auth_bp.route('/verify-email-otp', methods=['POST'])
 def verify_email_otp():
