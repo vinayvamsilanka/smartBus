@@ -1,3 +1,5 @@
+import os
+import requests
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
@@ -8,60 +10,110 @@ logger = logging.getLogger(__name__)
 
 class MailService:
     """
-    SMTP Mail Service for user registration mail verification.
-    Uses standard smtplib with HTML formatting and fallback dev-logging.
+    Mail Service for user registration mail verification.
+    Supports both HTTP Mail APIs (Brevo / Resend over HTTPS port 443 - immune to cloud firewall port blocks)
+    and standard Gmail SMTP (Port 465 SSL / 587 TLS).
     """
 
     @staticmethod
     def send_verification_email(user_email: str, verification_token: str) -> bool:
         """
-        Sends registration email verification link and token via SMTP.
-        If SMTP server fails or default credentials are set, falls back to logging the verification details.
+        Sends registration email verification link and token.
+        Prioritizes HTTP APIs (Port 443) on cloud environments, with standard SMTP fallback.
         """
         try:
+            base_url = current_app.config.get('BASE_URL') or os.environ.get('RENDER_EXTERNAL_URL') or 'https://smartbus-ai-r4ay.onrender.com'
+            verification_url = f"{base_url.rstrip('/')}/api/auth/verify-email?token={verification_token}"
+
             mail_server = current_app.config.get('MAIL_SERVER', 'smtp.gmail.com')
-            mail_port = current_app.config.get('MAIL_PORT', 587)
-            mail_use_tls = current_app.config.get('MAIL_USE_TLS', True)
-            mail_use_ssl = current_app.config.get('MAIL_USE_SSL', False)
             mail_user = current_app.config.get('MAIL_USERNAME', '')
             mail_pass = current_app.config.get('MAIL_PASSWORD', '')
-            sender = current_app.config.get('MAIL_DEFAULT_SENDER', 'noreply@smartbus.com')
+            sender = current_app.config.get('MAIL_DEFAULT_SENDER', 'smartbusai.noreply@gmail.com')
+            sender_email = mail_user if (mail_user and '@' in mail_user) else sender
+
+            brevo_key = current_app.config.get('BREVO_API_KEY') or os.environ.get('BREVO_API_KEY', '')
+            resend_key = current_app.config.get('RESEND_API_KEY') or os.environ.get('RESEND_API_KEY', '')
 
             subject = "SmartBus AI - Verify Your Email Address"
-            verification_url = f"http://localhost:5000/api/auth/verify-email?token={verification_token}"
 
             body_text = (
                 f"Welcome to SmartBus AI!\n\n"
-                f"Please verify your email using token: {verification_token}\n"
-                f"Or click link: {verification_url}\n"
+                f"Your 4-digit verification code is: {verification_token}\n\n"
+                f"Please enter this code on the verification screen to activate your account.\n"
+                f"Or click: {verification_url}\n"
             )
 
             body_html = f"""
             <html>
-              <body style="font-family: Arial, sans-serif; background-color: #f4f6f8; padding: 20px;">
-                <div style="max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-                  <h2 style="color: #4f46e5;">Welcome to SmartBus AI!</h2>
-                  <p>Thank you for registering. Please verify your email address to activate your account.</p>
-                  <p>Your verification code is: <b style="font-size: 18px; color: #4f46e5;">{verification_token}</b></p>
-                  <div style="margin: 25px 0;">
-                    <a href="{verification_url}" style="background-color: #4f46e5; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">Verify Email</a>
+              <body style="font-family: Arial, sans-serif; background-color: #0f172a; padding: 30px; color: #f8fafc;">
+                <div style="max-width: 520px; margin: 0 auto; background: #1e293b; padding: 32px; border-radius: 16px; border: 1px solid #334155; text-align: center;">
+                  <h2 style="color: #38bdf8; margin-top: 0;">SmartBus AI</h2>
+                  <p style="color: #cbd5e1; font-size: 15px;">Thank you for registering! Please use your One-Time PIN below to verify your email address:</p>
+                  <div style="margin: 28px 0; padding: 18px; background: rgba(56, 189, 248, 0.1); border: 1px dashed #38bdf8; border-radius: 12px;">
+                    <span style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #38bdf8;">{verification_token}</span>
                   </div>
-                  <p style="color: #6b7280; font-size: 12px;">If you did not request this, please ignore this email.</p>
+                  <p style="color: #94a3b8; font-size: 13px;">Enter this PIN on the verification screen to complete your sign in.</p>
+                  <div style="margin: 24px 0;">
+                    <a href="{verification_url}" style="background: linear-gradient(135deg, #f97316 0%, #10b981 100%); color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">Verify Account</a>
+                  </div>
+                  <p style="color: #64748b; font-size: 11px;">If you did not request this verification code, please ignore this email.</p>
                 </div>
               </body>
             </html>
             """
 
-            # Determine authenticated sender address
-            sender_email = mail_user if (mail_user and '@' in mail_user) else sender
+            # 1. Try Brevo HTTP REST API (Port 443 - 100% works on Render Free)
+            if brevo_key:
+                try:
+                    res = requests.post(
+                        "https://api.brevo.com/v3/smtp/email",
+                        headers={
+                            "accept": "application/json",
+                            "api-key": brevo_key,
+                            "content-type": "application/json"
+                        },
+                        json={
+                            "sender": {"name": "SmartBus AI", "email": sender_email},
+                            "to": [{"email": user_email}],
+                            "subject": subject,
+                            "htmlContent": body_html,
+                            "textContent": body_text
+                        },
+                        timeout=8
+                    )
+                    if res.status_code in (200, 201, 202):
+                        logger.info(f"Verification email sent to {user_email} via Brevo API")
+                        return True
+                    else:
+                        logger.warning(f"Brevo API error: {res.status_code} {res.text}")
+                except Exception as e_brevo:
+                    logger.warning(f"Brevo API call failed: {e_brevo}")
 
-            # Check if using template/dummy credentials in dev mode
-            if not mail_user or 'your_email' in mail_user or not mail_pass or 'your_app_password' in mail_pass:
-                logger.info(f"[SMTP SIMULATED MAIL] Verification email for {user_email} generated.")
-                print(f"\n[SMTP SIMULATED MAIL] Verification Email to {user_email}")
-                print(f"Token: {verification_token}")
-                print(f"Link: {verification_url}\n")
-                return True
+            # 2. Try Resend HTTP REST API (Port 443 - 100% works on Render Free)
+            if resend_key:
+                try:
+                    res = requests.post(
+                        "https://api.resend.com/emails",
+                        headers={
+                            "Authorization": f"Bearer {resend_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "from": f"SmartBus AI <onboarding@resend.dev>",
+                            "to": [user_email],
+                            "subject": subject,
+                            "html": body_html,
+                            "text": body_text
+                        },
+                        timeout=8
+                    )
+                    if res.status_code in (200, 201, 202):
+                        logger.info(f"Verification email sent to {user_email} via Resend API")
+                        return True
+                    else:
+                        logger.warning(f"Resend API error: {res.status_code} {res.text}")
+                except Exception as e_resend:
+                    logger.warning(f"Resend API call failed: {e_resend}")
 
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject

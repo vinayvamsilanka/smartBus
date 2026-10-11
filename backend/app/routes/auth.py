@@ -185,14 +185,20 @@ def send_email_otp():
     sent = False
     try:
         sent = MailService.send_verification_email(email, otp_code)
-    except Exception:
+    except Exception as e:
         sent = False
     
+    if not sent:
+        return jsonify({
+            "success": False,
+            "sent": False,
+            "msg": "Failed to send verification email. SMTP outbound ports (25, 465, 587) are restricted by the cloud host. Please configure an HTTP Mail API (Brevo/Resend) or run on an unblocked host."
+        }), 502
+
     return jsonify({
         "success": True, 
-        "sent": sent,
-        "otp": otp_code,
-        "msg": "Verification code sent to your email! (Please check Inbox and Spam folder)"
+        "sent": True,
+        "msg": "Verification code sent to your email! Please check your Inbox and Spam folder."
     }), 200
 
 @auth_bp.route('/test-mail', methods=['GET'])

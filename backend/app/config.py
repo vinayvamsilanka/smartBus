@@ -51,4 +51,7 @@ class Config:
     MAIL_USERNAME = os.environ.get('MAIL_USERNAME', '')
     MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
     MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@smartbus.com')
+    BREVO_API_KEY = os.environ.get('BREVO_API_KEY', '')
+    RESEND_API_KEY = os.environ.get('RESEND_API_KEY', '')
+    BASE_URL = os.environ.get('BASE_URL', os.environ.get('RENDER_EXTERNAL_URL', 'https://smartbus-ai-r4ay.onrender.com'))
 
