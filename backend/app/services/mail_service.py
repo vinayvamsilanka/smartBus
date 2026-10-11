@@ -52,6 +52,9 @@ class MailService:
             </html>
             """
 
+            # Determine authenticated sender address
+            sender_email = mail_user if (mail_user and '@' in mail_user) else sender
+
             # Check if using template/dummy credentials in dev mode
             if not mail_user or 'your_email' in mail_user or not mail_pass or 'your_app_password' in mail_pass:
                 logger.info(f"[SMTP SIMULATED MAIL] Verification email for {user_email} generated.")
@@ -62,26 +65,43 @@ class MailService:
 
             msg = MIMEMultipart('alternative')
             msg['Subject'] = subject
-            msg['From'] = sender
+            msg['From'] = f"SmartBus AI <{sender_email}>"
             msg['To'] = user_email
+            msg['Reply-To'] = sender_email
 
             msg.attach(MIMEText(body_text, 'plain'))
             msg.attach(MIMEText(body_html, 'html'))
 
-            if mail_use_ssl:
-                server = smtplib.SMTP_SSL(mail_server, mail_port, timeout=10)
-            else:
-                server = smtplib.SMTP(mail_server, mail_port, timeout=10)
-                if mail_use_tls:
-                    server.starttls()
+            server = None
+            connection_error = None
 
-            if mail_user and mail_pass:
-                server.login(mail_user, mail_pass)
+            # First priority: Port 465 SSL (Direct SMTPS - immune to cloud provider 587 throttling)
+            try:
+                server = smtplib.SMTP_SSL(mail_server, 465, timeout=12)
+                if mail_user and mail_pass:
+                    server.login(mail_user, mail_pass)
+                server.sendmail(sender_email, [user_email], msg.as_string())
+                server.quit()
+                logger.info(f"Verification email successfully sent to {user_email} via Port 465 SSL")
+                return True
+            except Exception as e_ssl:
+                connection_error = e_ssl
+                logger.warning(f"Port 465 SSL attempt failed ({e_ssl}). Trying Port 587 STARTTLS...")
 
-            server.sendmail(sender, [user_email], msg.as_string())
-            server.quit()
-            logger.info(f"Verification email sent to {user_email} via SMTP")
-            return True
+            # Second priority fallback: Port 587 TLS
+            try:
+                server = smtplib.SMTP(mail_server, 587, timeout=12)
+                server.starttls()
+                if mail_user and mail_pass:
+                    server.login(mail_user, mail_pass)
+                server.sendmail(sender_email, [user_email], msg.as_string())
+                server.quit()
+                logger.info(f"Verification email successfully sent to {user_email} via Port 587 TLS")
+                return True
+            except Exception as e_tls:
+                logger.error(f"Both Port 465 and Port 587 failed: SSL ({connection_error}) | TLS ({e_tls})")
+                print(f"\n[SMTP ERROR] Could not deliver email to {user_email}: {e_tls}")
+                return False
         except Exception as e:
             logger.error(f"Failed to send SMTP verification email to {user_email}: {str(e)}")
             print(f"\n[SMTP ERROR / FALLBACK LOG] Mail Verification Token for {user_email}: {verification_token}\n")

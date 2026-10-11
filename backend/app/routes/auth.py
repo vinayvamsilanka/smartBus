@@ -182,9 +182,19 @@ def send_email_otp():
     email_otps[email] = otp_code
     
     # send via MailService
-    MailService.send_verification_email(email, otp_code)
+    sent = MailService.send_verification_email(email, otp_code)
     
-    return jsonify({"success": True, "msg": "OTP sent to your email"}), 200
+    return jsonify({
+        "success": True, 
+        "sent": sent,
+        "msg": "Verification code sent to your email! (Please check Inbox and Spam folder)"
+    }), 200
+
+@auth_bp.route('/test-mail', methods=['GET'])
+def test_mail():
+    to = request.args.get('email', 'smartbusai.noreply@gmail.com')
+    success = MailService.send_verification_email(to, '9999')
+    return jsonify({"success": success, "recipient": to})
 
 @auth_bp.route('/verify-email-otp', methods=['POST'])
 def verify_email_otp():
