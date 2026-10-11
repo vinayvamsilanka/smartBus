@@ -15,3 +15,5 @@ pymysql
 python-dotenv
 waitress
 gunicorn
+requests
+google-generativeai

@@ -358,193 +358,275 @@ def chat():
     import os
     import json
     import re
+    import requests
+    from pathlib import Path
     from flask import session
     from app.models.booking import Booking
     from app.models.bus import BusSchedule, Bus, Route
     from app.models.metrics import SafetyMetrics, EcoMetrics
     import google.generativeai as genai
     
+    # Reload .env if needed to guarantee keys are present
+    try:
+        from dotenv import load_dotenv
+        env_file = Path(__file__).resolve().parent.parent.parent / '.env'
+        if env_file.exists():
+            load_dotenv(dotenv_path=env_file)
+    except Exception:
+        pass
+
     data = request.json or {}
     message = data.get('message', '').strip()
     query = message.lower()
     
     user_name = session.get('user_name')
     user_id = session.get('user_id')
-    
-    # 1. Update Conversational Memory
-    if 'chat_history' not in session:
-        session['chat_history'] = []
-    
-    # Keep last 6 messages
-    session['chat_history'] = session['chat_history'][-6:]
-    session['chat_history'].append({"role": "user", "content": message})
-    session.modified = True
+    now = datetime.now()
+    current_time_str = now.strftime("%A, %B %d, %Y, %I:%M %p")
+    current_year = now.year
 
-    # Build context string
-    context = "\n".join([f"{msg['role']}: {msg['content']}" for msg in session['chat_history']])
-    
-    # Check for API Key for True LLM processing
-    gemini_key = os.getenv('GEMINI_API_KEY')
-    
-    # We will populate these to render in frontend UI perfectly
-    reply = ""
-    rich_cards = []
-
-    # 1. Booking History Query (Always handle explicitly for security)
-    if any(k in query for k in ['booking', 'ticket', 'my journey', 'my trip', 'my seat']):
-        if not user_id:
-            reply = "🔒 **Access Restricted**\n\nI couldn't detect an active passenger session. Please click **Login** in the top right corner to verify your profile and securely access your ticket history."
-        else:
-            bookings = Booking.query.filter_by(user_id=user_id, status='Confirmed').all()
-            if not bookings:
-                reply = f"Hello **{user_name}**! I successfully accessed your passenger records, but you don't have any confirmed travel tickets booked yet.\n\nReady to start your first trip? Search for your route on the home page!"
-            else:
-                reply = f"Hi **{user_name}**! 🎫 I found **{len(bookings)}** confirmed booking(s) in your profile:\n\n"
-                for idx, b in enumerate(bookings, 1):
-                    schedule = BusSchedule.query.filter_by(id=b.schedule_id).first()
-                    route = schedule.route if schedule else None
-                    origin = route.origin.title() if route else "Hub"
-                    dest = route.destination.title() if route else "Hub"
-                    reply += f"{idx}. **{origin} ➔ {dest}** (Seat {b.seat_number})\n"
+    try:
+        # 1. Update Conversational Memory
+        if 'chat_history' not in session:
+            session['chat_history'] = []
         
-        session['chat_history'].append({"role": "assistant", "content": reply})
-        return jsonify({'response': reply, 'rich_cards': rich_cards})
+        # Keep last 6 messages
+        session['chat_history'] = session['chat_history'][-6:]
+        session['chat_history'].append({"role": "user", "content": message})
+        session.modified = True
 
-    # 2. Safety Query
-    if any(k in query for k in ['safe', 'reliability', 'accident', 'night travel', 'top safety']):
-        top_safety = SafetyMetrics.query.order_by(SafetyMetrics.overall_score.desc()).first()
-        if top_safety:
-            bus = Bus.query.filter_by(id=top_safety.bus_id).first()
-            reply = f"🛡️ **Safety Telemetry Insights**\nThe safest asset in our fleet is **SmartTravel {bus.bus_number}** ({bus.type}) with a **Safety Rating of {top_safety.overall_score}%**!\n\n"
-            reply += f"* **Driver Reliability:** `{top_safety.driver_reliability}%`\n"
-            reply += f"* **Night Driving Safety:** `{top_safety.night_travel_safety}%`\n"
-        else:
-            reply = "🛡️ **Safety Insights:** All fleet coaches undergo daily comprehensive safety checkups."
-            
-        session['chat_history'].append({"role": "assistant", "content": reply})
-        return jsonify({'response': reply, 'rich_cards': rich_cards})
+        # Build context string
+        context = "\n".join([f"{msg['role']}: {msg['content']}" for msg in session['chat_history']])
+        
+        # Check for API Keys for True LLM processing
+        groq_key = os.getenv('GROQ_API_KEY')
+        gemini_key = os.getenv('GEMINI_API_KEY')
+        
+        reply = ""
+        rich_cards = []
 
-    # 3. Intelligent LLM Processing (Gemini) or Smart Hybrid Fallback
-    origin = None
-    dest = None
-    
-    if gemini_key:
-        try:
-            genai.configure(api_key=gemini_key)
-            model = genai.GenerativeModel('gemini-1.5-flash')
-            sys_prompt = "You are SmartBus AI Travel Concierge. Be concise, polite, and use emojis. "
-            sys_prompt += "If the user asks for buses, explicitly format origin and destination like [SEARCH:ORIGIN|DEST]. "
-            sys_prompt += "If answering in a regional language (Telugu, Hindi, etc), do so fluently while keeping the search format intact."
+        # 1. Booking History Query (Always handle explicitly for security)
+        if any(k in query for k in ['booking', 'ticket', 'my journey', 'my trip', 'my seat']):
+            if not user_id:
+                reply = "🔒 **Access Restricted**\n\nI couldn't detect an active passenger session. Please click **Login** in the top right corner to verify your profile and securely access your ticket history."
+            else:
+                bookings = Booking.query.filter_by(user_id=user_id, status='Confirmed').all()
+                if not bookings:
+                    reply = f"Hello **{user_name}**! I successfully accessed your passenger records, but you don't have any confirmed travel tickets booked yet.\n\nReady to start your first trip? Search for your route on the home page!"
+                else:
+                    reply = f"Hi **{user_name}**! 🎫 I found **{len(bookings)}** confirmed booking(s) in your profile:\n\n"
+                    for idx, b in enumerate(bookings, 1):
+                        schedule = BusSchedule.query.filter_by(id=b.schedule_id).first()
+                        route = schedule.route if schedule else None
+                        origin = route.origin.title() if route else "Hub"
+                        dest = route.destination.title() if route else "Hub"
+                        reply += f"{idx}. **{origin} ➔ {dest}** (Seat {b.seat_number})\n"
             
-            response = model.generate_content(f"{sys_prompt}\nChat History:\n{context}\nUser: {message}")
-            reply = response.text
-            
-            # Parse custom execution tags from LLM
+            session['chat_history'].append({"role": "assistant", "content": reply})
+            return jsonify({'response': reply, 'rich_cards': rich_cards})
+
+        # 2. Safety Query
+        if any(k in query for k in ['safe', 'reliability', 'accident', 'night travel', 'top safety']):
+            top_safety = SafetyMetrics.query.order_by(SafetyMetrics.overall_score.desc()).first()
+            if top_safety:
+                bus = Bus.query.filter_by(id=top_safety.bus_id).first()
+                reply = f"🛡️ **Safety Telemetry Insights**\nThe safest asset in our fleet is **SmartTravel {bus.bus_number}** ({bus.type}) with a **Safety Rating of {top_safety.overall_score}%**!\n\n"
+                reply += f"* **Driver Reliability:** `{top_safety.driver_reliability}%`\n"
+                reply += f"* **Night Driving Safety:** `{top_safety.night_travel_safety}%`\n"
+            else:
+                reply = "🛡️ **Safety Insights:** All fleet coaches undergo daily comprehensive safety checkups."
+                
+            session['chat_history'].append({"role": "assistant", "content": reply})
+            return jsonify({'response': reply, 'rich_cards': rich_cards})
+
+        # 3. Intelligent LLM Processing (Groq Primary -> Gemini Secondary -> Local Fallback)
+        origin = None
+        dest = None
+        
+        user_status = f"The user is currently LOGGED IN. Their name is '{user_name}'." if user_name else "The user is a GUEST (not logged in)."
+        sys_prompt = (
+            f"[{user_status}] [REAL-TIME SYSTEM CLOCK: Today is {current_time_str} (Year {current_year})]. "
+            "You are SmartBus AI Travel Concierge. Be highly professional, warmly personalized, and engaging. "
+            "You fluently understand and can reply in English, Telugu, and Hindi. "
+            f"CRITICAL TEMPORAL AWARENESS: You have live real-time awareness. The current year is {current_year}. Today's date is {current_time_str}. NEVER say it is 2024 or any past year. When the user asks about the current year, today's date, or upcoming schedules and festivals, always base your answer accurately on the real-time system clock. "
+            "CRITICAL RULE 1: If a user tells you they want to travel to a destination, but they DO NOT mention their starting location, you MUST ask them 'Where are you travelling from?' DO NOT guess. "
+            "CRITICAL RULE 2: If the user simply says 'hi', 'hello', or 'hey': If they are a GUEST, warmly welcome them and suggest they log in for a better experience or start searching for a bus. If they are LOGGED IN, greet them enthusiastically by their actual name! If they have previous chat history searching for a route, politely ask them if they would like to continue their previous journey or start looking for a brand new one. "
+            "CRITICAL RULE 3: ALWAYS respond in English by default, regardless of chat history. ONLY reply in Hindi or Telugu if the user's CURRENT message is written in that language or they explicitly ask you to change the language right now. "
+            "ONLY when you clearly know BOTH the origin city and the destination city (and the user explicitly wants to search it right now), you must output this exact tag: [SEARCH:OriginCity|DestinationCity]. "
+        )
+
+        # Attempt 1: Groq Cloud (Ultra-fast, High Limits)
+        if groq_key:
+            try:
+                messages_payload = [{"role": "system", "content": sys_prompt}]
+                for msg in session.get('chat_history', []):
+                    role = "assistant" if msg.get("role") == "assistant" else "user"
+                    messages_payload.append({"role": role, "content": msg.get("content", "")})
+                
+                res = requests.post(
+                    'https://api.groq.com/openai/v1/chat/completions',
+                    headers={'Authorization': f'Bearer {groq_key}', 'Content-Type': 'application/json'},
+                    json={
+                        'model': 'qwen/qwen3.8-27b',
+                        'messages': messages_payload,
+                        'temperature': 0.7,
+                        'max_tokens': 800
+                    },
+                    timeout=8
+                )
+                if res.status_code == 200:
+                    reply = res.json()['choices'][0]['message']['content'].strip()
+                else:
+                    print(f"Groq API returned status {res.status_code}: {res.text}", flush=True)
+            except Exception as groq_err:
+                print(f"Groq API error: {groq_err}", flush=True)
+
+        # Attempt 2: Google Gemini (Fallback)
+        if not reply and gemini_key:
+            try:
+                genai.configure(api_key=gemini_key)
+                model = genai.GenerativeModel('gemini-3.6-flash')
+                response = model.generate_content(f"{sys_prompt}\nChat History:\n{context}\nUser: {message}")
+                reply = response.text.strip()
+            except Exception as gemini_err:
+                print(f"Gemini API error: {gemini_err}", flush=True)
+
+        # Process search tags if LLM succeeded
+        if reply:
             match = re.search(r'\[SEARCH:(.*?)\|(.*?)\]', reply)
             if match:
                 origin = match.group(1).strip()
                 dest = match.group(2).strip()
                 reply = reply.replace(match.group(0), f"\n🔗 [Click here to view full schedule for {origin} to {dest}](/results?origin={origin}&dest={dest})\n")
-        except Exception as e:
-            reply = "I'm having trouble reaching my Gemini engine neural network right now. Falling back to local intelligence..."
-            origin, dest = _extract_cities_fallback(query)
-    else:
-        # Smart Contextual Fallback using Regex
-        origin, dest = _extract_cities_fallback(query)
-        if any(k in query for k in ['model', 'models', 'ai used', 'which ai', 'best ai']):
-            reply = "🧠 **SmartBus AI Architecture**\n\nI am fully equipped to use **Google Gemini 1.5 Flash** for advanced conversation and memory! (Just add `GEMINI_API_KEY` to the `.env` file to fully awaken my neural network).\n\nRight now, I am using a hybridized context-aware NLP engine that processes your commands and extracts entities."
-        elif origin and dest:
-            reply = f"🚌 Great! Based on our chat context, I am looking up elite routes from **{origin.title()}** to **{dest.title()}** for you.\n\nHere are some top-tier options I pulled dynamically. Note the rich interactive cards below!"
         else:
-            # Memory Check (If user says "what about tomorrow?", we can recall origin/dest from history)
-            prev_context_hit = False
-            if any(word in query for word in ["tomorrow", "what about", "cheapest", "cost"]):
-                for history_msg in reversed(session['chat_history'][:-1]):
-                    o, d = _extract_cities_fallback(history_msg['content'].lower())
-                    if o and d:
-                        origin, dest = o, d
-                        reply = f"Ah, continuing our chat about your trip from **{origin.title()}** to **{dest.title()}**!\nI can definitely find options for that."
-                        prev_context_hit = True
-                        break
-            
-            if not prev_context_hit:
-                name_str = f" **{user_name}**" if user_name else " there"
-                reply = f"👋 Hello{name_str}! I am your **SmartBus AI Travel Concierge**.\nThanks to my recent upgrade, I now have **Conversational Memory**, support for **Rich UI Cards**, and readiness for full **Multilingual LLM** capability.\n\nTry asking me: *'Find me a bus from Tirupati to Nellore'*."
-
-    # 4. Generate Interactive Rich Cards if Origin & Dest found
-    if origin and dest:
-        o_clean = origin.title()
-        d_clean = dest.title()
-        
-        # City Name Normalizer for common misspellings or abbreviations
-        city_aliases = {
-            "rajhamundry": "rajahmundry",
-            "rajmundry": "rajahmundry",
-            "vizag": "visakhapatnam",
-            "banglore": "bangalore",
-            "bangaluru": "bangalore",
-            "bengaluru": "bangalore",
-            "hyd": "hyderabad",
-            "hyderbad": "hyderabad",
-            "madras": "chennai",
-            "tirupathi": "tirupati"
-        }
-        search_origin = city_aliases.get(origin.lower(), origin)
-        search_dest = city_aliases.get(dest.lower(), dest)
-        
-        # Real Database Query for actual bus routes and schedules
-        # Looking up exact or partial matches
-        active_routes = Route.query.filter(
-            Route.origin.ilike(f"%{search_origin}%"), 
-            Route.destination.ilike(f"%{search_dest}%"),
-            Route.is_active == True
-        ).all()
-        
-        if active_routes:
-            matched_route_ids = [r.id for r in active_routes]
-            # Get live schedules
-            schedules = BusSchedule.query.filter(
-                BusSchedule.route_id.in_(matched_route_ids),
-                BusSchedule.is_active == True
-            ).limit(3).all()
-            
-            if schedules:
-                for sch in schedules:
-                    bus = Bus.query.filter_by(id=sch.bus_id).first()
-                    route_info = Route.query.filter_by(id=sch.route_id).first()
-                    
-                    # Format exact details
-                    dep_time = sch.departure_time.strftime("%H:%M | %d %b")
-                    arr_time = sch.arrival_time.strftime("%H:%M")
-                    actual_fare = int(route_info.base_fare)
-                    
-                    # Construct genuine Rich UI Card
-                    rich_cards.append({
-                        "title": f"SmartBus {bus.bus_number}",
-                        "type": bus.type,
-                        "origin": route_info.origin.title(),
-                        "destination": route_info.destination.title(),
-                        "distance": getattr(route_info, 'distance_km', random.randint(150, 600)),
-                        "time": f"Projected: 4.8h", # Keeping static duration for now to match UI mockup
-                        "fare": f"{actual_fare}.0",
-                        "bookLink": f"/results?origin={route_info.origin}&dest={route_info.destination}"
-                    })
-                
-                reply = f"🚌 Found {len(schedules)} active schedules for **{o_clean}** to **{d_clean}** directly from the live database. Check out the verified options below!"
+            # Attempt 3: Smart Local Fallback
+            if any(k in query for k in ['year', 'which year', 'what year', 'current year', 'date today', 'what is the date', 'today date']):
+                reply = f"We are currently in the year **{current_year}**! Today is {current_time_str}. How can I assist you with your journey today?"
             else:
-                reply = f"I found the route for **{o_clean}** to **{d_clean}**, but there are currently no active bus schedules available for this route in the database right now."
+                origin, dest = _extract_cities_fallback(query)
+                if any(k in query for k in ['model', 'models', 'ai used', 'which ai', 'best ai']):
+                    reply = "🧠 **SmartBus AI Architecture**\n\nI am fully equipped to use **Groq & Google Gemini 2.5 Flash** for advanced conversation and memory! Right now, I am using a hybridized context-aware NLP engine that processes your commands and extracts entities."
+                elif origin and dest:
+                    reply = f"🚌 Great! Based on our chat context, I am looking up elite routes from **{origin.title()}** to **{dest.title()}** for you.\n\nHere are some top-tier options I pulled dynamically. Note the rich interactive cards below!"
+                else:
+                    # Memory Check (If user says "what about tomorrow?", we can recall origin/dest from history)
+                    prev_context_hit = False
+                    if any(word in query for word in ["tomorrow", "what about", "cheapest", "cost"]):
+                        for history_msg in reversed(session['chat_history'][:-1]):
+                            o, d = _extract_cities_fallback(history_msg['content'].lower())
+                            if o and d:
+                                origin, dest = o, d
+                                reply = f"Ah, continuing our chat about your trip from **{origin.title()}** to **{dest.title()}**!\nI can definitely find options for that."
+                                prev_context_hit = True
+                                break
+                    
+                    if not prev_context_hit:
+                        name_str = f" **{user_name}**" if user_name else " there"
+                        reply = f"👋 Hello{name_str}! I am your **SmartBus AI Travel Concierge**.\nWe are in the year **{current_year}**. Try asking me: *'Find me a bus from Hyderabad to Bangalore'* or *'Check safety rating'*."
+
+        # 4. Generate Interactive Rich Cards if Origin & Dest found
+        if origin and dest:
+            o_clean = origin.title()
+            d_clean = dest.title()
+            
+            # City Name Normalizer for common misspellings or abbreviations
+            city_aliases = {
+                "rajhamundry": "rajahmundry",
+                "rajmundry": "rajahmundry",
+                "vizag": "visakhapatnam",
+                "banglore": "bangalore",
+                "bangaluru": "bangalore",
+                "bengaluru": "bangalore",
+                "hyd": "hyderabad",
+                "hyderbad": "hyderabad",
+                "madras": "chennai",
+                "tirupathi": "tirupati"
+            }
+            search_origin = city_aliases.get(origin.lower(), origin)
+            search_dest = city_aliases.get(dest.lower(), dest)
+            
+            # Real Database Query for actual bus routes and schedules
+            active_routes = Route.query.filter(
+                Route.origin.ilike(f"%{search_origin}%"), 
+                Route.destination.ilike(f"%{search_dest}%"),
+                Route.is_active == True
+            ).all()
+            
+            if active_routes:
+                matched_route_ids = [r.id for r in active_routes]
+                # Get live schedules
+                schedules = BusSchedule.query.filter(
+                    BusSchedule.route_id.in_(matched_route_ids),
+                    BusSchedule.is_active == True
+                ).limit(3).all()
+                
+                if schedules:
+                    for sch in schedules:
+                        bus = Bus.query.filter_by(id=sch.bus_id).first()
+                        route_info = Route.query.filter_by(id=sch.route_id).first()
+                        
+                        dist = float(getattr(route_info, 'distance_km', random.randint(150, 600)))
+                        
+                        # AI-driven Travel Duration Estimation
+                        b_type = bus.type.lower() if getattr(bus, 'type', None) else 'seater'
+                        if 'volvo' in b_type or 'scania' in b_type or 'premium' in b_type:
+                            speed = 68.0
+                        elif 'express' in b_type:
+                            speed = 58.0
+                        else:
+                            speed = 48.0 # Sleeper / Normal
+                            
+                        duration_hrs = dist / speed
+                        hrs = int(duration_hrs)
+                        mins = int((duration_hrs - hrs) * 60)
+                        
+                        # Dynamic Fare Multipliers based on Luxury/Type
+                        base = float(route_info.base_fare)
+                        mult = 1.45 if 'volvo' in b_type or 'premium' in b_type else (1.30 if 'ac sleeper' in b_type else (1.15 if 'sleeper' in b_type else (0.85 if 'express' in b_type else 1.0)))
+                        optimized_fare = int(round(base * mult, -1))
+                        
+                        # Construct genuine Rich UI Card
+                        rich_cards.append({
+                            "title": f"SmartBus {bus.bus_number}",
+                            "type": bus.type,
+                            "origin": route_info.origin.title(),
+                            "destination": route_info.destination.title(),
+                            "distance": round(dist, 1),
+                            "time": f"{hrs}h {mins}m",
+                            "fare": f"{optimized_fare}",
+                            "bookLink": f"/results?origin={route_info.origin}&dest={route_info.destination}"
+                        })
+                    
+                    reply = f"🚌 Found {len(schedules)} active schedules for **{o_clean}** to **{d_clean}** directly from the live database. Check out the verified options below!"
+                else:
+                    reply = f"I found the route for **{o_clean}** to **{d_clean}**, but there are currently no active bus schedules available for this route in the database right now."
+            else:
+                reply = f"It looks like we don't currently operate a direct route from **{o_clean}** to **{d_clean}** yet. SmartBus AI is constantly analyzing demand to expand our network!"
+            
+        session['chat_history'].append({"role": "assistant", "content": reply})
+        session.modified = True
+        return jsonify({'response': reply, 'rich_cards': rich_cards})
+
+    except Exception as global_err:
+        import traceback
+        traceback.print_exc()
+        if any(k in query for k in ['year', 'which year', 'what year', 'current year', 'date']):
+            fallback_msg = f"We are in the year **{current_year}**! Today is {current_time_str}. How can I assist you with your journey today?"
         else:
-            # If no actual route is in DB, we guide them gracefully
-            reply = f"It looks like we don't currently operate a direct route from **{o_clean}** to **{d_clean}** yet. SmartBus AI is constantly analyzing demand to expand our network!"
-        
-    session['chat_history'].append({"role": "assistant", "content": reply})
-    session.modified = True
-    return jsonify({'response': reply, 'rich_cards': rich_cards})
+            fallback_msg = "👋 Hello! I am your SmartBus AI Travel Concierge. How can I assist you with your journey today?"
+            
+        return jsonify({'response': fallback_msg, 'rich_cards': []}), 200
 
 def _extract_cities_fallback(text):
     import re
-    match = re.search(r'(?:buses|bus|tickets|travel|route|busses) (?:from|between)?\s*([a-zA-Z\s]+)\s*(?:to|and)\s*([a-zA-Z\s]+)', text)
+    # Try explicit travel keywords first
+    match = re.search(r'(?:buses|bus|tickets|travel|route|busses)\s+(?:from|between)?\s*([a-zA-Z\s]+?)\s*(?:to|and)\s*([a-zA-Z\s]+)', text)
+    if not match:
+        # Try generic "City to City"
+        match = re.search(r'(?:from\s+)?([a-zA-Z\s]+?)\s+(?:to|-)\s+([a-zA-Z\s]+)', text)
     if match:
-        return match.group(1).replace("tomorrow", "").replace("today", "").strip(), match.group(2).replace("tomorrow", "").replace("today", "").strip()
+        origin = match.group(1).replace("tomorrow", "").replace("today", "").strip()
+        dest = match.group(2).replace("tomorrow", "").replace("today", "").strip()
+        return origin, dest
     return None, None
 

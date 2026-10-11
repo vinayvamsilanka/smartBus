@@ -30,8 +30,23 @@ def create_app(config_class=Config):
     app.register_blueprint(rewards_bp, url_prefix='/api/rewards')
 
     # Register UI routes
-    from flask import render_template
+    from flask import render_template, jsonify
+    from sqlalchemy import text
+    from datetime import datetime
     
+    @app.route('/health')
+    def health_check():
+        db_status = "healthy"
+        try:
+            db.session.execute(text("SELECT 1"))
+        except Exception as e:
+            db_status = f"degraded: {str(e)}"
+        return jsonify({
+            "status": "online",
+            "database": db_status,
+            "timestamp": datetime.utcnow().isoformat()
+        }), 200
+
     @app.route('/')
     def index():
         from app.models import City
