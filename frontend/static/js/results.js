@@ -64,12 +64,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('split-leg1-dep').innerText = leg1.departure_datetime.split(' ')[1];
             document.getElementById('split-leg1-arr').innerText = leg1.arrival_datetime.split(' ')[1];
             document.getElementById('split-leg1-fare').innerText = `₹${leg1.fare}`;
+            if (document.getElementById('leg1-btn-fare')) document.getElementById('leg1-btn-fare').innerText = `₹${leg1.fare}`;
 
             document.getElementById('leg2-route-detail').innerText = `${viaCity} ➔ ${destCity}`;
             document.getElementById('split-leg2-operator').innerText = `${leg2.operator} (${leg2.type})`;
             document.getElementById('split-leg2-dep').innerText = leg2.departure_datetime.split(' ')[1];
             document.getElementById('split-leg2-arr').innerText = leg2.arrival_datetime.split(' ')[1];
             document.getElementById('split-leg2-fare').innerText = `₹${leg2.fare}`;
+            if (document.getElementById('leg2-btn-fare')) document.getElementById('leg2-btn-fare').innerText = `₹${leg2.fare}`;
 
             // Populate New Dark UI Elements
             const splitLeg1Dep = document.getElementById('split-leg1-dep').innerText;
@@ -121,6 +123,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     arrival_time: leg1.arrival_datetime,
                     duration: leg1.duration,
                     ai_reasoning: "Selected as Leg 1 of your split journey."
+                }));
+                localStorage.setItem('pendingSplitLeg2', JSON.stringify({
+                    id: `bus_${leg2.bus_id}`,
+                    schedule_id: leg2.schedule_id,
+                    operator: leg2.operator,
+                    type: leg2.type,
+                    fare: leg2.fare,
+                    badge: "Leg 2 of Split Journey",
+                    confidence: leg2.confidence,
+                    carbon_footprint: leg2.carbon_footprint,
+                    safety_index: leg2.safety_index,
+                    overall_safety: leg2.overall_safety,
+                    delay: leg2.delay,
+                    departure_time: leg2.departure_datetime,
+                    arrival_time: leg2.arrival_datetime,
+                    duration: leg2.duration,
+                    ai_reasoning: "Selected as Leg 2 of your split journey."
                 }));
                 localStorage.setItem('passengerCount', passengers);
                 window.location.href = `/details`;

@@ -61,11 +61,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
         const res = await fetch(`/api/optimizer/seats?type=${encodeURIComponent(bus.type)}&schedule_id=${bus.schedule_id}`);
         const seats = await res.json();
-        
+
         // Initialize Deck Management
         let currentDeck = 'Lower';
         const isSleeper = bus.type.toLowerCase().includes('sleeper');
-        
+
         if (isSleeper) {
             setupDeckSelector((deck) => {
                 currentDeck = deck;
@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             </div>
         `;
         wrapper.insertAdjacentHTML('afterbegin', selectorHTML);
-        
+
         document.querySelectorAll('.deck-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.deck-btn').forEach(b => b.classList.remove('active'));
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     function renderSeats(seats, fare, isSleeper) {
         const container = document.getElementById('seats-container');
         container.innerHTML = '';
-        
+
         if (isSleeper) {
             container.classList.add('sleeper-grid');
             container.style.gridTemplateColumns = '1fr 60px 1fr 1fr';
@@ -119,13 +119,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!rows[r]) rows[r] = [];
                 rows[r].push(s);
             });
-            
-            Object.keys(rows).sort((a,b) => a-b).forEach(r => {
+
+            Object.keys(rows).sort((a, b) => a - b).forEach(r => {
                 const rowSeats = rows[r];
                 const left = rowSeats.find(s => s.align === 'left');
                 const rightA = rowSeats.find(s => s.id.includes('RA'));
                 const rightB = rowSeats.find(s => s.id.includes('RB'));
-                
+
                 html += generateSeatHTML(left, r, true);
                 html += `<div style="width:100%; display:flex; align-items:center; justify-content:center;"><div style="width:2px; height:60%; background: rgba(56,189,248,0.1);"></div></div>`;
                 html += generateSeatHTML(rightA, r, true);
@@ -146,21 +146,86 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         container.innerHTML = html;
-        
+
         // --- AI Seat Recommendation Engine ---
-        // Find the first available window seat to recommend
-        const availableWindowSeats = seats.filter(s => !s.is_booked && s.is_window);
-        if (availableWindowSeats.length > 0 && selectedSeats.length === 0) {
-            const recommendedSeat = availableWindowSeats[0];
+        seats.forEach(s => {
+            s.ai_score = -9999;
+            if (!s.available) return;
+
+            let score = 0;
+            // 1. Noise factor (lower is better, max ~80dB)
+            score += (80 - (s.noise_db || 50)) * 1.5;
+
+            // 2. Vibration comfort
+            if (s.vibration === 'Low' || s.vibration === 'Ultra Smooth') score += 25;
+            else if (s.vibration === 'Medium') score += 10;
+            else score -= 20; // High vibration
+
+            // 3. Journey duration / Distance heuristic
+            // Longer journeys demand mid-cabin stability. Shorter ones prefer front cabin.
+            const durationHours = bus.duration ? parseInt(bus.duration.split('h')[0]) : 5;
+            if (durationHours > 5) {
+                if (s.zone === 'Middle') score += 30; // Max stability
+                else if (s.zone === 'Front') score += 10;
+                else if (s.zone === 'Back') score -= 20; // Too bumpy for long trips
+            } else {
+                if (s.zone === 'Front') score += 30; // Quick exit
+                else if (s.zone === 'Middle') score += 15;
+                else if (s.zone === 'Back') score -= 10;
+            }
+
+            // 4. Seating preferences (Window/Single Berth gets a boost)
+            if (s.type === 'Window') score += 20;
+            if (s.type === 'Single Berth' || (s.align && s.align === 'left')) score += 25; // Solo travel preference
+
+            s.ai_score = score;
+        });
+
+        let recommendedSeats = [];
+        let bestGroupScore = -99999;
+        let bestGroupIndex = -1;
+
+        // Strategy 1: Find best adjacent cluster in the linear seat array
+        for (let i = 0; i <= seats.length - passengerCount; i++) {
+            let validGroup = true;
+            let groupScore = 0;
+
+            for (let j = 0; j < passengerCount; j++) {
+                if (!seats[i + j].available) {
+                    validGroup = false;
+                    break;
+                }
+                groupScore += seats[i + j].ai_score;
+            }
+
+            if (validGroup && groupScore > bestGroupScore) {
+                bestGroupScore = groupScore;
+                bestGroupIndex = i;
+            }
+        }
+
+        if (bestGroupIndex !== -1) {
+            for (let j = 0; j < passengerCount; j++) {
+                recommendedSeats.push(seats[bestGroupIndex + j]);
+            }
+        } else {
+            // Strategy 2: Fallback to top individual seats if no contiguous block is available
+            const availableScored = seats.filter(s => s.available).sort((a, b) => b.ai_score - a.ai_score);
+            recommendedSeats = availableScored.slice(0, passengerCount);
+        }
+
+        if (recommendedSeats.length > 0 && selectedSeats.length === 0) {
             // Small delay to allow DOM to render
             setTimeout(() => {
-                const seatEl = document.querySelector(`[data-id="${recommendedSeat.id}"]`);
-                if (seatEl) {
-                    seatEl.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.8)';
-                    seatEl.style.border = '2px solid #10b981';
-                    seatEl.innerHTML += `<div style="position:absolute; top:-8px; right:-8px; background:#10b981; color:#000; border-radius:50%; width:20px; height:20px; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index: 5;" title="AI Recommended Seat"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
-                }
-            }, 100);
+                recommendedSeats.forEach(recSeat => {
+                    const seatEl = document.querySelector(`[data-id="${recSeat.id}"]`);
+                    if (seatEl) {
+                        seatEl.style.boxShadow = '0 0 15px rgba(16, 185, 129, 0.8)';
+                        seatEl.style.border = '2px solid #10b981';
+                        seatEl.innerHTML += `<div style="position:absolute; top:-8px; right:-8px; background:#10b981; color:#000; border-radius:50%; width:20px; height:20px; font-size:10px; display:flex; align-items:center; justify-content:center; font-weight:bold; z-index: 5; box-shadow: 0 0 10px #10b981;" title="AI Group Pick: Best Comfort"><i class="fa-solid fa-wand-magic-sparkles"></i></div>`;
+                    }
+                });
+            }, 300);
         }
 
         attachSeatEvents(seats, fare);
@@ -174,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         document.querySelectorAll('.seat-btn').forEach(seatEl => {
             if (seatEl.dataset.booked === 'true') return;
-            
+
             // Restore visual style if the seat is already selected (e.g. after changing decks)
             const seatId = seatEl.dataset.id;
             const isSelected = selectedSeats.some(s => s.id === seatId);
@@ -188,7 +253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             seatEl.addEventListener('click', () => {
                 const seatData = seats.find(s => s.id === seatId);
                 if (!seatData) return; // safety check
-                
+
                 const idx = selectedSeats.findIndex(s => s.id === seatId);
                 if (idx > -1) {
                     // Already selected, deselect it
@@ -204,11 +269,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (oldestEl) resetSeatStyle(oldestEl);
                         }
                     }
-                    
+
                     selectedSeats.push(seatData);
                     setSelectedSeatStyle(seatEl);
                 }
-                
+
                 updateSeatSelectionStatus(fare);
             });
         });
@@ -272,7 +337,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!seat) return '<div></div>';
         const isBooked = !seat.available;
         const isWindow = seat.type === 'Window' || (seat.align && (seat.align === 'left' || seat.id.includes('RB')));
-        
+
         let iconHTML = '';
         if (isSleeper) {
             const isDouble = seat.type && seat.type.includes('Double');
@@ -280,9 +345,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         } else {
             iconHTML = `<div style="font-size: 1.3rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4)); opacity: ${isBooked ? 0.3 : 0.95}; margin-bottom: 2px;">${isBooked ? '🔒' : '💺'}</div>`;
         }
-        
+
         const sleeperClass = isSleeper ? `berth-btn ${seat.type && seat.type.includes('Double') ? 'double-berth' : ''}` : 'seater-btn';
-        
+
         return `<div class="seat-btn ${sleeperClass}"
             data-id="${seat.id}"
             data-booked="${isBooked}"
@@ -305,10 +370,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const busView = document.getElementById('bus-360-view');
 
     const viewAngles = {
-        front: { x: 45, y: 0,  z: -100, cockpit: 1 },
-        mid:   { x: 15, y: -15, z: 0, cockpit: 0.8 },
-        top:   { x: 60, y: 0,  z: 50, cockpit: 0.5 },
-        side:  { x: 0,  y: 65, z: 100, cockpit: 0.2 }
+        front: { x: 45, y: 0, z: -100, cockpit: 1 },
+        mid: { x: 15, y: -15, z: 0, cockpit: 0.8 },
+        top: { x: 60, y: 0, z: 50, cockpit: 0.5 },
+        side: { x: 0, y: 65, z: 100, cockpit: 0.2 }
     };
 
     window.setViewAngle = (angle) => {
@@ -316,7 +381,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         rotX = target.x;
         rotY = target.y;
         applyView();
-        
+
         // Cockpit opacity animation
         const cockpit = document.getElementById('cockpit-view');
         if (cockpit) cockpit.style.opacity = target.cockpit;
@@ -382,12 +447,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (selectedSeats.length === 0) {
             metricsDiv.style.opacity = '0.4';
             titleEl.innerHTML = `Select exactly <strong style="color:#38bdf8;">${passengerCount}</strong> seat(s)`;
-            
+
             document.getElementById('seat-noise').innerText = '-- dB';
             document.getElementById('seat-vibe').innerText = '--';
             document.getElementById('seat-type').innerText = '--';
             document.getElementById('seat-zone').innerText = '--';
-            
+
             bookBtn.disabled = true;
             bookBtn.classList.remove('pulse-glow');
             bookBtn.innerHTML = `<i class="fa-solid fa-lock"></i> Secure Seat`;
@@ -396,10 +461,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             // Show latest seat info
             const latest = selectedSeats[selectedSeats.length - 1];
             titleEl.innerHTML = `Selected <strong style="color:#38bdf8;">${selectedSeats.length}/${passengerCount}</strong> Seat(s) <span style="background:linear-gradient(135deg, #2563eb, #1d4ed8);color:#fff;padding:4px 12px;border-radius:20px;font-size:0.8rem;margin-left:8px;box-shadow:0 4px 10px rgba(37,99,235,0.4);border:1px solid #60a5fa;">₹${fare * selectedSeats.length}</span>`;
-            
+
             const noiseVal = latest.noise_db || (latest.zone === 'Front' ? 32 : (latest.zone === 'Back' ? 42 : 36));
             const vibeVal = latest.vibration || (latest.zone === 'Front' ? 'Ultra Smooth' : (latest.zone === 'Back' ? 'Engine Zone' : 'Medium'));
-            
+
             document.getElementById('seat-noise').innerText = `${noiseVal} dB`;
             document.getElementById('seat-vibe').innerText = vibeVal;
             document.getElementById('seat-type').innerText = latest.type || 'Executive Pod';
@@ -430,7 +495,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const modal = document.getElementById('checkout-modal');
     const modalContent = document.getElementById('checkout-modal-content');
     const closeModalBtn = document.getElementById('close-checkout-modal');
-    
+
     // Progress Indicators
     const step1Ind = document.getElementById('step-1-indicator');
     const step2Ind = document.getElementById('step-2-indicator');
@@ -454,42 +519,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const phoneInput = document.getElementById('modal-phone-input');
 
     const tabEmail = document.getElementById('modal-tab-email');
-    const tabOtp = document.getElementById('modal-tab-otp');
     const emailForm = document.getElementById('modal-auth-email-form');
-    const otpForm = document.getElementById('modal-auth-otp-form');
     let currentAuthMode = 'email';
 
-    if (tabEmail && tabOtp) {
-        tabEmail.onclick = () => {
-            tabEmail.classList.add('active-tab');
-            tabOtp.classList.remove('active-tab');
-            emailForm.style.display = 'block';
-            otpForm.style.display = 'none';
-            currentAuthMode = 'email';
-        };
-        tabOtp.onclick = () => {
-            tabOtp.classList.add('active-tab');
-            tabEmail.classList.remove('active-tab');
-            otpForm.style.display = 'block';
-            emailForm.style.display = 'none';
-            currentAuthMode = 'otp';
-        };
-    }
-
-    // OTP auto hop
-    const digits = document.querySelectorAll('.modal-otp-digit');
-    digits.forEach((digit, idx) => {
-        digit.oninput = () => {
-            if (digit.value && idx < digits.length - 1) {
-                digits[idx + 1].focus();
-            }
-        };
-        digit.onkeydown = (e) => {
-            if (e.key === 'Backspace' && !digit.value && idx > 0) {
-                digits[idx - 1].focus();
-            }
-        };
-    });
 
     if (closeModalBtn) {
         closeModalBtn.onclick = () => {
@@ -612,7 +644,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="display: flex; gap: 10px;">
                         <div style="flex: 1;">
                             <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 4px;">Age</label>
-                            <input type="number" class="passenger-age-input" data-seat="${seat.id}" placeholder="Age" min="1" max="120" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; font-size:0.85rem;">
+                            <input type="text" class="passenger-age-input" data-seat="${seat.id}" placeholder="Age" inputmode="numeric" maxlength="3" required style="width: 100%; padding: 10px; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #fff; outline: none; font-size:0.85rem;" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                         </div>
                         <div style="flex: 1.2;">
                             <label style="display: block; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); margin-bottom: 4px;">Gender</label>
@@ -633,100 +665,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         const errDiv = document.getElementById('auth-modal-error');
         errDiv.style.display = 'none';
 
-        if (currentAuthMode === 'email') {
-            const email = emailInput.value.trim();
-            const password = passwordInput.value;
+        const email = emailInput.value.trim();
+        const password = passwordInput.value;
 
-            if (!email || !password) {
-                errDiv.innerText = 'Please enter both email and password.';
-                errDiv.style.display = 'block';
-                return;
-            }
+        if (!email || !password) {
+            errDiv.innerText = 'Please enter both email and password.';
+            errDiv.style.display = 'block';
+            return;
+        }
 
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    window.USER_ID = data.user.id;
-                    window.USER_NAME = data.user.name;
-                    fetchUserProfileNav();
-                    goToPassengerStep();
-                } else {
-                    errDiv.innerText = data.message || 'Invalid email or password.';
-                    errDiv.style.display = 'block';
-                }
-            } catch (e) {
-                errDiv.innerText = 'Server error during authentication.';
+        try {
+            const res = await fetch('/api/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                window.USER_ID = data.user.id;
+                window.USER_NAME = data.user.name;
+                fetchUserProfileNav();
+                goToPassengerStep();
+            } else {
+                errDiv.innerText = data.message || 'Invalid email or password.';
                 errDiv.style.display = 'block';
             }
-        } else {
-            const phone = phoneInput.value.trim();
-            let otp = '';
-            digits.forEach(d => otp += d.value);
-
-            if (phone.length < 10 || otp.length < 4) {
-                errDiv.innerText = 'Please enter a valid 10-digit phone number and 4-digit OTP.';
-                errDiv.style.display = 'block';
-                return;
-            }
-
-            try {
-                const res = await fetch('/api/auth/verify-otp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ phone, code: otp })
-                });
-                const data = await res.json();
-                if (res.ok && data.success) {
-                    window.USER_ID = data.user.id;
-                    window.USER_NAME = data.user.name;
-                    fetchUserProfileNav();
-                    goToPassengerStep();
-                } else {
-                    errDiv.innerText = data.msg || 'OTP Verification failed.';
-                    errDiv.style.display = 'block';
-                }
-            } catch (e) {
-                errDiv.innerText = 'Server error during OTP verification.';
-                errDiv.style.display = 'block';
-            }
+        } catch (e) {
+            errDiv.innerText = 'Server error during authentication.';
+            errDiv.style.display = 'block';
         }
     };
-    
-    const sendOtpBtn = document.getElementById('modal-send-otp-btn');
-    if(sendOtpBtn) {
-        sendOtpBtn.onclick = async () => {
-            const phone = phoneInput.value.trim();
-            if(phone.length < 10) {
-                document.getElementById('auth-modal-error').innerText = 'Enter valid 10-digit number.';
-                document.getElementById('auth-modal-error').style.display = 'block';
-                return;
-            }
-            sendOtpBtn.innerText = 'Sending...';
-            try {
-                const res = await fetch('/api/auth/send-otp', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({phone})
-                });
-                if(res.ok) {
-                    document.getElementById('modal-otp-verify-section').style.display = 'block';
-                    document.getElementById('auth-modal-error').style.display = 'none';
-                    sendOtpBtn.innerText = 'Sent!';
-                } else {
-                    sendOtpBtn.innerText = 'Send';
-                    document.getElementById('auth-modal-error').innerText = 'Failed to send OTP.';
-                    document.getElementById('auth-modal-error').style.display = 'block';
-                }
-            } catch(e) {
-                sendOtpBtn.innerText = 'Send';
-            }
-        };
-    }
+
+
 
     function fetchUserProfileNav() {
         fetch('/api/auth/profile').then(r => r.json()).then(d => {
@@ -788,31 +758,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         let totalFare = bus.fare * selectedSeats.length;
         window.CURRENT_FARE = totalFare;
         window.APPLIED_COUPON = null;
-        
+
         document.getElementById('modal-fare-amount').innerText = `₹${totalFare}`;
-        
+
         // Handle Coupon Application
         const applyBtn = document.getElementById('apply-coupon-btn');
         const codeInp = document.getElementById('checkout-coupon-code');
-        
-        if(applyBtn && codeInp) {
+
+        if (applyBtn && codeInp) {
             applyBtn.onclick = async () => {
                 const msg = document.getElementById('coupon-message');
                 const code = codeInp.value.trim();
-                if(!code) return;
-                
+                if (!code) return;
+
                 applyBtn.disabled = true;
                 applyBtn.innerText = '...';
-                
+
                 try {
                     const res = await fetch('/api/rewards/validate-coupon', {
                         method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({coupon_code: code})
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ coupon_code: code })
                     });
                     const data = await res.json();
-                    
-                    if(data.success) {
+
+                    if (data.success) {
                         window.APPLIED_COUPON = code;
                         const newFare = window.CURRENT_FARE * (1.0 - data.discount_pct);
                         document.getElementById('modal-fare-amount').innerHTML = `<strike style="color:var(--text-secondary);font-size:0.8rem;">₹${window.CURRENT_FARE}</strike> ₹${newFare.toFixed(2)}`;
@@ -820,7 +790,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         msg.style.display = 'block';
                         msg.style.color = 'var(--accent-green)';
                         msg.innerText = `Coupon Applied! You get ${data.discount_pct * 100}% off with ${data.product_name}`;
-                        
+
                         // Update UPI QR with new fare
                         const upiId = document.getElementById('payment-upi-id').innerText.trim() || '9390378365@axl';
                         const upiUrl = `upi://pay?pa=${upiId}&pn=SmartBus%20AI&am=${newFare.toFixed(2)}&cu=INR&tn=SmartBus%20Booking`;
@@ -833,7 +803,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         totalFare = window.CURRENT_FARE;
                         document.getElementById('modal-fare-amount').innerText = `₹${totalFare}`;
                     }
-                } catch(e) {
+                } catch (e) {
                     msg.style.display = 'block';
                     msg.style.color = 'var(--accent-error)';
                     msg.innerText = 'Network error checking coupon';
@@ -852,7 +822,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }, 300);
             }
         }
-        
+
         const upiId = document.getElementById('payment-upi-id').innerText.trim() || '9390378365@axl';
         const upiUrl = `upi://pay?pa=${upiId}&pn=SmartBus%20AI&am=${totalFare}&cu=INR&tn=SmartBus%20Booking`;
         document.getElementById('upi-qr-image').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiUrl)}`;
@@ -1049,8 +1019,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 body: JSON.stringify(paymentData)
             });
             const payResult = await payRes.json();
-            
-            if(!payRes.ok || !payResult.success) {
+
+            if (!payRes.ok || !payResult.success) {
                 clearInterval(msgInterval);
                 alert('Payment Processing Failed: ' + (payResult.error || 'Gateway Error'));
                 stepProcessing.style.display = 'none';
@@ -1080,15 +1050,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             if (res.ok) {
                 const checkoutResult = await res.json();
-                
+
                 setTimeout(() => {
                     stepProcessing.style.display = 'none';
                     stepSuccess.style.display = 'block';
 
                     const successContainer = document.getElementById('success-tickets-container');
                     successContainer.innerHTML = '';
-                    
-                    if(checkoutResult.booking_ids && checkoutResult.booking_ids.length > 0) {
+
+                    if (checkoutResult.booking_ids && checkoutResult.booking_ids.length > 0) {
                         const dlBtn = document.getElementById('success-download-ticket');
                         if (dlBtn) {
                             dlBtn.onclick = () => {
@@ -1098,7 +1068,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                     const details = checkoutResult.payment.details || [];
-                    
+
                     details.forEach((ticket, idx) => {
                         const pass = passengersInfo[idx] || {};
                         successContainer.innerHTML += `
@@ -1146,7 +1116,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // Final Dashboard Redirect
-    document.getElementById('success-dashboard-redirect').onclick = () => {
-        window.location.href = '/dashboard';
-    };
+    const dashboardRedirectBtn = document.getElementById('success-dashboard-redirect');
+    const pendingLeg2Str = localStorage.getItem('pendingSplitLeg2');
+
+    if (pendingLeg2Str) {
+        dashboardRedirectBtn.innerText = 'Book Next Leg (Leg 2) →';
+        dashboardRedirectBtn.style.background = 'linear-gradient(135deg, var(--accent-purple), #4f46e5)';
+        dashboardRedirectBtn.onclick = () => {
+            localStorage.setItem('selectedBusData', pendingLeg2Str);
+            localStorage.removeItem('pendingSplitLeg2');
+            window.location.reload();
+        };
+    } else {
+        dashboardRedirectBtn.onclick = () => {
+            window.location.href = '/dashboard';
+        };
+    }
 });

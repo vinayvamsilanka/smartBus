@@ -57,6 +57,48 @@
     .leaflet-container {
         font-family: var(--font-primary);
     }
+
+    /* Analytics Hoverboards */
+    .analytics-hoverboard:hover {
+        transform: translateY(-5px) scale(1.02);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.06) !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    /* Mobile Responsive Overrides */
+    @media (max-width: 768px) {
+        .tracking-layout-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .dashboard-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+            gap: 1rem;
+        }
+
+        .past-bookings-header {
+            display: none !important;
+        }
+
+        .past-booking-row {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+        }
+
+        .past-booking-row>div {
+            text-align: left !important;
+            width: 100% !important;
+        }
+
+        .dashboard-grid {
+            grid-template-columns: 1fr !important;
+        }
+
+        .dashboard-grid .span-2 {
+            grid-column: span 1 !important;
+        }
+    }
 </style>
 
 <!-- Leaflet CSS & JS for Live Tracking -->
@@ -161,7 +203,7 @@
             </div>
 
             <!-- Boxed Header Layout -->
-            <div
+            <div class="past-bookings-header"
                 style="display: flex; gap: 1rem; padding: 1rem 1.5rem; background: rgba(0,0,0,0.03); border-radius: 12px; margin-bottom: 1rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 0.5px; border: 1px solid var(--border-light);">
                 <div style="flex: 0 0 24%;">Route Details</div>
                 <div style="flex: 0 0 15%; text-align: center;">Departure</div>
@@ -187,26 +229,29 @@
                 <h2><i class="fa-solid fa-chart-pie"></i> Travel Analytics</h2>
             </div>
 
-            <!-- Metric Boxes (Anticipations) -->
+            <!-- Metric Boxes (Anticipations / Hoverboards) -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
-                <div
-                    style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.15); border-radius: 14px; padding: 1.25rem 1rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+                <!-- Eco Board -->
+                <div class="analytics-hoverboard"
+                    style="background: rgba(16, 185, 129, 0.04); border: 1.5px solid rgba(16, 185, 129, 0.15); border-radius: 16px; padding: 1.5rem 0.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: default; overflow: hidden; width: 100%;">
                     <div
-                        style="font-size: 0.72rem; color: #10b981; text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
-                        <i class="fa-solid fa-leaf"></i> Eco CO₂ Saved
+                        style="font-size: 0.75rem; color: #10b981; text-transform: uppercase; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: 0.7px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                        <i class="fa-solid fa-leaf"></i> ECO CO₂ SAVED
                     </div>
                     <div id="eco-val"
-                        style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading);">
+                        style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading); display: block; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">
                         0.0</div>
                 </div>
-                <div
-                    style="background: rgba(37, 99, 235, 0.05); border: 1px solid rgba(37, 99, 235, 0.15); border-radius: 14px; padding: 1.25rem 1rem; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+
+                <!-- Savings Board -->
+                <div class="analytics-hoverboard"
+                    style="background: rgba(37, 99, 235, 0.04); border: 1.5px solid rgba(37, 99, 235, 0.15); border-radius: 16px; padding: 1.5rem 0.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 15px rgba(0,0,0,0.02); transition: transform 0.3s ease, box-shadow 0.3s ease; cursor: default; overflow: hidden; width: 100%;">
                     <div
-                        style="font-size: 0.72rem; color: #2563eb; text-transform: uppercase; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
-                        <i class="fa-solid fa-wallet"></i> Total Savings
+                        style="font-size: 0.75rem; color: #2563eb; text-transform: uppercase; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: 0.7px; display: flex; align-items: center; gap: 6px; white-space: nowrap;">
+                        <i class="fa-solid fa-wallet"></i> TOTAL SAVINGS
                     </div>
                     <div id="savings-val"
-                        style="font-size: 1.6rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading);">
+                        style="font-size: 1.8rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-heading); display: block; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1;">
                         ₹0</div>
                 </div>
             </div>

@@ -421,12 +421,9 @@
         <!-- 1. SIGN IN FORM PANEL -->
         <div id="login-section" class="auth-form-section active">
             <!-- Secondary filter pills -->
-            <div class="login-methods">
+            <div class="login-methods" style="display: none;">
                 <button class="method-btn active" id="btn-method-email" onclick="switchLoginMethod('email')">
                     <i class="fa-solid fa-envelope"></i> Email Credentials
-                </button>
-                <button class="method-btn" id="btn-method-phone" onclick="switchLoginMethod('phone')">
-                    <i class="fa-solid fa-mobile-screen-button"></i> Mobile OTP
                 </button>
             </div>
 
@@ -454,19 +451,6 @@
                 </button>
             </form>
 
-            <!-- Phone Method -->
-            <form id="phoneLoginForm" onsubmit="handlePhoneVerify(event)" style="display: none;">
-                <div class="input-wrapper">
-                    <input type="tel" id="login-phone" class="auth-input" placeholder="10-digit Phone Number"
-                        pattern="[6-9][0-9]{9}" required style="padding-left: 3.8rem !important;">
-                    <i class="fa-solid fa-mobile-screen-button input-icon"></i>
-                    <span
-                        style="position: absolute; left: 1.2rem; top: 50%; transform: translateY(-50%); color: var(--text-primary); font-weight: 700; font-size: 0.95rem; pointer-events: none;">+91</span>
-                </div>
-                <button type="submit" class="btn-secure-action" style="margin-top: 1rem;">
-                    Get Secure OTP <i class="fa-solid fa-key"></i>
-                </button>
-            </form>
         </div>
 
         <!-- 2. SIGN UP FORM PANEL -->
@@ -501,37 +485,7 @@
     </div>
 </div>
 
-<!-- Phone verification dialog -->
-<div id="otpOverlay" class="otp-overlay">
-    <div class="otp-box">
-        <i class="fa-solid fa-shield-halved"
-            style="font-size: 2.8rem; color: #10b981; margin-bottom: 1rem; display: inline-block;"></i>
-        <h3
-            style="color: var(--text-primary); margin-bottom: 0.5rem; font-family: var(--font-heading); font-weight:800;">
-            Phone Verification</h3>
-        <p style="color: var(--text-secondary); font-size: 0.9rem;">We sent a secure One-Time PIN to <strong
-                id="otp-phone-display" style="color: var(--text-primary);">+91 9876543210</strong></p>
 
-        <div class="otp-inputs">
-            <input type="text" maxlength="1" class="otp-digit" id="otp1">
-            <input type="text" maxlength="1" class="otp-digit" id="otp2">
-            <input type="text" maxlength="1" class="otp-digit" id="otp3">
-            <input type="text" maxlength="1" class="otp-digit" id="otp4">
-        </div>
-
-        <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 1.5rem;">
-            Resend PIN in <span id="otp-timer" style="color: #f97316; font-weight:700;">30</span>s
-        </p>
-
-        <div style="display: flex; gap: 1rem;">
-            <button class="btn-secure-action"
-                style="background: rgba(0,0,0,0.05); color: var(--text-primary); border: 1.5px solid var(--border-light); box-shadow:none; flex: 1; justify-content: center;"
-                onclick="closeOTP()">Cancel</button>
-            <button class="btn-secure-action" style="flex: 2; justify-content: center;" onclick="verifyOTP()">Verify OTP
-                <i class="fa-solid fa-circle-check"></i></button>
-        </div>
-    </div>
-</div>
 
 <!-- Email verification dialog -->
 <div id="emailOtpOverlay" class="otp-overlay">
@@ -611,16 +565,7 @@
     }
 
     function switchLoginMethod(method) {
-        document.querySelectorAll('.method-btn').forEach(b => b.classList.remove('active'));
-        if (method === 'email') {
-            document.getElementById('btn-method-email').classList.add('active');
-            document.getElementById('emailLoginForm').style.display = 'block';
-            document.getElementById('phoneLoginForm').style.display = 'none';
-        } else {
-            document.getElementById('btn-method-phone').classList.add('active');
-            document.getElementById('emailLoginForm').style.display = 'none';
-            document.getElementById('phoneLoginForm').style.display = 'block';
-        }
+        // Method toggling removed for cleaner UI with only Email
     }
 
     // --- Fancy Password Toggle Visibility ---
@@ -692,76 +637,7 @@
         }
     }
 
-    let otpTimerInterval;
-    let savedPhoneNumber = '';
 
-    function handlePhoneVerify(e) {
-        e.preventDefault();
-        savedPhoneNumber = document.getElementById('login-phone').value;
-        document.getElementById('otp-phone-display').innerText = `+91 ${savedPhoneNumber}`;
-
-        document.getElementById('otpOverlay').classList.add('active');
-        document.getElementById('otp1').focus();
-
-        let count = 30;
-        document.getElementById('otp-timer').innerText = count;
-        clearInterval(otpTimerInterval);
-        otpTimerInterval = setInterval(() => {
-            count--;
-            document.getElementById('otp-timer').innerText = count;
-            if (count <= 0) {
-                clearInterval(otpTimerInterval);
-            }
-        }, 1000);
-    }
-
-    function closeOTP() {
-        document.getElementById('otpOverlay').classList.remove('active');
-        clearInterval(otpTimerInterval);
-    }
-
-    async function verifyOTP() {
-        const o1 = document.getElementById('otp1').value;
-        const o2 = document.getElementById('otp2').value;
-        const o3 = document.getElementById('otp3').value;
-        const o4 = document.getElementById('otp4').value;
-
-        if (!o1 || !o2 || !o3 || !o4) {
-            alert('Please enter complete secure 4-digit PIN.');
-            return;
-        }
-
-        const email = `phone${savedPhoneNumber}@smartbus.com`;
-
-        try {
-            const regRes = await fetch('/api/auth/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: `Passenger ${savedPhoneNumber.slice(-4)}`,
-                    email: email,
-                    password: `pass_${savedPhoneNumber}`
-                })
-            });
-        } catch (e) { }
-
-        try {
-            const loginRes = await fetch('/api/auth/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email: email, password: `pass_${savedPhoneNumber}` })
-            });
-
-            if (loginRes.ok) {
-                closeOTP();
-                window.location.href = '/';
-            } else {
-                alert('OTP Verification match error.');
-            }
-        } catch {
-            alert('Verification backend connection failed.');
-        }
-    }
 
     // --- Email Verification Logic ---
     let emailOtpTimerInterval;

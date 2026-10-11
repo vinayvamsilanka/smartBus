@@ -17,6 +17,49 @@
     box-sizing: border-box;
 }
 
+/* Global Protection: Disable Text Selection & I-Beam Cursor everywhere except inputs */
+body {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    cursor: default;
+}
+
+input,
+textarea,
+select {
+    user-select: auto;
+    -webkit-user-select: auto;
+    -moz-user-select: auto;
+    cursor: text;
+}
+
+select,
+input[type="submit"],
+input[type="button"],
+input[type="checkbox"],
+input[type="radio"],
+input[type="date"] {
+    cursor: pointer;
+}
+
+
+/* Prevent Text Highlighting on Interactive Elements */
+a,
+button,
+.nav-links a,
+.btn-login,
+.btn-primary,
+.btn-neon,
+.toggle-btn,
+.search-field label,
+.nav-item {
+    cursor: pointer !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+}
+
 body {
     background: var(--bg-dark);
     color: var(--text-primary);

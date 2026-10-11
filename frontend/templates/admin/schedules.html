@@ -66,7 +66,8 @@
                                 <i class="fa-solid fa-toggle-on"></i>
                             </button>
                         </form>
-                        <button class="action-btn" title="Delay Management"><i
+                        <button class="action-btn" title="Delay Management"
+                            onclick="openDelayModal('{{ sch.id }}', '{{ sch.bus.bus_number }}', '{{ sch.projected_delay_mins }}')"><i
                                 class="fa-solid fa-clock-rotate-left"></i></button>
                         <form method="POST" action="{{ url_for('admin_ui.delete_schedule', id=sch.id) }}"
                             onsubmit="return confirm('Cancel this dispatch? Users will be notified.');">
@@ -131,4 +132,37 @@
         </form>
     </div>
 </div>
+
+<!-- Delay Management Modal -->
+<div id="delayModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-clock-rotate-left"></i> Manage Delay</h3>
+            <button class="modal-close" onclick="closeModal('delayModal')">&times;</button>
+        </div>
+        <form method="POST" id="delayForm" action="">
+            <div class="form-group">
+                <label>Asset: <span id="delay-bus-num"
+                        style="color: var(--accent-primary); font-weight:700;"></span></label>
+            </div>
+            <div class="form-group">
+                <label>Projected Delay (Minutes)</label>
+                <input type="number" name="delay_mins" id="delay-mins" class="form-control" required value="0" min="0">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('delayModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Update Delay <i class="fa-solid fa-save"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openDelayModal(id, busNum, currentDelay) {
+        document.getElementById('delayForm').action = "/admin/schedules/delay/" + id;
+        document.getElementById('delay-bus-num').innerText = busNum;
+        document.getElementById('delay-mins').value = currentDelay || 0;
+        openModal('delayModal');
+    }
+</script>
 {% endblock %}

@@ -1,0 +1,107 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Safety & Eco Metrics{% endblock %}
+{% block page_header %}Fleet Safety & Eco Analysis{% endblock %}
+
+{% block content %}
+<div class="stat-grid">
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-shield-halved text-glow"></i> Avg Driver Score</h4>
+        <div class="stat-value">{{ avg_driver }}/100</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-wrench" style="color:var(--accent-purple);"></i> Avg Maintenance</h4>
+        <div class="stat-value">{{ avg_maint }}/100</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-leaf" style="color:var(--accent-green);"></i> Avg CO2 Emissions</h4>
+        <div class="stat-value">{{ avg_co2 }} kg/km</div>
+    </div>
+    <div class="stat-card">
+        <h4><i class="fa-solid fa-bus-simple text-glow"></i> Vehicles Tracked</h4>
+        <div class="stat-value">{{ total_tracked }}</div>
+    </div>
+</div>
+
+<div class="table-panel" style="margin-top: 1.5rem;">
+    <div class="table-header">
+        <div style="display:flex; align-items:center; gap:1rem;">
+            <h4><i class="fa-solid fa-ranking-star"></i> Fleet Metrics Breakdown</h4>
+        </div>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Bus Number</th>
+                <th>Type</th>
+                <th>Driver Score</th>
+                <th>Maintenance</th>
+                <th>Overall Safety</th>
+                <th>Carbon Footprint</th>
+                <th>Eco Rating</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in metrics_data %}
+            <tr>
+                <td><span style="font-weight:600; color:#fff;">{{ item.bus.bus_number }}</span></td>
+                <td><small style="color:var(--text-secondary);">{{ item.bus.type }}</small></td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <progress value="{{ item.safety.driver_score }}" max="100" class="rating-bar"
+                            style="width: 50px;"></progress>
+                        <span>{{ item.safety.driver_score }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <progress value="{{ item.safety.maintenance_score }}" max="100" class="rating-bar"
+                            style="width: 50px;"></progress>
+                        <span>{{ item.safety.maintenance_score }}</span>
+                    </div>
+                </td>
+                <td
+                    style="color:{% if item.safety.overall_score >= 80 %}var(--accent-green){% else %}var(--accent-red){% endif %}; font-weight:bold;">
+                    {{ item.safety.overall_score }}/100
+                </td>
+                <td style="color:var(--text-secondary);">{{ item.eco.co2_emissions_per_km }} kg/km</td>
+                <td>
+                    <span class="badge"
+                        style="background:{% if item.eco.eco_rating == 'High' %}rgba(52, 211, 153, 0.1){% elif item.eco.eco_rating == 'Medium' %}rgba(250, 204, 21, 0.1){% else %}rgba(244, 63, 94, 0.1){% endif %}; color:{% if item.eco.eco_rating == 'High' %}var(--accent-green){% elif item.eco.eco_rating == 'Medium' %}#facc15{% else %}var(--accent-red){% endif %};">
+                        {{ item.eco.eco_rating }}
+                    </span>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align:center; padding: 4rem;">
+                    <i class="fa-solid fa-chart-line"
+                        style="font-size: 3rem; color:rgba(255,255,255,0.05); margin-bottom:1.5rem;"></i>
+                    <p style="color:var(--text-secondary);">No metrics available yet.</p>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<style>
+    progress {
+        -webkit-appearance: none;
+        appearance: none;
+        height: 8px;
+        border-radius: 4px;
+    }
+
+    progress::-webkit-progress-bar {
+        background-color: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+    }
+
+    progress::-webkit-progress-value {
+        background-color: var(--accent-primary);
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}

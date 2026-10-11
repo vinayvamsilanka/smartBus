@@ -76,50 +76,50 @@
         new Chart(ctxR, {
             type: 'line',
             data: {
-                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                datasets: [{
-                    label: 'Gross Volume (₹)',
-                    data: [12400, 19000, 16500, 24000, 28000, 31000],
-                    borderColor: '#a78bfa',
-                    backgroundColor: grad,
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4
+                labels: {{ chart_labels | tojson | safe }},
+        datasets: [{
+            label: 'Gross Volume (₹)',
+            data: {{ chart_data | tojson | safe }},
+        borderColor: '#a78bfa',
+        backgroundColor: grad,
+        borderWidth: 3,
+        fill: true,
+        tension: 0.4
                 }]
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
-                    x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
-                }
-            }
+        options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+        }
+    }
         });
 
-        // Split Journey Doughnut
-        const ctxS = document.getElementById('splitChart').getContext('2d');
-        new Chart(ctxS, {
-            type: 'doughnut',
-            data: {
-                labels: ['Direct Routes', 'AI Split Routes'],
-                datasets: [{
-                    data: [65, 35],
-                    backgroundColor: ['#38bdf8', '#34d399'],
-                    borderWidth: 0,
-                    hoverOffset: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter' } } }
-                }
+    // Split Journey Doughnut
+    const ctxS = document.getElementById('splitChart').getContext('2d');
+    new Chart(ctxS, {
+        type: 'doughnut',
+        data: {
+            labels: ['Direct Routes', 'AI Split Routes'],
+            datasets: [{
+                data: [65, 35],
+                backgroundColor: ['#38bdf8', '#34d399'],
+                borderWidth: 0,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94a3b8', font: { family: 'Inter' } } }
             }
-        });
+        }
+    });
     });
 </script>
 {% endblock %}

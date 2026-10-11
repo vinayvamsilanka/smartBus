@@ -55,8 +55,8 @@
                                 <i class="fa-solid fa-power-off"></i>
                             </button>
                         </form>
-                        <button class="action-btn" title="Edit Metadata"
-                            onclick="alert('Metadata Editor coming soon in v2.0')"><i
+                        <button class="action-btn" title="Edit Hub Name"
+                            onclick="openEditCityModal('{{ city.id }}', '{{ city.name.title() }}')"><i
                                 class="fa-solid fa-pen-to-square"></i></button>
                         <form method="POST" action="{{ url_for('admin_ui.delete_city', id=city.id) }}"
                             onsubmit="return confirm('SOFT DELETE: Deactivate {{ city.name.title() }} from the live network? It will remain in history but disappear from user search.');">
@@ -98,4 +98,31 @@
         </form>
     </div>
 </div>
+
+<!-- Edit City Modal -->
+<div id="editCityModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-pen-to-square"></i> Edit City Data</h3>
+            <button class="modal-close" onclick="closeModal('editCityModal')">&times;</button>
+        </div>
+        <form method="POST" id="editCityForm" action="">
+            <div class="form-group">
+                <label>System Identifier (Unique Name)</label>
+                <input type="text" name="name" id="edit-city-name" class="form-control" required autofocus>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('editCityModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Update Hub <i class="fa-solid fa-save"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    function openEditCityModal(id, currentName) {
+        document.getElementById('editCityForm').action = "/admin/cities/edit/" + id;
+        document.getElementById('edit-city-name').value = currentName;
+        openModal('editCityModal');
+    }
+</script>
 {% endblock %}

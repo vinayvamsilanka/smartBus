@@ -5,6 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SmartBus Admin | {% block title %}{% endblock %}</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'/%3E">
     <!-- Fonts -->
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap"
@@ -51,10 +53,12 @@
             class="nav-item {% if request.endpoint == 'admin_ui.manage_schedules' %}active{% endif %}">
             <i class="fa-solid fa-calendar-check"></i> Dispatch Schedules
         </a>
-        <a href="#" class="nav-item">
+        <a href="{{ url_for('admin_ui.safety_metrics') }}"
+            class="nav-item {% if request.endpoint == 'admin_ui.safety_metrics' %}active{% endif %}">
             <i class="fa-solid fa-shield-heart"></i> Safety & Eco Metrics
         </a>
-        <a href="#" class="nav-item">
+        <a href="{{ url_for('admin_ui.system_access') }}"
+            class="nav-item {% if request.endpoint == 'admin_ui.system_access' %}active{% endif %}">
             <i class="fa-solid fa-users-gear"></i> System Access
         </a>
     </div>
@@ -67,7 +71,8 @@
             <div class="header-profile">
                 <span style="color:var(--text-secondary); font-size:0.9rem;">
                     <i class="fa-solid fa-circle" style="color:var(--accent-green); font-size:0.6rem;"></i>
-                    {{ current_admin.name }} ({{ current_admin.role_id.name }})
+                    {{ current_admin.name }} ({{ current_admin.role.name if current_admin.role else
+                    current_admin.role_id }})
                 </span>
                 <a href="{{ url_for('admin_ui.logout') }}" class="btn-logout"><i
                         class="fa-solid fa-arrow-right-from-bracket"></i> Logout</a>

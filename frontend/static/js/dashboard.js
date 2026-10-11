@@ -120,18 +120,20 @@ document.addEventListener('DOMContentLoaded', () => {
             milestoneProgFill.style.width = `${progressPercentage}%`;
         }
 
-        // Tier badges based on eco points
+        // Tier badges based on bookings
         if (userTierBadge) {
-            if (pts >= 250) {
+            const bookingsCount = globalUser.booking_count || 0;
+
+            if (bookingsCount >= 10) {
                 userTierBadge.innerHTML = `<i class="fa-solid fa-gem"></i> ECO LEGEND`;
                 userTierBadge.style.background = 'linear-gradient(135deg, #a855f7, #7c3aed)';
                 userTierBadge.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.3)';
-            } else if (pts >= 150) {
-                userTierBadge.innerHTML = `<i class="fa-solid fa-crown"></i> ECO PLATINUM`;
+            } else if (bookingsCount >= 5) {
+                userTierBadge.innerHTML = `<i class="fa-solid fa-compass"></i> ECO EXPLORER`;
                 userTierBadge.style.background = 'linear-gradient(135deg, #f59e0b, #d97706)';
                 userTierBadge.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.25)';
             } else {
-                userTierBadge.innerHTML = `<i class="fa-solid fa-leaf"></i> ECO VOYAGER`;
+                userTierBadge.innerHTML = `<i class="fa-solid fa-user"></i> NORMAL USER`;
                 userTierBadge.style.background = 'linear-gradient(135deg, #10b981, #059669)';
                 userTierBadge.style.boxShadow = '0 4px 12px rgba(16, 185, 129, 0.2)';
             }
@@ -198,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
 
                 tbody.innerHTML += `
-                    <div class="glass-panel" style="display: flex; gap: 1rem; padding: 1.25rem 1.5rem; align-items: center; border-radius: 12px; border: 1px solid var(--border-light); background: rgba(255, 255, 255, 0.4); box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
+                    <div class="glass-panel past-booking-row" style="display: flex; gap: 1rem; padding: 1.25rem 1.5rem; align-items: center; border-radius: 12px; border: 1px solid var(--border-light); background: rgba(255, 255, 255, 0.4); box-shadow: 0 4px 6px rgba(0,0,0,0.01);">
                         <div style="flex: 0 0 24%; min-width: 0;">
                             <div style="font-weight: 700; color: var(--text-primary); display:flex; align-items:flex-start; gap: 8px; padding-bottom: 6px;">
                                 <i class="fa-solid fa-bus" style="color: var(--accent-primary); font-size:0.9rem; flex-shrink: 0; margin-top: 2px;"></i>
@@ -674,17 +676,47 @@ document.addEventListener('DOMContentLoaded', () => {
                 </ul>
             </div>
 
-            <!-- simulated SMS button -->
+            <!-- Email notification button -->
             <button class="btn-action-glow notify-sms-btn" style="width:100%; border-radius:8px; font-size:0.75rem; padding:8px 12px; margin-top:0.4rem; justify-content:center;">
-                <i class="fa-solid fa-paper-plane"></i> Notify Status via SMS
+                <i class="fa-solid fa-paper-plane"></i> Notify Status via Email
             </button>
         </div>
         `;
 
                 const smsBtn = assessmentContainer.querySelector('.notify-sms-btn');
                 if (smsBtn) {
-                    smsBtn.onclick = () => {
-                        showToast(`[SIMULATED SMS] Alert sent: Bus #${currentTrackedBusId} delay updated. Adjusted ETA: ${data.adjusted_arrival} 📱`, 'success');
+                    smsBtn.onclick = async () => {
+                        const originalText = smsBtn.innerHTML;
+                        smsBtn.disabled = true;
+                        smsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Sending Details...';
+                        try {
+                            const response = await fetch('/api/tracking/notify-email', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    bus_id: currentTrackedBusId,
+                                    scheduled_arrival: data.scheduled_arrival,
+                                    adjusted_arrival: data.adjusted_arrival,
+                                    congestion: data.congestion,
+                                    delay_minutes: data.delay_minutes,
+                                    ai_confidence_score: data.ai_confidence_score,
+                                    reasons: data.reasons
+                                })
+                            });
+                            const result = await response.json();
+                            if (result.success) {
+                                showToast(`Alert sent securely to ${result.email}. 📧`, 'success');
+                                smsBtn.innerHTML = '<i class="fa-solid fa-check-circle"></i> Sent Successfully';
+                            } else {
+                                showToast(`Failed to send email.`, 'error');
+                                smsBtn.innerHTML = originalText;
+                                smsBtn.disabled = false;
+                            }
+                        } catch (e) {
+                            showToast(`Failed to connect to email service.`, 'error');
+                            smsBtn.innerHTML = originalText;
+                            smsBtn.disabled = false;
+                        }
                     };
                 }
             } else {

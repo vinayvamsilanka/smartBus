@@ -126,4 +126,17 @@ env/
 *.njsproj
 *.sln
 *.sw?
+# Environment and Secrets (CRITICAL)
 .env
+.env.*
+*.env
+!.env.example
+
+# Temporary debug logs and outputs
+*.log
+*_err.txt
+*_out.txt
+err.txt
+fetch_err.py
+app_err.txt
+app_out.txt

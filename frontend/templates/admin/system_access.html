@@ -1,0 +1,90 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}System Access{% endblock %}
+{% block page_header %}Access Management & Audit Logs{% endblock %}
+
+{% block content %}
+<div class="stat-grid" style="grid-template-columns: 1fr 1fr;">
+    <!-- Active Administrators -->
+    <div class="table-panel">
+        <div class="table-header">
+            <h4><i class="fa-solid fa-user-shield"></i> Authorized Personnel</h4>
+        </div>
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Admin Name / Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for admin in admins %}
+                <tr>
+                    <td>
+                        <div style="display:flex; flex-direction:column;">
+                            <span style="font-weight:600; color:#fff;">{{ admin.name or 'N/A' }}</span>
+                            <small style="color:var(--text-secondary);">{{ admin.email }}</small>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge" style="background:rgba(167, 139, 250, 0.1); color:var(--accent-purple);">
+                            {{ admin.role.name if admin.role else 'Custom Role ' ~ admin.role_id }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge"
+                            style="background:rgba(52, 211, 153, 0.1); color:var(--accent-green);">Active</span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" style="text-align:center; padding: 2rem;">No users assigned to administrative roles.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Security Audit Logs -->
+    <div class="table-panel">
+        <div class="table-header">
+            <h4><i class="fa-solid fa-list-check"></i> Recent Audit Logs</h4>
+        </div>
+        <div style="max-height: 400px; overflow-y: auto; padding-right:1rem;">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Action Performed</th>
+                        <th>IP Address</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td style="color:var(--text-secondary); width:30%;">{{ log.timestamp.strftime('%y-%m-%d
+                            %H:%M:%S') }}</td>
+                        <td style="color:#fff;">
+                            {% if log.admin_id %}
+                            <span style="color:var(--accent-primary);">[{{ log.admin.name if log.admin else 'ID:' ~
+                                log.admin_id }}]</span>
+                            {% else %}
+                            <span style="color:var(--accent-primary);">[System]</span>
+                            {% endif %}
+                            {{ log.action }}
+                        </td>
+                        <td style="color:var(--text-secondary); width:20%;"><small>{{ log.ip_address }}</small></td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align:center; padding: 2rem;">No audit logs recorded yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

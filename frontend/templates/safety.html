@@ -27,8 +27,15 @@
     }
 
     @keyframes safetyFadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
     }
 
     /* Hero section styling */
@@ -56,8 +63,10 @@
     .safety-hero::before {
         content: '';
         position: absolute;
-        top: -60%; right: -10%;
-        width: 450px; height: 450px;
+        top: -60%;
+        right: -10%;
+        width: 450px;
+        height: 450px;
         background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
         pointer-events: none;
     }
@@ -69,10 +78,13 @@
     }
 
     .safety-avatar-glow {
-        width: 84px; height: 84px;
+        width: 84px;
+        height: 84px;
         border-radius: 50%;
         background: linear-gradient(135deg, var(--accent-primary), var(--accent-purple));
-        display: flex; align-items: center; justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
         color: white;
         font-size: 2.2rem;
         font-weight: 700;
@@ -211,7 +223,7 @@
         border-radius: 12px;
         padding: 1.5rem;
         font-family: monospace;
-        box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+        box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
         position: relative;
         overflow: hidden;
     }
@@ -219,7 +231,10 @@
     .telemetry-screen::after {
         content: '';
         position: absolute;
-        top: 0; left: 0; right: 0; bottom: 0;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
         background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
         background-size: 100% 4px, 6px 100%;
         pointer-events: none;
@@ -244,8 +259,15 @@
     }
 
     @keyframes telemetryPulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.3; }
+
+        0%,
+        100% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.3;
+        }
     }
 
     .btn-telemetry {
@@ -281,6 +303,18 @@
         display: flex;
         flex-direction: column;
         gap: 0.6rem;
+        transition: transform 0.3s ease, text-shadow 0.3s ease;
+        padding: 5px;
+        border-radius: 8px;
+    }
+
+    .index-item:hover {
+        transform: translateY(-4px) scale(1.01);
+        text-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .index-item:hover .index-bar-bg {
+        box-shadow: 0 6px 14px rgba(99, 102, 241, 0.15);
     }
 
     .index-label {
@@ -330,9 +364,13 @@
             </div>
         </div>
         <div class="telemetry-widget" style="min-width: 250px;">
-            <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-secondary); font-weight:700; letter-spacing:0.5px;">SYSTEM SECURITY LEVEL</div>
-            <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent-green); display: flex; align-items: center; gap: 8px; line-height: 1.1;">
-                94.8% <span style="font-size: 0.88rem; background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.2); padding: 4px 10px; border-radius: 20px; font-weight:700;">EXCELLENT</span>
+            <div
+                style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-secondary); font-weight:700; letter-spacing:0.5px;">
+                SYSTEM SECURITY LEVEL</div>
+            <div
+                style="font-size: 2.2rem; font-weight: 800; color: var(--accent-green); display: flex; align-items: center; gap: 8px; line-height: 1.1;">
+                94.8% <span
+                    style="font-size: 0.88rem; background: rgba(16, 185, 129, 0.1); border: 1.5px solid rgba(16, 185, 129, 0.2); padding: 4px 10px; border-radius: 20px; font-weight:700;">EXCELLENT</span>
             </div>
         </div>
     </div>
@@ -343,8 +381,10 @@
         <!-- Safest Fleet Assets -->
         <div class="safety-panel">
             <div class="panel-header">
-                <h3><i class="fa-solid fa-ranking-star" style="color: var(--accent-primary);"></i> Top Safest Fleet Coaches</h3>
-                <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">Ordered by DB Safety Rating</span>
+                <h3><i class="fa-solid fa-ranking-star" style="color: var(--accent-primary);"></i> Top Safest Fleet
+                    Coaches</h3>
+                <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 700;">Ordered by DB Safety
+                    Rating</span>
             </div>
             <div style="overflow-x: auto;">
                 <table class="safety-table">
@@ -361,17 +401,22 @@
                         {% for coach in safest_coaches %}
                         <tr>
                             <td>
-                                <div style="font-weight:700; color: var(--text-primary);">SmartTravel {{ coach.bus_number }}</div>
-                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">{{ coach.type }}</div>
+                                <div style="font-weight:700; color: var(--text-primary);">SmartTravel {{
+                                    coach.bus_number }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem;">{{
+                                    coach.type }}</div>
                             </td>
                             <td>
-                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.driver_score }}%</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.driver_score }}%
+                                </div>
                             </td>
                             <td>
-                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.maintenance_score }}%</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.maintenance_score
+                                    }}%</div>
                             </td>
                             <td>
-                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.women_safety }}%</div>
+                                <div style="font-weight: 600; color: var(--text-primary);">{{ coach.women_safety }}%
+                                </div>
                             </td>
                             <td>
                                 <span class="safety-score-pill">{{ coach.overall_score }}%</span>
@@ -393,18 +438,21 @@
         <div class="safety-panel" style="display: flex; flex-direction: column; justify-content: space-between;">
             <div>
                 <div class="panel-header">
-                    <h3><i class="fa-solid fa-satellite-dish" style="color: var(--accent-purple);"></i> Real-Time Coach Scan</h3>
+                    <h3><i class="fa-solid fa-satellite-dish" style="color: var(--accent-purple);"></i> Real-Time Coach
+                        Scan</h3>
                 </div>
-                <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1.2rem;">Select and audit telemetry directly from active coach diagnostics.</p>
-                
+                <p style="font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 1.2rem;">Select and audit
+                    telemetry directly from active coach diagnostics.</p>
+
                 <div class="telemetry-screen" id="telemetry-screen">
                     <div class="telemetry-line">> SYSTEM READY FOR TESTING</div>
                     <div class="telemetry-line">> AWAITING INITIATION DIAL...</div>
                 </div>
             </div>
-            
+
             <button class="btn-telemetry" id="btn-scan-telemetry" style="margin-top: 1.5rem; width: 100%;">
-                <i class="fa-solid fa-crosshairs" id="scan-icon"></i> <span id="scan-text">Start Telemetry Test Scan</span>
+                <i class="fa-solid fa-crosshairs" id="scan-icon"></i> <span id="scan-text">Start Telemetry Test
+                    Scan</span>
             </button>
         </div>
 
@@ -413,7 +461,8 @@
     <!-- Bottom Safety Factors Summary -->
     <div class="safety-panel">
         <div class="panel-header">
-            <h3><i class="fa-solid fa-chart-line" style="color: var(--accent-purple);"></i> AI Safety Prioritization Metrics</h3>
+            <h3><i class="fa-solid fa-chart-line" style="color: var(--accent-purple);"></i> AI Safety Prioritization
+                Metrics</h3>
         </div>
         <div class="safety-grid" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 0; gap: 2rem;">
             <div class="safety-indices">
@@ -473,22 +522,22 @@
         if (!btn || !screen) return;
 
         let scanning = false;
-        
+
         btn.addEventListener('click', () => {
             if (scanning) return;
             scanning = true;
-            
+
             // UI Loading state
             icon.className = "fa-solid fa-spinner fa-spin";
             btnText.textContent = "Scanning active coaches...";
             btn.style.opacity = "0.7";
-            
+
             screen.innerHTML = `
                 <div class="telemetry-line">> SCANNING SATELLITE TELEMETRY FEED...</div>
                 <div class="telemetry-line">> LOCATING ACTIVE TRANSPORT LINERS...</div>
                 <div class="telemetry-line">> CONNECTING DIAGNOSTIC SENSORS...</div>
             `;
-            
+
             setTimeout(() => {
                 screen.innerHTML += `<div class="telemetry-line" style="color: #6366f1;">> CONNECTED TO SMARTTRAVEL ASSET #87</div>`;
             }, 1000);
@@ -497,7 +546,7 @@
                 const speed = Math.floor(Math.random() * 20) + 55;
                 const temp = Math.floor(Math.random() * 10) + 85;
                 const driverScore = Math.floor(Math.random() * 8) + 90;
-                
+
                 screen.innerHTML = `
                     <div class="telemetry-line" style="color:#6366f1;">> SCANNED VEHICLE AP-09-H8272 SUCCESSFUL</div>
                     <div class="telemetry-line"><span class="label">SPEED PROFILE:</span> <span class="val">${speed} km/h</span></div>
@@ -507,7 +556,7 @@
                     <div class="telemetry-line"><span class="label">PANIC ALERTS LOG:</span> <span class="val">0 ALERTS RECORDED</span></div>
                     <div class="telemetry-line" style="color:#10b981;">> VERDICT: SECURE RIDE STATUS OK ✅</div>
                 `;
-                
+
                 // Reset button
                 icon.className = "fa-solid fa-crosshairs";
                 btnText.textContent = "Run Telemetry Test Scan";

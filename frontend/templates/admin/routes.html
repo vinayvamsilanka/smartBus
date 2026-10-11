@@ -60,7 +60,9 @@
                                 <i class="fa-solid fa-power-off"></i>
                             </button>
                         </form>
-                        <button class="action-btn" title="Edit Route Details" onclick="openEditModal('{{ route.id }}', '{{ route.distance_km }}', '{{ route.base_fare }}')"><i class="fa-solid fa-pen-to-square"></i></button>
+                        <button class="action-btn" title="Edit Route Details"
+                            onclick="openEditModal('{{ route.id }}', '{{ route.distance_km }}', '{{ route.base_fare }}')"><i
+                                class="fa-solid fa-pen-to-square"></i></button>
                         <form method="POST" action="{{ url_for('admin_ui.delete_route', id=route.id) }}"
                             onsubmit="return confirm('SOFT DELETE: Suspend route {{ route.origin.title() }} → {{ route.destination.title() }}?');">
                             <button type="submit" class="action-btn delete" title="Archive Route"><i
@@ -101,7 +103,8 @@
             </div>
             <div class="form-group">
                 <label>Destination Hub</label>
-                <select name="destination" id="new-dest" class="form-control" required onchange="fetchRouteSuggestion()">
+                <select name="destination" id="new-dest" class="form-control" required
+                    onchange="fetchRouteSuggestion()">
                     <option value="" disabled selected>-- Select Hub --</option>
                     {% for city in cities %}
                     <option value="{{ city.name }}">{{ city.name.title() }}</option>
@@ -111,7 +114,9 @@
             <div class="form-group" style="position: relative;">
                 <label>Distance (km)</label>
                 <input type="number" name="distance" id="new-dist" class="form-control" required placeholder="850">
-                <span id="ai-suggest-badge" class="badge" style="position: absolute; right: 0.5rem; top: 2.2rem; background: var(--accent-purple); color: white; scale: 0.8; display: none;">AI SUGGESTED</span>
+                <span id="ai-suggest-badge" class="badge"
+                    style="position: absolute; right: 0.5rem; top: 2.2rem; background: var(--accent-purple); color: white; scale: 0.8; display: none;">AI
+                    SUGGESTED</span>
             </div>
             <div class="form-group">
                 <label>Base Fare (₹)</label>
@@ -125,16 +130,40 @@
     </div>
 </div>
 
+<!-- Edit Route Modal -->
+<div id="editRouteModal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-pen-to-square"></i> Modify Route Config</h3>
+            <button class="modal-close" onclick="closeModal('editRouteModal')">&times;</button>
+        </div>
+        <form method="POST" id="editRouteForm" action="">
+            <div class="form-group">
+                <label>Distance (km)</label>
+                <input type="number" name="distance" id="edit-distance" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Base Fare (₹)</label>
+                <input type="number" name="base_fare" id="edit-fare" class="form-control" required>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeModal('editRouteModal')">Cancel</button>
+                <button type="submit" class="btn-admin">Update Route <i class="fa-solid fa-save"></i></button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     async function fetchRouteSuggestion() {
         const origin = document.getElementById('new-origin').value;
         const dest = document.getElementById('new-dest').value;
-        
+
         if (origin && dest && origin !== dest) {
             try {
                 const response = await fetch(`/admin/api/suggest-route?origin=${origin}&dest=${dest}`);
                 const data = await response.json();
-                
+
                 if (data.distance_km) {
                     document.getElementById('new-dist').value = data.distance_km;
                     document.getElementById('new-fare').value = data.suggested_fare;

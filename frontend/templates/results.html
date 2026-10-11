@@ -341,19 +341,36 @@
                     width: 700px;
                     /* Force minimum width to preserve layout gracefully on mobile */
                 }
+
+                .split-fare-info {
+                    position: relative;
+                    bottom: 0;
+                    right: 0;
+                    margin-top: 1rem;
+                    justify-content: flex-start;
+                }
+
+                .split-booking-actions {
+                    flex-direction: column;
+                    width: 100%;
+                }
+
+                .split-booking-actions button {
+                    width: 100%;
+                    white-space: normal !important;
+                }
             }
         </style>
 
         <div class="premium-ai-dashboard span-2">
             <!-- 1. AI FARE PREDICTOR -->
             <div class="glow-card top-card">
-                <div class="glow-header">
-                    <h2 class="glow-title">AI FARE PREDICTOR <i class="fa-regular fa-circle-question info-icon"></i>
+                <div class="glow-header"
+                    style="justify-content: flex-start; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 15px; margin-bottom: 20px;">
+                    <h2 class="glow-title" style="margin: 0; display:flex; align-items:center; gap:10px;">
+                        AI FARE PREDICTOR <i class="fa-regular fa-circle-question info-icon"
+                            style="font-size: 0.8em; color: var(--text-secondary);"></i>
                     </h2>
-                    <div class="glow-controls">
-                        <button class="glow-pill active">Past 10 Days</button>
-                        <button class="glow-pill">Next 10 Days</button>
-                    </div>
                 </div>
 
                 <div class="chart-header-row">
@@ -429,44 +446,53 @@
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Book Button -->
-                        <div class="split-node node-action" id="btn-split-leg1" title="Book Optimal Split Route">
-                            <i class="fa-solid fa-map"></i>
-                        </div>
                     </div>
                 </div>
-
-                <div class="split-fare-info">
-                    ₹<span id="split-fare"
-                        style="font-weight:700; color:#fff; font-size:1.25rem; margin:0; padding:0; margin-left: 2px;">...</span>
-                    <span>(Split Fare)</span>
-                </div>
-
-                <div style="display:none;" id="direct-fare"></div>
-                <div style="display:none;" id="split-savings"></div>
-                <div style="display:none;" id="leg1-route-detail"></div>
-                <div style="display:none;" id="split-leg1-operator"></div>
-                <div style="display:none;" id="split-leg1-fare"></div>
-                <div style="display:none;" id="leg2-route-detail"></div>
-                <div style="display:none;" id="split-leg2-operator"></div>
-                <div style="display:none;" id="split-leg2-dep"></div>
-                <div style="display:none;" id="split-leg2-fare"></div>
-                <div style="display:none;" id="leg1-text"></div>
-                <div style="display:none;" id="leg2-text"></div>
-                <div style="display:none;" id="btn-split-leg2"></div>
-                <div style="display:none;" id="split-via"></div>
-                <i id="animated-bus" style="display:none;"></i>
             </div>
-        </div>
 
-        <!-- Bus Options List -->
-        <div class="results-list" id="buses-container"
-            style="display: flex; flex-direction: column; gap: 1.5rem; grid-column: span 3;">
-            <!-- Rendered via results.js -->
-        </div>
+            <!-- Routing Action Buttons Native Layout -->
+            <div class="split-booking-actions"
+                style="display: flex; gap: 20px; margin-top: 1rem; margin-bottom: 3.5rem; justify-content: center;">
+                <button id="btn-split-leg1" class="btn-primary"
+                    style="padding: 14px 40px; border-radius: 12px; white-space: nowrap; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(37,99,235,0.2);">
+                    <i class="fa-solid fa-ticket"></i> Book Leg 1 (<span id="leg1-btn-fare">...</span>)
+                </button>
+                <button id="btn-split-leg2" class="btn-primary"
+                    style="padding: 14px 40px; border-radius: 12px; background: linear-gradient(135deg, var(--accent-purple), #4f46e5); white-space: nowrap; font-size: 1.05rem; box-shadow: 0 4px 15px rgba(168,85,247,0.2);">
+                    <i class="fa-solid fa-ticket" style="color: #fff;"></i> Book Leg 2 (<span
+                        id="leg2-btn-fare">...</span>)
+                </button>
+            </div>
 
+            <div class="split-fare-info">
+                ₹<span id="split-fare"
+                    style="font-weight:700; color:#fff; font-size:1.25rem; margin:0; padding:0; margin-left: 2px;">...</span>
+                <span>(Split Total Fare)</span>
+            </div>
+
+            <div style="display:none;" id="direct-fare"></div>
+            <div style="display:none;" id="split-savings"></div>
+            <div style="display:none;" id="leg1-route-detail"></div>
+            <div style="display:none;" id="split-leg1-operator"></div>
+            <div style="display:none;" id="split-leg1-fare"></div>
+            <div style="display:none;" id="leg2-route-detail"></div>
+            <div style="display:none;" id="split-leg2-operator"></div>
+            <div style="display:none;" id="split-leg2-dep"></div>
+            <div style="display:none;" id="split-leg2-fare"></div>
+            <div style="display:none;" id="leg1-text"></div>
+            <div style="display:none;" id="leg2-text"></div>
+            <div style="display:none;" id="split-via"></div>
+            <i id="animated-bus" style="display:none;"></i>
+        </div>
     </div>
+
+    <!-- Bus Options List -->
+    <div class="results-list" id="buses-container"
+        style="display: flex; flex-direction: column; gap: 1.5rem; grid-column: span 3;">
+        <!-- Rendered via results.js -->
+    </div>
+
+</div>
 </div>
 {% endblock %}
 
