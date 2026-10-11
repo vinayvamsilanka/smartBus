@@ -19,3 +19,7 @@ class User(db.Model):
     role = db.relationship('Role', backref='users')
     bookings = db.relationship('Booking', backref='user', lazy=True)
     owned_buses = db.relationship('Bus', backref='operator', lazy=True)
+
+    def __init__(self, **kwargs):
+        super(User, self).__init__(**kwargs)
+

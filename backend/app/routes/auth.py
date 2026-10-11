@@ -7,6 +7,7 @@ import random
 
 from app.services.mail_service import MailService
 import secrets
+import os
 
 auth_provider = AuthProvider(use_simulation=True)
 
@@ -208,12 +209,25 @@ def test_mail():
     to = request.args.get('email', 'charanreddy5638@gmail.com')
     mail_user = current_app.config.get('MAIL_USERNAME', '')
     mail_pass = current_app.config.get('MAIL_PASSWORD', '')
+    brevo_key = current_app.config.get('BREVO_API_KEY') or os.environ.get('BREVO_API_KEY')
     diag = {
         "user_set": bool(mail_user),
         "pass_set": bool(mail_pass),
         "user_val": (mail_user[:5] + "***") if mail_user else None,
         "pass_len": len(mail_pass) if mail_pass else 0,
+        "brevo_set": bool(brevo_key),
     }
+    if brevo_key:
+        try:
+            import requests
+            rb = requests.get('https://api.brevo.com/v3/account', headers={'accept': 'application/json', 'api-key': brevo_key}, timeout=5)
+            diag['brevo_status'] = rb.status_code
+            if rb.status_code == 200:
+                diag['brevo_account'] = rb.json().get('email')
+                diag['success'] = True
+        except Exception as eb:
+            diag['brevo_error'] = str(eb)
+
     # Test Port 465 SSL
     try:
         s = smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=5)
