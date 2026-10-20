@@ -131,6 +131,8 @@ python backend/run.py
 ```
 Visit **`http://127.0.0.1:8000`** in your browser to explore SmartBus AI!
 
+ EXPERIENCE THE FUTUR EOF TRAVEL--> https://smartbus-ai-r4ay.onrender.com/
+
 ---
 
 ## 🤝 Contributing
