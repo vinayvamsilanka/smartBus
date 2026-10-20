@@ -1910,5 +1910,17 @@
             if (selector) selector.style.display = 'flex';
         });
     });
+
+    // Auto-save route for SmartBus Intro animation destination board
+    const searchForm = document.querySelector('form.search-panel');
+    if (searchForm) {
+        searchForm.addEventListener('submit', () => {
+            const originCity = document.getElementById('origin-input')?.value;
+            const destCity = document.getElementById('dest-input')?.value;
+            if (originCity && destCity && window.SmartBusIntro?.saveRoute) {
+                window.SmartBusIntro.saveRoute(originCity, destCity);
+            }
+        });
+    }
 </script>
 {% endblock %}

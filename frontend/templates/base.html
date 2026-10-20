@@ -37,6 +37,9 @@
 </head>
 
 <body>
+    {% if request.path == '/' %}
+    {% include "smartbus-intro-only.html" %}
+    {% endif %}
     <div class="app-bg"></div>
 
     <nav class="navbar">
