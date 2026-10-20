@@ -80,41 +80,6 @@ graph TD
 
 ---
 
-## 📂 Project Structure
-
-```text
-smartBus/
-├── backend/
-│   ├── app/
-│   │   ├── admin/             # Admin management endpoints & models
-│   │   ├── models/            # SQLAlchemy database models (Bus, Route, User, Booking)
-│   │   ├── routes/            # API Blueprints (Auth, Optimizer, Booking, Tracking, Rewards)
-│   │   ├── services/          # ML predictors, Gemini AI chat, PDF generator, email service
-│   │   ├── config.py          # App configuration & environment settings
-│   │   └── extensions.py      # SQLAlchemy, JWT, Bcrypt initialization
-│   ├── run.py                 # Development runner
-│   └── wsgi.py                # Production WSGI entry point
-├── frontend/
-│   ├── static/
-│   │   ├── css/               # Modular styling & design tokens
-│   │   ├── js/                # Chatbot & tracking client scripts
-│   │   └── img/               # Brand assets & icons
-│   └── templates/
-│       ├── base.html          # Global layout template
-│       ├── index.html         # Hero, AI search panel, popular routes
-│       ├── smartbus-intro-only.html  # Cinematic canvas intro sequence
-│       ├── results.html       # AI-optimized route comparison
-│       ├── details.html       # Seat selection & checkout
-│       ├── dashboard.html     # Passenger booking portal
-│       ├── eco_rewards.html   # Green miles & rewards tier
-│       └── safety.html        # Coach safety scores & verification
-├── requirements.txt           # Project dependencies
-├── render.yaml                # Cloud deployment configuration
-└── README.md
-```
-
----
-
 ## ⚡ Quick Start Guide
 
 ### 1. Prerequisites
@@ -160,7 +125,7 @@ python backend/seed_cities.py
 python backend/seed_real_world.py
 ```
 
-### 7. Run the Application
+### 7. Run the Live Application
 ```bash
 python backend/run.py
 ```
